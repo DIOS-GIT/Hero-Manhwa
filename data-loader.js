@@ -10,7 +10,7 @@
 // que main.js, y borrar (o dejar de cargar) game-data.js/demo-story.js.
 // main.js sigue igual, solo espera a que window.GAME_DATA_READY resuelva.
 
-import { firebaseConfig } from "../../admin/js/firebase-config.js"; // ajustar ruta relativa
+import { firebaseConfig } from "./js/firebase-config.js"; // ajustar ruta relativa
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
