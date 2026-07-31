@@ -181,3 +181,58 @@ main { flex: 1; padding: 24px; overflow-x: auto; }
   font-size: 12px;
 }
 .entity-table button.danger { border-color: var(--danger); color: var(--danger); }
+
+/* ---- filas dinámicas (stats, imágenes múltiples, opciones de choice) ---- */
+.dynamic-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.imagelist-row, .statlist-row, .option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f0f1a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.imagelist-row input, .statlist-row input, .option-row input, .option-row select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #12121e;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+.statlist-row input[type="number"] { flex: 0 0 90px; }
+.option-row select { flex: 1; }
+.add-row-btn {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ---- selector de personaje con foto ---- */
+.char-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.char-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: #0f0f1a;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+.char-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.char-chip.selected { border-color: var(--accent); background: rgba(139, 92, 246, 0.25); }
