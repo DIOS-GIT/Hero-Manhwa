@@ -1,6 +1,6 @@
 // Los "key" de cada campo tienen que coincidir EXACTO con lo que lee
-// js/character-creation.js del juego (desc, tag, tags, etc.) — así
-// data-loader.js no tiene que renombrar nada, solo pasar los datos tal cual.
+// js/character-creation.js del juego (desc, tag, tags, stats como
+// objeto) — así data-loader.js no tiene que renombrar nada.
 export const COLLECTIONS = [
   {
     key: "protagonists",
@@ -9,13 +9,8 @@ export const COLLECTIONS = [
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true },
       { key: "desc", label: "Descripción", type: "textarea" },
-      { key: "portraitUrl", label: "Retrato", type: "image" },
-      {
-        key: "stats",
-        label: "Stats iniciales (JSON, ej: carisma/inteligencia/fisico/riqueza/suerte)",
-        type: "json",
-        placeholder: '{"carisma":8,"inteligencia":6,"fisico":4,"riqueza":9,"suerte":3}',
-      },
+      { key: "images", label: "Imágenes (una por expresión)", type: "image-list" },
+      { key: "stats", label: "Stats iniciales", type: "stat-list" },
     ],
   },
   {
@@ -59,7 +54,7 @@ export const COLLECTIONS = [
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true },
       { key: "desc", label: "Descripción", type: "textarea" },
-      { key: "portraitUrl", label: "Retrato", type: "image" },
+      { key: "images", label: "Imágenes (una por expresión)", type: "image-list" },
       {
         key: "tags",
         label: "Tags separados por coma (deben matchear tag de trabajo o vivienda)",
