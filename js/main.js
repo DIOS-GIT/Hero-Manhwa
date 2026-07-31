@@ -150,7 +150,8 @@ function initGameControls() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.GAME_DATA_READY;
   initCharacterCreation();
   initGameControls();
   document.getElementById("btn-summary-confirm").addEventListener("click", startStory);
