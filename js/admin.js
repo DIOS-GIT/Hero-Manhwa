@@ -18,8 +18,8 @@ import {
   deleteDoc,
   getDoc,
   onSnapshot,
-  orderBy,
   query,
+  where,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -54,7 +54,6 @@ onAuthStateChanged(auth, async (user) => {
     adminScreen.classList.add("hidden");
     return;
   }
-  // Confirmar que este usuario está en /admins/{uid} antes de mostrar nada.
   try {
     const adminDoc = await getDoc(doc(db, "admins", user.uid));
     if (!adminDoc.exists()) {
@@ -92,9 +91,7 @@ function buildNav() {
     btn.textContent = `${cfg.icon} ${cfg.label}`;
     btn.dataset.target = cfg.key;
     navEl.appendChild(btn);
-
-    const section = buildCollectionSection(cfg);
-    sectionsEl.appendChild(section);
+    sectionsEl.appendChild(buildCollectionSection(cfg));
   });
 
   const nodeBtn = document.createElement("button");
@@ -133,9 +130,7 @@ function openCloudinaryWidget(onSuccess) {
     return;
   }
   if (cloudinaryConfig.uploadPreset === "COMPLETAR") {
-    alert(
-      "Falta configurar el 'upload preset' unsigned de Cloudinary en firebase-config.js"
-    );
+    alert("Falta configurar el 'upload preset' unsigned de Cloudinary en firebase-config.js");
     return;
   }
   const widget = window.cloudinary.createUploadWidget(
@@ -156,6 +151,127 @@ function openCloudinaryWidget(onSuccess) {
   widget.open();
 }
 
+// ---------- CAMPO: lista de imágenes con etiqueta (image-list) ----------
+// Sirve para personajes/heroínas con varias expresiones (sonriendo,
+// enojada, etc). Cada item queda como { label, url } en Firestore.
+function buildImageListField(container, initial) {
+  let items = initial ? JSON.parse(JSON.stringify(initial)) : [];
+  const rowsEl = document.createElement("div");
+  rowsEl.className = "dynamic-rows";
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "add-row-btn";
+  addBtn.textContent = "+ Agregar imagen";
+  addBtn.addEventListener("click", () => {
+    openCloudinaryWidget((url) => {
+      items.push({ label: "", url });
+      renderRows();
+    });
+  });
+
+  function renderRows() {
+    rowsEl.innerHTML = "";
+    items.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "imagelist-row";
+      const img = document.createElement("img");
+      img.src = item.url;
+      img.className = "img-preview";
+      const label = document.createElement("input");
+      label.type = "text";
+      label.placeholder = "Etiqueta (ej: sonriendo, enojada, triste)";
+      label.value = item.label || "";
+      label.addEventListener("input", () => (items[idx].label = label.value));
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Quitar";
+      del.addEventListener("click", () => {
+        items.splice(idx, 1);
+        renderRows();
+      });
+      row.append(img, label, del);
+      rowsEl.appendChild(row);
+    });
+  }
+  renderRows();
+  container.append(rowsEl, addBtn);
+  return {
+    getValue: () => items,
+    setValue: (v) => {
+      items = v ? JSON.parse(JSON.stringify(v)) : [];
+      renderRows();
+    },
+  };
+}
+
+// ---------- CAMPO: lista de stats (stat-list) ----------
+// Reemplaza el textarea de JSON por filas "nombre + valor". Se guarda
+// en Firestore como objeto { carisma: 8, ... }, igual que antes.
+function buildStatListField(container, initial) {
+  let items = initial
+    ? Object.entries(initial).map(([key, value]) => ({ key, value }))
+    : [];
+  const rowsEl = document.createElement("div");
+  rowsEl.className = "dynamic-rows";
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "add-row-btn";
+  addBtn.textContent = "+ Agregar stat";
+  addBtn.addEventListener("click", () => {
+    items.push({ key: "", value: 0 });
+    renderRows();
+  });
+
+  function renderRows() {
+    rowsEl.innerHTML = "";
+    items.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "statlist-row";
+      const keyInput = document.createElement("input");
+      keyInput.type = "text";
+      keyInput.placeholder = "nombre (ej: carisma)";
+      keyInput.value = item.key;
+      keyInput.addEventListener("input", () => (items[idx].key = keyInput.value));
+      const valInput = document.createElement("input");
+      valInput.type = "number";
+      valInput.placeholder = "valor";
+      valInput.value = item.value;
+      valInput.addEventListener(
+        "input",
+        () => (items[idx].value = Number(valInput.value))
+      );
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Quitar";
+      del.addEventListener("click", () => {
+        items.splice(idx, 1);
+        renderRows();
+      });
+      row.append(keyInput, valInput, del);
+      rowsEl.appendChild(row);
+    });
+  }
+  renderRows();
+  container.append(rowsEl, addBtn);
+  return {
+    getValue: () => {
+      const obj = {};
+      items.forEach((it) => {
+        if (it.key.trim()) obj[it.key.trim()] = it.value;
+      });
+      return obj;
+    },
+    setValue: (v) => {
+      items = v
+        ? Object.entries(v).map(([key, value]) => ({ key, value }))
+        : [];
+      renderRows();
+    },
+  };
+}
+
 // ---------- CRUD GENÉRICO ----------
 function buildCollectionSection(cfg) {
   const section = document.createElement("div");
@@ -173,9 +289,9 @@ function buildCollectionSection(cfg) {
 
   const form = section.querySelector(`#form-${cfg.key}`);
   const thead = section.querySelector(`#thead-${cfg.key}`);
+  const complexFields = {}; // f.key -> { getValue, setValue } para image-list/stat-list
   let editingId = null;
 
-  // construir formulario
   cfg.fields.forEach((f) => {
     const wrap = document.createElement("div");
     wrap.className = "field";
@@ -209,6 +325,14 @@ function buildCollectionSection(cfg) {
       );
       row.append(btn, preview, hidden);
       wrap.appendChild(row);
+    } else if (f.type === "image-list") {
+      const container = document.createElement("div");
+      complexFields[f.key] = buildImageListField(container, []);
+      wrap.appendChild(container);
+    } else if (f.type === "stat-list") {
+      const container = document.createElement("div");
+      complexFields[f.key] = buildStatListField(container, {});
+      wrap.appendChild(container);
     } else {
       const input = document.createElement("input");
       input.type = f.type === "number" ? "number" : "text";
@@ -230,25 +354,36 @@ function buildCollectionSection(cfg) {
   actions.append(saveBtn, cancelBtn);
   form.appendChild(actions);
 
+  function resetComplexFields() {
+    cfg.fields.forEach((f) => {
+      if (f.type === "image-list") complexFields[f.key].setValue([]);
+      if (f.type === "stat-list") complexFields[f.key].setValue({});
+    });
+  }
+
   cancelBtn.addEventListener("click", () => {
     editingId = null;
     form.reset();
+    resetComplexFields();
     form.querySelectorAll(".img-preview").forEach((p) => (p.hidden = true));
     cancelBtn.hidden = true;
   });
 
-  // header tabla
   cfg.fields.forEach((f) => {
     const th = document.createElement("th");
     th.textContent = f.label;
     thead.appendChild(th);
   });
-  thead.appendChild(document.createElement("th")); // acciones
+  thead.appendChild(document.createElement("th"));
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = {};
     for (const f of cfg.fields) {
+      if (f.type === "image-list" || f.type === "stat-list") {
+        data[f.key] = complexFields[f.key].getValue();
+        continue;
+      }
       const el = form.elements[f.key];
       let val = el.value;
       if (f.type === "number") val = val === "" ? null : Number(val);
@@ -277,6 +412,7 @@ function buildCollectionSection(cfg) {
         await addDoc(collection(db, cfg.key), data);
       }
       form.reset();
+      resetComplexFields();
       form.querySelectorAll(".img-preview").forEach((p) => (p.hidden = true));
       editingId = null;
       cancelBtn.hidden = true;
@@ -298,6 +434,18 @@ function buildCollectionSection(cfg) {
           img.src = item[f.key];
           img.className = "cell-thumb";
           td.appendChild(img);
+        } else if (f.type === "image-list" && item[f.key]) {
+          (item[f.key] || []).slice(0, 3).forEach((im) => {
+            const img = document.createElement("img");
+            img.src = im.url;
+            img.title = im.label || "";
+            img.className = "cell-thumb";
+            td.appendChild(img);
+          });
+        } else if (f.type === "stat-list" && item[f.key]) {
+          td.textContent = Object.entries(item[f.key])
+            .map(([k, v]) => `${k}:${v}`)
+            .join(", ");
         } else if (f.type === "json" && item[f.key]) {
           td.textContent = JSON.stringify(item[f.key]);
         } else {
@@ -311,11 +459,15 @@ function buildCollectionSection(cfg) {
       editBtn.addEventListener("click", () => {
         editingId = docSnap.id;
         cfg.fields.forEach((f) => {
-          const el = form.elements[f.key];
           const val = item[f.key];
-          if (f.type === "json") {
-            el.value = val ? JSON.stringify(val, null, 2) : "";
+          if (f.type === "image-list") {
+            complexFields[f.key].setValue(val || []);
+          } else if (f.type === "stat-list") {
+            complexFields[f.key].setValue(val || {});
+          } else if (f.type === "json") {
+            form.elements[f.key].value = val ? JSON.stringify(val, null, 2) : "";
           } else if (f.type === "image") {
+            const el = form.elements[f.key];
             el.value = val || "";
             const preview = el.parentElement.querySelector(".img-preview");
             if (val) {
@@ -323,7 +475,7 @@ function buildCollectionSection(cfg) {
               preview.hidden = false;
             }
           } else {
-            el.value = val ?? "";
+            form.elements[f.key].value = val ?? "";
           }
         });
         cancelBtn.hidden = false;
@@ -355,15 +507,14 @@ function buildNodesSection() {
   section.innerHTML = `
     <h2>🔀 Nodos / Decisiones</h2>
     <p class="hint">
-      Cada nodo es un paso de la historia. El "ID del nodo" es lo que usás en
-      "next" para encadenarlos (ej: n001 → n002). Los tipos <b>condition</b> y
-      <b>random</b> son avanzados y se editan como JSON para no perder
-      flexibilidad.
+      El ID del nodo se asigna solo (n001, n002...). Los tipos
+      <b>condition</b> y <b>random</b> son avanzados y se editan como JSON
+      para no perder flexibilidad.
     </p>
     <form class="entity-form" id="form-nodes">
       <div class="field">
-        <label>ID del nodo (ej: n001)</label>
-        <input type="text" name="nodeId" required />
+        <label>ID del nodo (automático)</label>
+        <input type="text" id="node-id-display" readonly />
       </div>
       <div class="field">
         <label>Historia (título de la colección "stories")</label>
@@ -380,28 +531,28 @@ function buildNodesSection() {
           <option value="ending">ending — final</option>
         </select>
       </div>
-      <div class="field">
-        <label>Personaje que habla (opcional)</label>
-        <input type="text" name="character" />
+      <div class="field" style="grid-column: 1 / -1;">
+        <label>Personaje que habla</label>
+        <div class="char-picker" id="char-picker"></div>
       </div>
       <div class="field">
         <label>Fondo</label>
         <select name="backgroundUrl" id="bg-select"></select>
       </div>
-      <div class="field">
+      <div class="field" style="grid-column: 1 / -1;">
         <label>Texto</label>
         <textarea name="text"></textarea>
       </div>
       <div class="field" id="next-field">
         <label>Siguiente nodo (para dialogue/event)</label>
-        <input type="text" name="next" />
+        <select name="next" id="next-select"></select>
       </div>
-      <div class="field" id="options-field" hidden>
-        <label>Opciones (choice) — una por línea: texto | next | efectos JSON opcional</label>
-        <textarea name="optionsRaw" placeholder="Aceptar la misión | n010 | {"valentia":1}
-Rechazarla | n011"></textarea>
+      <div class="field" id="options-field" hidden style="grid-column: 1 / -1;">
+        <label>Opciones (choice)</label>
+        <div class="dynamic-rows" id="options-rows"></div>
+        <button type="button" class="add-row-btn" id="add-option-btn">+ Agregar opción</button>
       </div>
-      <div class="field" id="advanced-field" hidden>
+      <div class="field" id="advanced-field" hidden style="grid-column: 1 / -1;">
         <label>JSON avanzado (checks para condition / outcomes para random)</label>
         <textarea name="advancedJson" placeholder='[{"stat":"carisma","op":">=","value":5,"next":"n020"}]'></textarea>
       </div>
@@ -411,7 +562,7 @@ Rechazarla | n011"></textarea>
       </div>
     </form>
     <table class="entity-table">
-      <thead><tr><th>ID</th><th>Historia</th><th>Tipo</th><th>Texto</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>ID</th><th>Historia</th><th>Tipo</th><th>Personaje</th><th>Texto</th><th>Acciones</th></tr></thead>
       <tbody id="tbody-nodes"></tbody>
     </table>
   `;
@@ -419,13 +570,99 @@ Rechazarla | n011"></textarea>
   const form = section.querySelector("#form-nodes");
   const typeSelect = form.elements.type;
   const nextField = section.querySelector("#next-field");
+  const nextSelect = section.querySelector("#next-select");
   const optionsField = section.querySelector("#options-field");
+  const optionsRows = section.querySelector("#options-rows");
+  const addOptionBtn = section.querySelector("#add-option-btn");
   const advancedField = section.querySelector("#advanced-field");
   const bgSelect = section.querySelector("#bg-select");
+  const nodeIdDisplay = section.querySelector("#node-id-display");
+  const charPicker = section.querySelector("#char-picker");
   const cancelBtn = section.querySelector("#cancel-node");
-  let editingId = null;
 
-  // fondos disponibles (vienen de la colección "backgrounds")
+  let editingId = null;
+  let currentNodeId = "";
+  let selectedCharacter = "";
+  let allNodes = []; // [{id, type, text, character}]
+  let optionItems = []; // [{text, next, effectsRaw}]
+  let charactersList = []; // [{name, thumbUrl}]
+
+  function computeNextId() {
+    let max = 0;
+    allNodes.forEach((n) => {
+      const m = /^n(\d+)$/.exec(n.id);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return "n" + String(max + 1).padStart(3, "0");
+  }
+
+  function refreshNodeIdSuggestion() {
+    if (!editingId) {
+      currentNodeId = computeNextId();
+      nodeIdDisplay.value = currentNodeId;
+    }
+  }
+
+  function refreshNextSelect() {
+    const current = nextSelect.value;
+    nextSelect.innerHTML = '<option value="">(elegir nodo)</option>';
+    allNodes.forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n.id;
+      opt.textContent = `${n.id} — ${n.type} — ${(n.text || "").slice(0, 40)}`;
+      nextSelect.appendChild(opt);
+    });
+    nextSelect.value = current;
+  }
+
+  function renderOptionRows() {
+    optionsRows.innerHTML = "";
+    optionItems.forEach((opt, idx) => {
+      const row = document.createElement("div");
+      row.className = "option-row";
+      const textInput = document.createElement("input");
+      textInput.type = "text";
+      textInput.placeholder = "Texto de la opción";
+      textInput.value = opt.text || "";
+      textInput.addEventListener("input", () => (optionItems[idx].text = textInput.value));
+
+      const nextSel = document.createElement("select");
+      nextSel.innerHTML = '<option value="">(siguiente nodo)</option>';
+      allNodes.forEach((n) => {
+        const o = document.createElement("option");
+        o.value = n.id;
+        o.textContent = `${n.id} — ${(n.text || "").slice(0, 30)}`;
+        nextSel.appendChild(o);
+      });
+      nextSel.value = opt.next || "";
+      nextSel.addEventListener("change", () => (optionItems[idx].next = nextSel.value));
+
+      const effectsInput = document.createElement("input");
+      effectsInput.type = "text";
+      effectsInput.placeholder = 'efectos JSON opcional, ej: {"carisma":1}';
+      effectsInput.value = opt.effectsRaw || "";
+      effectsInput.addEventListener("input", () => (optionItems[idx].effectsRaw = effectsInput.value));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Quitar";
+      del.addEventListener("click", () => {
+        optionItems.splice(idx, 1);
+        renderOptionRows();
+      });
+
+      row.append(textInput, nextSel, effectsInput, del);
+      optionsRows.appendChild(row);
+    });
+  }
+
+  addOptionBtn.addEventListener("click", () => {
+    optionItems.push({ text: "", next: "", effectsRaw: "" });
+    renderOptionRows();
+  });
+
+  // fondos
   onSnapshot(collection(db, "backgrounds"), (snap) => {
     const current = bgSelect.value;
     bgSelect.innerHTML = '<option value="">(sin fondo)</option>';
@@ -438,6 +675,57 @@ Rechazarla | n011"></textarea>
     bgSelect.value = current;
   });
 
+  // personajes (protagonistas + heroínas) para el selector con foto
+  function renderCharPicker() {
+    charPicker.innerHTML = "";
+    const noneChip = document.createElement("button");
+    noneChip.type = "button";
+    noneChip.className = "char-chip" + (selectedCharacter === "" ? " selected" : "");
+    noneChip.textContent = "— narrador / sin personaje —";
+    noneChip.addEventListener("click", () => {
+      selectedCharacter = "";
+      renderCharPicker();
+    });
+    charPicker.appendChild(noneChip);
+
+    charactersList.forEach((c) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "char-chip" + (selectedCharacter === c.name ? " selected" : "");
+      if (c.thumbUrl) {
+        const img = document.createElement("img");
+        img.src = c.thumbUrl;
+        chip.appendChild(img);
+      }
+      const span = document.createElement("span");
+      span.textContent = c.name;
+      chip.appendChild(span);
+      chip.addEventListener("click", () => {
+        selectedCharacter = c.name;
+        renderCharPicker();
+      });
+      charPicker.appendChild(chip);
+    });
+  }
+
+  function subscribeCharacters(collectionName) {
+    onSnapshot(collection(db, collectionName), (snap) => {
+      charactersList = charactersList.filter((c) => c.source !== collectionName);
+      snap.forEach((d) => {
+        const data = d.data();
+        const firstImg = (data.images || [])[0];
+        charactersList.push({
+          name: data.name,
+          thumbUrl: firstImg ? firstImg.url : "",
+          source: collectionName,
+        });
+      });
+      renderCharPicker();
+    });
+  }
+  subscribeCharacters("protagonists");
+  subscribeCharacters("heroines");
+
   function updateVisibleFields() {
     const t = typeSelect.value;
     nextField.hidden = !(t === "dialogue" || t === "event");
@@ -447,40 +735,44 @@ Rechazarla | n011"></textarea>
   typeSelect.addEventListener("change", updateVisibleFields);
   updateVisibleFields();
 
-  cancelBtn.addEventListener("click", () => {
+  function resetForm() {
     editingId = null;
     form.reset();
+    selectedCharacter = "";
+    optionItems = [];
+    renderOptionRows();
+    renderCharPicker();
     updateVisibleFields();
+    refreshNodeIdSuggestion();
     cancelBtn.hidden = true;
-  });
+  }
+
+  cancelBtn.addEventListener("click", resetForm);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const nodeId = form.elements.nodeId.value.trim();
-    if (!nodeId) return alert("El ID del nodo es obligatorio");
+    const nodeId = currentNodeId;
+    if (!nodeId) return alert("No se pudo generar el ID del nodo, probá de nuevo.");
     const data = {
       storyId: form.elements.storyId.value.trim(),
       type: typeSelect.value,
-      character: form.elements.character.value.trim(),
+      character: selectedCharacter,
       backgroundUrl: bgSelect.value,
       text: form.elements.text.value,
     };
     if (data.type === "dialogue" || data.type === "event") {
-      data.next = form.elements.next.value.trim();
+      data.next = nextSelect.value;
     }
     if (data.type === "choice") {
-      const raw = form.elements.optionsRaw.value.trim();
-      data.options = raw
-        .split("\n")
-        .filter((l) => l.trim())
-        .map((line) => {
-          const [text, next, effectsRaw] = line.split("|").map((s) => s.trim());
-          const option = { text, next };
-          if (effectsRaw) {
+      data.options = optionItems
+        .filter((o) => o.text.trim())
+        .map((o) => {
+          const option = { text: o.text, next: o.next };
+          if (o.effectsRaw && o.effectsRaw.trim()) {
             try {
-              option.effects = JSON.parse(effectsRaw);
+              option.effects = JSON.parse(o.effectsRaw);
             } catch {
-              // si no es JSON válido, se ignora el efecto pero no rompe el guardado
+              // efecto inválido: se ignora, no rompe el guardado
             }
           }
           return option;
@@ -499,54 +791,53 @@ Rechazarla | n011"></textarea>
       }
     }
     try {
-      // el ID del nodo ES el ID del documento, así main.js/story-engine.js
-      // pueden seguir usando el mismo "next": "n010" tal cual. setDoc crea
-      // el nodo si no existe o lo sobreescribe si ya existe (upsert).
       await setDoc(doc(db, "nodes", nodeId), data);
-      form.reset();
-      updateVisibleFields();
-      editingId = null;
-      cancelBtn.hidden = true;
+      resetForm();
     } catch (err) {
       alert("Error guardando el nodo: " + err.message);
     }
   });
 
   const tbody = section.querySelector("#tbody-nodes");
-  onSnapshot(query(collection(db, "nodes")), (snap) => {
+  onSnapshot(collection(db, "nodes"), (snap) => {
+    allNodes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    refreshNodeIdSuggestion();
+    refreshNextSelect();
+    if (!optionsField.hidden) renderOptionRows(); // refresca los <select> de next en las filas visibles
+
     tbody.innerHTML = "";
-    snap.forEach((docSnap) => {
-      const item = docSnap.data();
+    allNodes.forEach((item) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${docSnap.id}</td>
+        <td>${item.id}</td>
         <td>${item.storyId || ""}</td>
         <td>${item.type || ""}</td>
+        <td>${item.character || ""}</td>
         <td>${(item.text || "").slice(0, 60)}</td>
       `;
       const actionsTd = document.createElement("td");
       const editBtn = document.createElement("button");
       editBtn.textContent = "Editar";
       editBtn.addEventListener("click", () => {
-        editingId = docSnap.id;
-        form.elements.nodeId.value = docSnap.id;
+        editingId = item.id;
+        currentNodeId = item.id;
+        nodeIdDisplay.value = item.id;
         form.elements.storyId.value = item.storyId || "";
         typeSelect.value = item.type || "dialogue";
-        form.elements.character.value = item.character || "";
+        selectedCharacter = item.character || "";
+        renderCharPicker();
         bgSelect.value = item.backgroundUrl || "";
         form.elements.text.value = item.text || "";
-        form.elements.next.value = item.next || "";
-        if (item.options) {
-          form.elements.optionsRaw.value = item.options
-            .map(
-              (o) =>
-                `${o.text} | ${o.next}` +
-                (o.effects ? ` | ${JSON.stringify(o.effects)}` : "")
-            )
-            .join("\n");
-        }
+        nextSelect.value = item.next || "";
+        optionItems = (item.options || []).map((o) => ({
+          text: o.text || "",
+          next: o.next || "",
+          effectsRaw: o.effects ? JSON.stringify(o.effects) : "",
+        }));
+        renderOptionRows();
         if (item.checks) form.elements.advancedJson.value = JSON.stringify(item.checks, null, 2);
-        if (item.outcomes) form.elements.advancedJson.value = JSON.stringify(item.outcomes, null, 2);
+        else if (item.outcomes) form.elements.advancedJson.value = JSON.stringify(item.outcomes, null, 2);
+        else form.elements.advancedJson.value = "";
         updateVisibleFields();
         cancelBtn.hidden = false;
         form.scrollIntoView({ behavior: "smooth" });
@@ -555,8 +846,8 @@ Rechazarla | n011"></textarea>
       delBtn.textContent = "Borrar";
       delBtn.className = "danger";
       delBtn.addEventListener("click", async () => {
-        if (confirm(`¿Borrar el nodo ${docSnap.id}?`)) {
-          await deleteDoc(doc(db, "nodes", docSnap.id));
+        if (confirm(`¿Borrar el nodo ${item.id}?`)) {
+          await deleteDoc(doc(db, "nodes", item.id));
         }
       });
       actionsTd.append(editBtn, delBtn);
@@ -565,10 +856,13 @@ Rechazarla | n011"></textarea>
     });
   });
 
+  renderCharPicker();
+  refreshNodeIdSuggestion();
+
   return section;
 }
 
-// ---------- ADMINISTRADORES (quién tiene acceso al panel) ----------
+// ---------- ADMINISTRADORES ----------
 function buildAdminsSection() {
   const section = document.createElement("div");
   section.className = "section hidden";
@@ -578,10 +872,8 @@ function buildAdminsSection() {
     <h2>🔑 Administradores</h2>
     <p class="hint">
       Para dar acceso a alguien nuevo: primero creale la cuenta en
-      <b>Firebase Console → Authentication → Add user</b> (email +
-      contraseña), copiá su UID de ahí, y pegalo acá. Esto es lo único
-      que sigue requiriendo la consola de Firebase — dar o sacar el
-      permiso de admin ya lo podés hacer todo desde este panel.
+      Firebase Console → Authentication → Add user, copiá su UID de ahí,
+      y pegalo acá.
     </p>
     <form class="entity-form" id="form-admins">
       <div class="field">
@@ -589,7 +881,7 @@ function buildAdminsSection() {
         <input type="text" name="uid" required />
       </div>
       <div class="field">
-        <label>Email (solo para identificarlo en la lista, no hace nada)</label>
+        <label>Email (solo para identificarlo en la lista)</label>
         <input type="text" name="email" />
       </div>
       <div class="form-actions">
