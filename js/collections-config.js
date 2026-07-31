@@ -10,7 +10,7 @@ export const COLLECTIONS = [
       { key: "name", label: "Nombre", type: "text", required: true },
       { key: "desc", label: "Descripción", type: "textarea" },
       { key: "images", label: "Imágenes (una por expresión)", type: "image-list" },
-      { key: "stats", label: "Stats iniciales", type: "stat-list" },
+      { key: "stats", label: "Stats iniciales", type: "fixed-stats", keys: ["carisma", "inteligencia", "fisico", "riqueza"] },
     ],
   },
   {
@@ -60,6 +60,12 @@ export const COLLECTIONS = [
         label: "Tags separados por coma (deben matchear tag de trabajo o vivienda)",
         type: "text",
         placeholder: "estudiante,dormitorio",
+      },
+      {
+        key: "stats",
+        label: "Stats (afinidad es la más importante — no se le muestra al jugador)",
+        type: "fixed-stats",
+        keys: ["carisma", "inteligencia", "fisico", "riqueza", "afinidad"],
       },
     ],
   },
