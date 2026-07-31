@@ -272,6 +272,44 @@ function buildStatListField(container, initial) {
   };
 }
 
+// ---------- CAMPO: stats fijas (mismo set para todos, sin agregar/quitar) ----------
+// Se usa para que todos los protagonistas/heroínas compartan exactamente
+// los mismos nombres de stat (evita typos que rompan checks/effects de
+// los nodos). f.keys define el set fijo, ej: ["carisma","inteligencia","fisico","riqueza"].
+function buildFixedStatsField(container, keys, initial) {
+  let values = {};
+  keys.forEach((k) => (values[k] = initial && initial[k] != null ? initial[k] : 0));
+  const rowsEl = document.createElement("div");
+  rowsEl.className = "dynamic-rows";
+
+  function render() {
+    rowsEl.innerHTML = "";
+    keys.forEach((k) => {
+      const row = document.createElement("div");
+      row.className = "statlist-row";
+      const label = document.createElement("span");
+      label.textContent = k;
+      label.style.flex = "1";
+      label.style.color = "var(--muted)";
+      const input = document.createElement("input");
+      input.type = "number";
+      input.value = values[k];
+      input.addEventListener("input", () => (values[k] = Number(input.value)));
+      row.append(label, input);
+      rowsEl.appendChild(row);
+    });
+  }
+  render();
+  container.appendChild(rowsEl);
+  return {
+    getValue: () => ({ ...values }),
+    setValue: (v) => {
+      keys.forEach((k) => (values[k] = v && v[k] != null ? v[k] : 0));
+      render();
+    },
+  };
+}
+
 // ---------- CRUD GENÉRICO ----------
 function buildCollectionSection(cfg) {
   const section = document.createElement("div");
@@ -333,6 +371,10 @@ function buildCollectionSection(cfg) {
       const container = document.createElement("div");
       complexFields[f.key] = buildStatListField(container, {});
       wrap.appendChild(container);
+    } else if (f.type === "fixed-stats") {
+      const container = document.createElement("div");
+      complexFields[f.key] = buildFixedStatsField(container, f.keys, {});
+      wrap.appendChild(container);
     } else {
       const input = document.createElement("input");
       input.type = f.type === "number" ? "number" : "text";
@@ -358,6 +400,7 @@ function buildCollectionSection(cfg) {
     cfg.fields.forEach((f) => {
       if (f.type === "image-list") complexFields[f.key].setValue([]);
       if (f.type === "stat-list") complexFields[f.key].setValue({});
+      if (f.type === "fixed-stats") complexFields[f.key].setValue({});
     });
   }
 
@@ -380,7 +423,7 @@ function buildCollectionSection(cfg) {
     e.preventDefault();
     const data = {};
     for (const f of cfg.fields) {
-      if (f.type === "image-list" || f.type === "stat-list") {
+      if (f.type === "image-list" || f.type === "stat-list" || f.type === "fixed-stats") {
         data[f.key] = complexFields[f.key].getValue();
         continue;
       }
@@ -442,7 +485,7 @@ function buildCollectionSection(cfg) {
             img.className = "cell-thumb";
             td.appendChild(img);
           });
-        } else if (f.type === "stat-list" && item[f.key]) {
+        } else if ((f.type === "stat-list" || f.type === "fixed-stats") && item[f.key]) {
           td.textContent = Object.entries(item[f.key])
             .map(([k, v]) => `${k}:${v}`)
             .join(", ");
@@ -462,7 +505,7 @@ function buildCollectionSection(cfg) {
           const val = item[f.key];
           if (f.type === "image-list") {
             complexFields[f.key].setValue(val || []);
-          } else if (f.type === "stat-list") {
+          } else if (f.type === "stat-list" || f.type === "fixed-stats") {
             complexFields[f.key].setValue(val || {});
           } else if (f.type === "json") {
             form.elements[f.key].value = val ? JSON.stringify(val, null, 2) : "";
