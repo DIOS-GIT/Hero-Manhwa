@@ -5,10 +5,8 @@
  * los datos que salieron de la creación de personaje, y renderiza el
  * stream de nodos en formato panel vertical (estilo webtoon).
  *
- * Por ahora la historia sale de demo-story.js (local). Cuando conecten
- * Firestore, esto se reemplaza por algo como:
- *   const nodes = await fetchNodesForStory(storyId); // desde Firestore
- * el resto del motor no cambia.
+ * La historia y los datos de personaje salen de Firestore vía
+ * data-loader.js (window.GAME_DATA_READY / window.loadStory).
  * -----------------------------------------------------------------------
  */
 
@@ -20,7 +18,12 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
-function startStory() {
+async function startStory() {
+  // TU_STORY_ID = el ID del documento en Firestore > stories (lo ves en
+  // Firebase Console > Firestore Database > colección "stories", el ID
+  // que aparece arriba de cada documento, NO un campo de adentro).
+  await window.loadStory("TU_STORY_ID");
+
   const initialStats = { ...player.protagonist.stats };
   const initialFlags = [
     `protagonista_${player.protagonist.id}`,
