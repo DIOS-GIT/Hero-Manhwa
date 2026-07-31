@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Un admin es cualquier usuario autenticado cuyo UID tiene un
+    // documento en /admins/{uid}. El documento en sí puede estar vacío
+    // (solo importa que exista) — lo creás a mano desde la consola de
+    // Firestore: colección "admins", ID del documento = el UID del
+    // usuario (lo ves en Authentication > Users).
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Contenido del juego: protagonistas, heroínas, rutas, trabajos,
+    // vivienda, fondos, historias y nodos.
+    // - Lectura: pública (la página del juego no requiere login).
+    // - Escritura: solo admins, desde el panel.
+    match /protagonists/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /heroines/{id}      { allow read: if true; allow write: if isAdmin(); }
+    match /routes/{id}        { allow read: if true; allow write: if isAdmin(); }
+    match /jobs/{id}          { allow read: if true; allow write: if isAdmin(); }
+    match /housing/{id}       { allow read: if true; allow write: if isAdmin(); }
+    match /backgrounds/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /stories/{id}       { allow read: if true; allow write: if isAdmin(); }
+    match /nodes/{id}         { allow read: if true; allow write: if isAdmin(); }
+
+    // /admins/{uid}: cada usuario puede LEER su propio doc (para que el
+    // panel confirme si es admin), pero nadie puede escribir esta
+    // colección desde el cliente — se administra a mano desde la
+    // consola para que un admin comprometido no pueda auto-promoverse
+    // ni agregar otros admins.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Progreso del jugador (para cuando se implemente guardar partida):
+    // cada usuario logueado solo puede leer/escribir su propio doc.
+    match /players/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Cualquier otra colección: bloqueada por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
