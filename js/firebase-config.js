@@ -29,7 +29,7 @@ export const firebaseConfig = {
 // y pegás el nombre del preset abajo.
 export const cloudinaryConfig = {
   cloudName: "dy66brku6",
-  uploadPreset: "COMPLETAR", // <-- nombre del preset "unsigned" que crees
+  uploadPreset: "hero_manhwa_admin", // <-- nombre del preset "unsigned" que crees
   folder: "HERO MANHWA",
 };
 
