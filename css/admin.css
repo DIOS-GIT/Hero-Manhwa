@@ -1,0 +1,183 @@
+:root {
+  --bg: #12121e;
+  --panel: #1a1a2e;
+  --accent: #8b5cf6;
+  --accent-2: #ec4899;
+  --text: #e8e6f0;
+  --muted: #9a97b0;
+  --danger: #ef4444;
+  --border: #2c2c44;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.hidden { display: none !important; }
+
+#login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-box h1 { font-size: 20px; margin: 0; }
+.login-box .hint { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+.login-box input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0f0f1a;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.login-box button {
+  margin-top: 8px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+.error { color: var(--danger); font-size: 13px; min-height: 18px; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+header h1 { font-size: 18px; margin: 0; }
+.header-right { display: flex; align-items: center; gap: 12px; color: var(--muted); }
+#logout-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.layout { display: flex; min-height: calc(100vh - 57px); }
+nav {
+  width: 220px;
+  border-right: 1px solid var(--border);
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-btn {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+}
+.nav-btn:hover { background: #22223a; }
+.nav-btn.active { background: var(--accent); color: white; }
+
+main { flex: 1; padding: 24px; overflow-x: auto; }
+.section h2 { margin-top: 0; }
+.hint { color: var(--muted); font-size: 13px; }
+
+.entity-form {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 12px; color: var(--muted); }
+.field input, .field select, .field textarea {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0f0f1a;
+  color: var(--text);
+  font-family: inherit;
+}
+.field textarea { min-height: 70px; resize: vertical; }
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+}
+.form-actions button {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.form-actions button[type="submit"] {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+}
+.form-actions button[type="button"] {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.image-row { display: flex; align-items: center; gap: 10px; }
+.image-row button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0f0f1a;
+  color: var(--text);
+  cursor: pointer;
+}
+.img-preview { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; }
+
+.entity-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.entity-table th, .entity-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 13px;
+}
+.entity-table th { color: var(--muted); font-weight: 600; }
+.cell-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+.entity-table button {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  margin-right: 6px;
+  font-size: 12px;
+}
+.entity-table button.danger { border-color: var(--danger); color: var(--danger); }
