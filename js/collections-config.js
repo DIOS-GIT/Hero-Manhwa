@@ -1,6 +1,6 @@
-// Cada entrada describe una colección de Firestore y qué formulario
-// generar para ella. Agregar una sección nueva = agregar un objeto acá,
-// no hace falta tocar admin.js.
+// Los "key" de cada campo tienen que coincidir EXACTO con lo que lee
+// js/character-creation.js del juego (desc, tag, tags, etc.) — así
+// data-loader.js no tiene que renombrar nada, solo pasar los datos tal cual.
 export const COLLECTIONS = [
   {
     key: "protagonists",
@@ -8,13 +8,47 @@ export const COLLECTIONS = [
     icon: "🧑‍🎤",
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true },
-      { key: "description", label: "Descripción", type: "textarea" },
+      { key: "desc", label: "Descripción", type: "textarea" },
       { key: "portraitUrl", label: "Retrato", type: "image" },
       {
         key: "stats",
-        label: "Stats iniciales (JSON)",
+        label: "Stats iniciales (JSON, ej: carisma/inteligencia/fisico/riqueza/suerte)",
         type: "json",
-        placeholder: '{"fuerza":5,"carisma":3}',
+        placeholder: '{"carisma":8,"inteligencia":6,"fisico":4,"riqueza":9,"suerte":3}',
+      },
+    ],
+  },
+  {
+    key: "routes",
+    label: "Rutas",
+    icon: "🧭",
+    fields: [
+      { key: "name", label: "Nombre", type: "text", required: true },
+      { key: "desc", label: "Descripción", type: "textarea" },
+    ],
+  },
+  {
+    key: "jobs",
+    label: "Trabajos",
+    icon: "💼",
+    fields: [
+      { key: "name", label: "Nombre", type: "text", required: true },
+      { key: "desc", label: "Descripción", type: "textarea" },
+      { key: "tag", label: "Tag (ej: estudiante, oficinista)", type: "text" },
+    ],
+  },
+  {
+    key: "housing",
+    label: "Vivienda",
+    icon: "🏠",
+    fields: [
+      { key: "name", label: "Nombre", type: "text", required: true },
+      { key: "desc", label: "Descripción", type: "textarea" },
+      { key: "tag", label: "Tag (ej: dormitorio, depto)", type: "text" },
+      {
+        key: "requiresJobTag",
+        label: "Requiere este tag de trabajo (opcional)",
+        type: "text",
       },
     ],
   },
@@ -24,43 +58,14 @@ export const COLLECTIONS = [
     icon: "💗",
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true },
-      { key: "route", label: "Ruta a la que pertenece", type: "text" },
-      { key: "description", label: "Descripción", type: "textarea" },
+      { key: "desc", label: "Descripción", type: "textarea" },
       { key: "portraitUrl", label: "Retrato", type: "image" },
-    ],
-  },
-  {
-    key: "routes",
-    label: "Rutas",
-    icon: "🧭",
-    fields: [
-      { key: "name", label: "Nombre", type: "text", required: true },
-      { key: "description", label: "Descripción", type: "textarea" },
-    ],
-  },
-  {
-    key: "jobs",
-    label: "Trabajos",
-    icon: "💼",
-    fields: [
-      { key: "name", label: "Nombre", type: "text", required: true },
-      { key: "description", label: "Descripción", type: "textarea" },
       {
-        key: "requirements",
-        label: "Requisitos (JSON)",
-        type: "json",
-        placeholder: '{"carisma":4}',
+        key: "tags",
+        label: "Tags separados por coma (deben matchear tag de trabajo o vivienda)",
+        type: "text",
+        placeholder: "estudiante,dormitorio",
       },
-    ],
-  },
-  {
-    key: "housing",
-    label: "Vivienda",
-    icon: "🏠",
-    fields: [
-      { key: "name", label: "Nombre", type: "text", required: true },
-      { key: "description", label: "Descripción", type: "textarea" },
-      { key: "cost", label: "Costo", type: "number" },
     ],
   },
   {
