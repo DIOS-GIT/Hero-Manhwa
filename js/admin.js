@@ -104,6 +104,13 @@ function buildNav() {
   navEl.appendChild(nodeBtn);
   sectionsEl.appendChild(buildNodesSection());
 
+  const adminsBtn = document.createElement("button");
+  adminsBtn.className = "nav-btn";
+  adminsBtn.textContent = "🔑 Administradores";
+  adminsBtn.dataset.target = "admins-mgmt";
+  navEl.appendChild(adminsBtn);
+  sectionsEl.appendChild(buildAdminsSection());
+
   navEl.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => showSection(btn.dataset.target));
   });
@@ -553,6 +560,83 @@ Rechazarla | n011"></textarea>
         }
       });
       actionsTd.append(editBtn, delBtn);
+      tr.appendChild(actionsTd);
+      tbody.appendChild(tr);
+    });
+  });
+
+  return section;
+}
+
+// ---------- ADMINISTRADORES (quién tiene acceso al panel) ----------
+function buildAdminsSection() {
+  const section = document.createElement("div");
+  section.className = "section hidden";
+  section.dataset.key = "admins-mgmt";
+
+  section.innerHTML = `
+    <h2>🔑 Administradores</h2>
+    <p class="hint">
+      Para dar acceso a alguien nuevo: primero creale la cuenta en
+      <b>Firebase Console → Authentication → Add user</b> (email +
+      contraseña), copiá su UID de ahí, y pegalo acá. Esto es lo único
+      que sigue requiriendo la consola de Firebase — dar o sacar el
+      permiso de admin ya lo podés hacer todo desde este panel.
+    </p>
+    <form class="entity-form" id="form-admins">
+      <div class="field">
+        <label>UID (copiado de Authentication)</label>
+        <input type="text" name="uid" required />
+      </div>
+      <div class="field">
+        <label>Email (solo para identificarlo en la lista, no hace nada)</label>
+        <input type="text" name="email" />
+      </div>
+      <div class="form-actions">
+        <button type="submit">Dar acceso de admin</button>
+      </div>
+    </form>
+    <table class="entity-table">
+      <thead><tr><th>UID</th><th>Email</th><th>Acciones</th></tr></thead>
+      <tbody id="tbody-admins"></tbody>
+    </table>
+  `;
+
+  const form = section.querySelector("#form-admins");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const uid = form.elements.uid.value.trim();
+    const email = form.elements.email.value.trim();
+    if (!uid) return;
+    try {
+      await setDoc(doc(db, "admins", uid), { email });
+      form.reset();
+    } catch (err) {
+      alert("Error dando acceso: " + err.message);
+    }
+  });
+
+  const tbody = section.querySelector("#tbody-admins");
+  onSnapshot(collection(db, "admins"), (snap) => {
+    tbody.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const item = docSnap.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${docSnap.id}</td><td>${item.email || ""}</td>`;
+      const actionsTd = document.createElement("td");
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Quitar acceso";
+      delBtn.className = "danger";
+      delBtn.addEventListener("click", async () => {
+        if (docSnap.id === auth.currentUser.uid) {
+          alert("No podés quitarte el acceso a vos mismo desde acá.");
+          return;
+        }
+        if (confirm(`¿Quitar acceso de admin a ${item.email || docSnap.id}?`)) {
+          await deleteDoc(doc(db, "admins", docSnap.id));
+        }
+      });
+      actionsTd.appendChild(delBtn);
       tr.appendChild(actionsTd);
       tbody.appendChild(tr);
     });
