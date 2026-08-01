@@ -4,10 +4,11 @@
  * Maneja los 5 pasos antes de que arranque el motor de nodos:
  *   1. Protagonista   2. Ruta/tono   3. Trabajo   4. Vivienda   5. Heroína(s)
  *
- * Todos los pasos comparten el mismo layout (una sola pantalla reciclada,
- * #screen-step) — lo que cambia es la config de cada paso: de dónde saca
- * las opciones, si es selección única o "harem", y cómo pinta cada carta.
- * Al terminar, arma `player` y lo pasa a main.js para iniciar el motor.
+ * Los pasos 2, 3 y 4 son selección manual (cartas, como antes).
+ * Los pasos 1 y 5 (protagonista y heroínas) son RULETA: el sistema elige
+ * por vos, pesado por el campo "weight" que se carga desde el admin
+ * (más alto = más probable). No hay cartas para tocar ahí, solo un botón
+ * para girar — así cada partida se siente distinta.
  * -----------------------------------------------------------------------
  */
 
@@ -22,18 +23,34 @@ const player = {
   heroines: []
 };
 
+// Elige un item al azar, pesado por item.weight (1-100). Si falta el
+// campo o es 0/inválido, se lo trata como peso 1 (no rompe partidas
+// viejas cargadas antes de que existiera este campo).
+function weightedPick(items, excludeIds = []) {
+  const pool = items.filter((i) => !excludeIds.includes(i.id));
+  if (pool.length === 0) return null;
+  const weightOf = (i) => (Number(i.weight) > 0 ? Number(i.weight) : 1);
+  const total = pool.reduce((sum, i) => sum + weightOf(i), 0);
+  let r = Math.random() * total;
+  for (const item of pool) {
+    r -= weightOf(item);
+    if (r < 0) return item;
+  }
+  return pool[pool.length - 1];
+}
+
 const STEPS = [
   {
     id: "protagonist",
     label: "Reencarnación",
     title: "¿En quién reencarnás?",
-    subtitle: "Cada protagonista arranca con sus propias estadísticas.",
+    subtitle: "El sistema decide por vos. Girá la ruleta.",
+    isRoulette: true,
     source: () => window.GAME_DATA.PROTAGONISTS,
     renderExtra: (item) => `
       <div class="stat-row">
         ${Object.entries(item.stats || {}).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join("")}
-      </div>`,
-    onSelect: (item) => { player.protagonist = item; }
+      </div>`
   },
   {
     id: "route",
@@ -67,21 +84,13 @@ const STEPS = [
     id: "heroines",
     label: "Interés romántico",
     title: "FMC o harem",
-    subtitle: "Elegí una heroína principal, o activá el modo harem para elegir varias.",
+    subtitle: "Elegí el modo. El destino elige a quién conocés.",
     isHarem: true,
+    isRoulette: true,
     source: () => window.GAME_DATA.HEROINES.filter(
       (h) => h.tags.includes(player.job.tag) || h.tags.includes(player.housing.tag)
     ),
-    renderExtra: (item) => `<span class="pick-card-tag">${item.tags.join(" · ")}</span>`,
-    onSelect: (item) => {
-      if (player.haremMode) {
-        const i = player.heroines.findIndex((h) => h.id === item.id);
-        if (i >= 0) player.heroines.splice(i, 1);
-        else if (player.heroines.length < HAREM_MAX) player.heroines.push(item);
-      } else {
-        player.heroines = [item];
-      }
-    }
+    renderExtra: (item) => `<span class="pick-card-tag">${item.tags.join(" · ")}</span>`
   }
 ];
 
@@ -101,6 +110,107 @@ function playerValueFor(stepId) {
   return player[stepId];
 }
 
+function renderCardGridStep(step) {
+  const items = step.source();
+  const grid = document.getElementById("step-cards");
+
+  if (items.length === 0) {
+    grid.innerHTML = `<p class="pick-card-desc">No hay opciones disponibles con tu selección anterior.</p>`;
+    return;
+  }
+
+  items.forEach((item) => {
+    const isSelected = playerValueFor(step.id)?.id === item.id;
+
+    const card = document.createElement("div");
+    card.className = `pick-card${isSelected ? " selected" : ""}`;
+    card.innerHTML = `
+      <div class="pick-card-check"></div>
+      <h3 class="pick-card-name">${item.name}</h3>
+      <p class="pick-card-desc">${item.desc}</p>
+      ${step.renderExtra ? step.renderExtra(item) : ""}
+    `;
+    card.addEventListener("click", () => {
+      step.onSelect(item);
+      renderStep();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderRouletteStep(step) {
+  const items = step.source();
+  const grid = document.getElementById("step-cards");
+
+  if (items.length === 0) {
+    grid.innerHTML = `<p class="pick-card-desc">No hay opciones disponibles con tu selección anterior.</p>`;
+    return;
+  }
+
+  const isHaremActive = step.isHarem && player.haremMode;
+  const picks = step.isHarem ? player.heroines : (player[step.id] ? [player[step.id]] : []);
+  const canSpin = isHaremActive ? player.heroines.length < HAREM_MAX : true;
+
+  const wrap = document.createElement("div");
+  wrap.className = "roulette-wrap";
+
+  if (picks.length) {
+    const revealed = document.createElement("div");
+    revealed.className = "roulette-revealed";
+    picks.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "pick-card selected roulette-result";
+      card.innerHTML = `
+        <h3 class="pick-card-name">${item.name}</h3>
+        <p class="pick-card-desc">${item.desc}</p>
+        ${step.renderExtra ? step.renderExtra(item) : ""}
+      `;
+      if (isHaremActive) {
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "roulette-remove-btn";
+        removeBtn.textContent = "✕ quitar";
+        removeBtn.addEventListener("click", () => {
+          player.heroines = player.heroines.filter((h) => h.id !== item.id);
+          renderStep();
+        });
+        card.appendChild(removeBtn);
+      }
+      revealed.appendChild(card);
+    });
+    wrap.appendChild(revealed);
+  } else {
+    const empty = document.createElement("p");
+    empty.className = "pick-card-desc";
+    empty.textContent = "Todavía no giraste. Tocá el botón para que el sistema elija.";
+    wrap.appendChild(empty);
+  }
+
+  if (canSpin) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-primary roulette-btn";
+    btn.textContent = picks.length
+      ? (isHaremActive ? "🎰 Girar de nuevo (sumar otra)" : "🎲 Volver a girar")
+      : "🎰 Girar la ruleta";
+    btn.addEventListener("click", () => {
+      const excludeIds = isHaremActive ? player.heroines.map((h) => h.id) : [];
+      const result = weightedPick(items, excludeIds);
+      if (!result) return;
+      if (step.isHarem) {
+        if (player.haremMode) player.heroines.push(result);
+        else player.heroines = [result];
+      } else {
+        player[step.id] = result;
+      }
+      renderStep();
+    });
+    wrap.appendChild(btn);
+  }
+
+  grid.appendChild(wrap);
+}
+
 function renderStep() {
   const step = currentStep();
 
@@ -118,38 +228,14 @@ function renderStep() {
     });
   }
 
-  const items = step.source();
   const grid = document.getElementById("step-cards");
   grid.innerHTML = "";
 
-  if (items.length === 0) {
-    grid.innerHTML = `<p class="pick-card-desc">No hay opciones disponibles con tu selección anterior.</p>`;
+  if (step.isRoulette) {
+    renderRouletteStep(step);
+  } else {
+    renderCardGridStep(step);
   }
-
-  items.forEach((item) => {
-    const isSelected = step.isHarem
-      ? player.heroines.some((h) => h.id === item.id)
-      : playerValueFor(step.id)?.id === item.id;
-    const isDisabled = step.isHarem && player.haremMode &&
-      !isSelected && player.heroines.length >= HAREM_MAX;
-
-    const card = document.createElement("div");
-    card.className = `pick-card${isSelected ? " selected" : ""}${isDisabled ? " disabled" : ""}`;
-    card.innerHTML = `
-      <div class="pick-card-check"></div>
-      <h3 class="pick-card-name">${item.name}</h3>
-      <p class="pick-card-desc">${item.desc}</p>
-      ${step.renderExtra ? step.renderExtra(item) : ""}
-    `;
-    if (!isDisabled) {
-      card.addEventListener("click", () => {
-        step.onSelect(item);
-        renderStep();
-        refreshNextButton();
-      });
-    }
-    grid.appendChild(card);
-  });
 
   refreshNextButton();
 }
