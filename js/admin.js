@@ -20,6 +20,9 @@ import {
   onSnapshot,
   query,
   where,
+  orderBy,
+  limit,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -107,6 +110,13 @@ function buildNav() {
   adminsBtn.dataset.target = "admins-mgmt";
   navEl.appendChild(adminsBtn);
   sectionsEl.appendChild(buildAdminsSection());
+
+  const activityBtn = document.createElement("button");
+  activityBtn.className = "nav-btn";
+  activityBtn.textContent = "📋 Actividad";
+  activityBtn.dataset.target = "activity";
+  navEl.appendChild(activityBtn);
+  sectionsEl.appendChild(buildActivitySection());
 
   navEl.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => showSection(btn.dataset.target));
@@ -310,6 +320,68 @@ function buildFixedStatsField(container, keys, initial) {
   };
 }
 
+// ---------- ACTIVIDAD (quién hizo qué) ----------
+async function logActivity(action, collectionName, docId, label) {
+  try {
+    await addDoc(collection(db, "activity_log"), {
+      action,
+      collectionName,
+      docId,
+      label: label || "",
+      adminEmail: auth.currentUser?.email || "desconocido",
+      adminUid: auth.currentUser?.uid || "",
+      at: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("No se pudo registrar actividad:", err);
+  }
+}
+
+// ---------- CANDADOS SUAVES (avisar si alguien más ya está editando esto) ----------
+// No bloquea de verdad (Firestore no da locking real desde el cliente),
+// pero avisa quién lo está tocando para que dos personas no se pisen sin
+// darse cuenta. Se vence solo a los 10 min por si alguien cierra la
+// pestaña sin cancelar.
+const LOCK_TTL_MS = 10 * 60 * 1000;
+
+async function acquireLock(collectionName, docId) {
+  try {
+    await setDoc(doc(db, "locks", `${collectionName}_${docId}`), {
+      collectionName,
+      docId,
+      adminEmail: auth.currentUser?.email || "",
+      adminUid: auth.currentUser?.uid || "",
+      at: serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("No se pudo tomar el candado:", err);
+  }
+}
+
+async function releaseLock(collectionName, docId) {
+  try {
+    await deleteDoc(doc(db, "locks", `${collectionName}_${docId}`));
+  } catch {
+    // si ya no existe o falla, no pasa nada
+  }
+}
+
+function isLockFresh(lockData) {
+  if (!lockData || !lockData.at || !lockData.at.toMillis) return false;
+  return Date.now() - lockData.at.toMillis() < LOCK_TTL_MS;
+}
+
+function subscribeLocks(collectionName, onChange) {
+  onSnapshot(
+    query(collection(db, "locks"), where("collectionName", "==", collectionName)),
+    (snap) => {
+      const map = {};
+      snap.forEach((d) => (map[d.data().docId] = d.data()));
+      onChange(map);
+    }
+  );
+}
+
 // ---------- CRUD GENÉRICO ----------
 function buildCollectionSection(cfg) {
   const section = document.createElement("div");
@@ -329,6 +401,9 @@ function buildCollectionSection(cfg) {
   const thead = section.querySelector(`#thead-${cfg.key}`);
   const complexFields = {}; // f.key -> { getValue, setValue } para image-list/stat-list
   let editingId = null;
+  let locksMap = {};
+  subscribeLocks(cfg.key, (map) => (locksMap = map));
+  const labelField = cfg.fields.find((f) => f.key === "name" || f.key === "title");
 
   cfg.fields.forEach((f) => {
     const wrap = document.createElement("div");
@@ -405,6 +480,7 @@ function buildCollectionSection(cfg) {
   }
 
   cancelBtn.addEventListener("click", () => {
+    if (editingId) releaseLock(cfg.key, editingId);
     editingId = null;
     form.reset();
     resetComplexFields();
@@ -449,11 +525,19 @@ function buildCollectionSection(cfg) {
       data[f.key] = val;
     }
     try {
+      const wasEditing = editingId;
       if (editingId) {
         await updateDoc(doc(db, cfg.key, editingId), data);
+        await releaseLock(cfg.key, editingId);
       } else {
         await addDoc(collection(db, cfg.key), data);
       }
+      logActivity(
+        wasEditing ? "update" : "create",
+        cfg.key,
+        wasEditing || "",
+        labelField ? data[labelField.key] : ""
+      );
       form.reset();
       resetComplexFields();
       form.querySelectorAll(".img-preview").forEach((p) => (p.hidden = true));
@@ -497,9 +581,25 @@ function buildCollectionSection(cfg) {
         tr.appendChild(td);
       });
       const actionsTd = document.createElement("td");
+      const lock = locksMap[docSnap.id];
+      if (lock && isLockFresh(lock) && lock.adminUid !== auth.currentUser?.uid) {
+        const badge = document.createElement("span");
+        badge.className = "lock-badge";
+        badge.textContent = `🔒 ${lock.adminEmail}`;
+        actionsTd.appendChild(badge);
+      }
       const editBtn = document.createElement("button");
       editBtn.textContent = "Editar";
       editBtn.addEventListener("click", () => {
+        if (lock && isLockFresh(lock) && lock.adminUid !== auth.currentUser?.uid) {
+          if (
+            !confirm(
+              `${lock.adminEmail} está editando esto ahora mismo (o lo estaba hace menos de 10 min). ¿Seguís igual? Si los dos guardan, gana el último.`
+            )
+          )
+            return;
+        }
+        acquireLock(cfg.key, docSnap.id);
         editingId = docSnap.id;
         cfg.fields.forEach((f) => {
           const val = item[f.key];
@@ -530,6 +630,7 @@ function buildCollectionSection(cfg) {
       delBtn.addEventListener("click", async () => {
         if (confirm("¿Borrar este elemento? No se puede deshacer.")) {
           await deleteDoc(doc(db, cfg.key, docSnap.id));
+          logActivity("delete", cfg.key, docSnap.id, labelField ? item[labelField.key] : "");
         }
       });
       actionsTd.append(editBtn, delBtn);
@@ -629,6 +730,8 @@ function buildNodesSection() {
   let allNodes = []; // [{id, type, text, character}]
   let optionItems = []; // [{text, next, effectsRaw}]
   let charactersList = []; // [{name, thumbUrl}]
+  let locksMap = {};
+  subscribeLocks("nodes", (map) => (locksMap = map));
 
   function computeNextId() {
     let max = 0;
@@ -779,6 +882,7 @@ function buildNodesSection() {
   updateVisibleFields();
 
   function resetForm() {
+    if (editingId) releaseLock("nodes", editingId);
     editingId = null;
     form.reset();
     selectedCharacter = "";
@@ -794,8 +898,28 @@ function buildNodesSection() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const nodeId = currentNodeId;
+    let nodeId = currentNodeId;
     if (!nodeId) return alert("No se pudo generar el ID del nodo, probá de nuevo.");
+
+    // si es un nodo NUEVO (no edición), confirmamos justo antes de guardar
+    // que nadie más creó ya ese mismo ID en el último segundo (dos admins
+    // trabajando a la vez podían calcular el mismo "próximo ID").
+    if (!editingId) {
+      let attempts = 0;
+      while (attempts < 20) {
+        const existing = await getDoc(doc(db, "nodes", nodeId));
+        if (!existing.exists()) break;
+        const m = /^n(\d+)$/.exec(nodeId);
+        const n = m ? parseInt(m[1], 10) + 1 : 1;
+        nodeId = "n" + String(n).padStart(3, "0");
+        attempts++;
+      }
+      if (nodeId !== currentNodeId) {
+        alert(
+          `Alguien más acaba de crear el nodo ${currentNodeId} justo ahora — este se guarda como ${nodeId} en su lugar.`
+        );
+      }
+    }
     const data = {
       storyId: form.elements.storyId.value.trim(),
       type: typeSelect.value,
@@ -834,7 +958,9 @@ function buildNodesSection() {
       }
     }
     try {
+      const wasEditing = editingId;
       await setDoc(doc(db, "nodes", nodeId), data);
+      logActivity(wasEditing ? "update" : "create", "nodes", nodeId, data.text ? data.text.slice(0, 40) : data.type);
       resetForm();
     } catch (err) {
       alert("Error guardando el nodo: " + err.message);
@@ -859,9 +985,25 @@ function buildNodesSection() {
         <td>${(item.text || "").slice(0, 60)}</td>
       `;
       const actionsTd = document.createElement("td");
+      const lock = locksMap[item.id];
+      if (lock && isLockFresh(lock) && lock.adminUid !== auth.currentUser?.uid) {
+        const badge = document.createElement("span");
+        badge.className = "lock-badge";
+        badge.textContent = `🔒 ${lock.adminEmail}`;
+        actionsTd.appendChild(badge);
+      }
       const editBtn = document.createElement("button");
       editBtn.textContent = "Editar";
       editBtn.addEventListener("click", () => {
+        if (lock && isLockFresh(lock) && lock.adminUid !== auth.currentUser?.uid) {
+          if (
+            !confirm(
+              `${lock.adminEmail} está editando este nodo ahora mismo (o hace menos de 10 min). ¿Seguís igual?`
+            )
+          )
+            return;
+        }
+        acquireLock("nodes", item.id);
         editingId = item.id;
         currentNodeId = item.id;
         nodeIdDisplay.value = item.id;
@@ -891,6 +1033,7 @@ function buildNodesSection() {
       delBtn.addEventListener("click", async () => {
         if (confirm(`¿Borrar el nodo ${item.id}?`)) {
           await deleteDoc(doc(db, "nodes", item.id));
+          logActivity("delete", "nodes", item.id, (item.text || "").slice(0, 40));
         }
       });
       actionsTd.append(editBtn, delBtn);
@@ -945,6 +1088,7 @@ function buildAdminsSection() {
     if (!uid) return;
     try {
       await setDoc(doc(db, "admins", uid), { email });
+      logActivity("create", "admins", uid, email);
       form.reset();
     } catch (err) {
       alert("Error dando acceso: " + err.message);
@@ -969,6 +1113,7 @@ function buildAdminsSection() {
         }
         if (confirm(`¿Quitar acceso de admin a ${item.email || docSnap.id}?`)) {
           await deleteDoc(doc(db, "admins", docSnap.id));
+          logActivity("delete", "admins", docSnap.id, item.email || "");
         }
       });
       actionsTd.appendChild(delBtn);
@@ -976,6 +1121,58 @@ function buildAdminsSection() {
       tbody.appendChild(tr);
     });
   });
+
+  return section;
+}
+
+// ---------- ACTIVIDAD (últimos 100 cambios, quién y qué) ----------
+function buildActivitySection() {
+  const section = document.createElement("div");
+  section.className = "section hidden";
+  section.dataset.key = "activity";
+
+  section.innerHTML = `
+    <h2>📋 Actividad reciente</h2>
+    <p class="hint">Últimos 100 cambios hechos desde el panel, más nuevo primero.</p>
+    <table class="entity-table">
+      <thead><tr><th>Cuándo</th><th>Quién</th><th>Acción</th><th>Sección</th><th>Elemento</th></tr></thead>
+      <tbody id="tbody-activity"></tbody>
+    </table>
+  `;
+
+  const actionLabels = { create: "🟢 Creó", update: "✏️ Editó", delete: "🔴 Borró" };
+  const sectionLabels = {
+    protagonists: "Protagonistas",
+    routes: "Rutas",
+    jobs: "Trabajos",
+    housing: "Vivienda",
+    heroines: "Heroínas",
+    backgrounds: "Fondos",
+    stories: "Historias",
+    nodes: "Nodo",
+    admins: "Administradores",
+  };
+
+  const tbody = section.querySelector("#tbody-activity");
+  onSnapshot(
+    query(collection(db, "activity_log"), orderBy("at", "desc"), limit(100)),
+    (snap) => {
+      tbody.innerHTML = "";
+      snap.forEach((docSnap) => {
+        const item = docSnap.data();
+        const when = item.at && item.at.toDate ? item.at.toDate().toLocaleString("es-AR") : "…";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${when}</td>
+          <td>${item.adminEmail || ""}</td>
+          <td>${actionLabels[item.action] || item.action}</td>
+          <td>${sectionLabels[item.collectionName] || item.collectionName}</td>
+          <td>${item.label || item.docId || ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  );
 
   return section;
 }
