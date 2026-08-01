@@ -390,6 +390,7 @@ function buildCollectionSection(cfg) {
 
   section.innerHTML = `
     <h2>${cfg.icon} ${cfg.label}</h2>
+    ${cfg.hint ? `<p class="hint">${cfg.hint}</p>` : ""}
     <form class="entity-form" id="form-${cfg.key}"></form>
     <table class="entity-table">
       <thead><tr id="thead-${cfg.key}"></tr></thead>
@@ -454,6 +455,7 @@ function buildCollectionSection(cfg) {
       const input = document.createElement("input");
       input.type = f.type === "number" ? "number" : "text";
       input.name = f.key;
+      if (f.placeholder) input.placeholder = f.placeholder;
       wrap.appendChild(input);
     }
     form.appendChild(wrap);
@@ -662,7 +664,7 @@ function buildNodesSection() {
       </div>
       <div class="field">
         <label>Historia (título de la colección "stories")</label>
-        <input type="text" name="storyId" />
+        <input type="text" name="storyId" placeholder="Ej: capitulo-1" />
       </div>
       <div class="field">
         <label>Tipo</label>
@@ -685,7 +687,7 @@ function buildNodesSection() {
       </div>
       <div class="field" style="grid-column: 1 / -1;">
         <label>Texto</label>
-        <textarea name="text"></textarea>
+        <textarea name="text" placeholder="Ej: —Nunca pensé que volvería a verte —dijo, sin apartar la mirada."></textarea>
       </div>
       <div class="field" id="next-field">
         <label>Siguiente nodo (para dialogue/event)</label>
@@ -768,7 +770,7 @@ function buildNodesSection() {
       row.className = "option-row";
       const textInput = document.createElement("input");
       textInput.type = "text";
-      textInput.placeholder = "Texto de la opción";
+      textInput.placeholder = "Ej: Aceptar la misión";
       textInput.value = opt.text || "";
       textInput.addEventListener("input", () => (optionItems[idx].text = textInput.value));
 
