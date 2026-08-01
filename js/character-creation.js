@@ -31,7 +31,7 @@ const STEPS = [
     source: () => window.GAME_DATA.PROTAGONISTS,
     renderExtra: (item) => `
       <div class="stat-row">
-        ${Object.entries(item.stats).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join("")}
+        ${Object.entries(item.stats || {}).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join("")}
       </div>`,
     onSelect: (item) => { player.protagonist = item; }
   },
