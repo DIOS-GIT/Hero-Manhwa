@@ -9,11 +9,12 @@ export const COLLECTIONS = [
     key: "protagonists",
     label: "Protagonistas",
     icon: "🧑‍🎤",
-    hint: "Ejemplo: nombre corto y con gancho, 1-2 líneas de descripción, 4 stats del 1 al 10, y una imagen por expresión (normal, sonriendo, serio...).",
+    hint: "Ejemplo: nombre corto y con gancho, 1-2 líneas de descripción, 4 stats del 1 al 10, un peso para la ruleta (dejalo en blanco = 1, o subilo si querés que salga más seguido), y una imagen por expresión.",
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true, placeholder: "Ej: El Heredero Caído" },
       { key: "desc", label: "Descripción", type: "textarea", placeholder: "Ej: Nace en la familia más rica de la ciudad — hasta el día que lo desheredan." },
       { key: "images", label: "Imágenes (una por expresión)", type: "image-list" },
+      { key: "weight", label: "Peso en la ruleta (1-100, más alto = más probable)", type: "number", placeholder: "Ej: 50" },
       { key: "stats", label: "Stats iniciales", type: "fixed-stats", keys: ["carisma", "inteligencia", "fisico", "riqueza"] },
     ],
   },
@@ -70,6 +71,7 @@ export const COLLECTIONS = [
         type: "text",
         placeholder: "estudiante,dormitorio",
       },
+      { key: "weight", label: "Peso en la ruleta (1-100, más alto = más probable)", type: "number", placeholder: "Ej: 50" },
       {
         key: "stats",
         label: "Stats (afinidad es la más importante — no se le muestra al jugador)",
