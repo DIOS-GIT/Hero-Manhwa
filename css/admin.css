@@ -236,3 +236,14 @@ main { flex: 1; padding: 24px; overflow-x: auto; }
   object-fit: cover;
 }
 .char-chip.selected { border-color: var(--accent); background: rgba(139, 92, 246, 0.25); }
+
+.lock-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(236, 72, 153, 0.2);
+  color: var(--accent-2);
+  margin-right: 8px;
+  white-space: nowrap;
+}
