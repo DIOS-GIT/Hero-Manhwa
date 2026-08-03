@@ -121,11 +121,13 @@ function renderCardGridStep(step) {
 
   items.forEach((item) => {
     const isSelected = playerValueFor(step.id)?.id === item.id;
+    const firstImg = (item.images || [])[0];
 
     const card = document.createElement("div");
     card.className = `pick-card${isSelected ? " selected" : ""}`;
     card.innerHTML = `
       <div class="pick-card-check"></div>
+      ${firstImg ? `<img class="pick-card-img" src="${firstImg.url}" alt="${item.name}" />` : ""}
       <h3 class="pick-card-name">${item.name}</h3>
       <p class="pick-card-desc">${item.desc}</p>
       ${step.renderExtra ? step.renderExtra(item) : ""}
@@ -158,9 +160,11 @@ function renderRouletteStep(step) {
     const revealed = document.createElement("div");
     revealed.className = "roulette-revealed";
     picks.forEach((item) => {
+      const firstImg = (item.images || [])[0];
       const card = document.createElement("div");
       card.className = "pick-card selected roulette-result";
       card.innerHTML = `
+        ${firstImg ? `<img class="pick-card-img" src="${firstImg.url}" alt="${item.name}" />` : ""}
         <h3 class="pick-card-name">${item.name}</h3>
         <p class="pick-card-desc">${item.desc}</p>
         ${step.renderExtra ? step.renderExtra(item) : ""}
