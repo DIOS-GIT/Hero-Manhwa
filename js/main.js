@@ -2,8 +2,10 @@
  * main.js
  * -----------------------------------------------------------------------
  * Pega todas las piezas: cambia de pantalla, arranca el StoryEngine con
- * los datos que salieron de la creación de personaje, y renderiza el
- * stream de nodos en formato panel vertical (estilo webtoon).
+ * los datos que salieron de la creación de personaje, y renderiza la
+ * pantalla de lectura en formato novela visual clásica — fondo a pantalla
+ * completa, personaje grande parado sobre el fondo, caja de diálogo fija
+ * abajo. Cada nodo REEMPLAZA lo anterior (no se apila como antes).
  *
  * La historia y los datos de personaje salen de Firestore vía
  * data-loader.js (window.GAME_DATA_READY / window.loadStory).
@@ -19,9 +21,7 @@ function showScreen(id) {
 }
 
 async function startStory() {
-  // TU_STORY_ID = el ID del documento en Firestore > stories (lo ves en
-  // Firebase Console > Firestore Database > colección "stories", el ID
-  // que aparece arriba de cada documento, NO un campo de adentro).
+  // TU_STORY_ID = el ID del documento en Firestore > stories.
   await window.loadStory("TU_STORY_ID");
 
   const initialStats = { ...player.protagonist.stats };
@@ -41,111 +41,108 @@ async function startStory() {
     initialFlags
   );
 
-  document.getElementById("panel-stream").innerHTML = "";
   showScreen("screen-game");
   renderCurrentNode();
 }
 
-function findCharacterImage(name) {
+function findCharacter(name) {
   if (!name) return null;
   const all = [
     ...(window.GAME_DATA.PROTAGONISTS || []),
     ...(window.GAME_DATA.HEROINES || [])
   ];
-  const found = all.find((c) => c.name === name);
-  return found && found.images && found.images[0] ? found.images[0].url : null;
+  return all.find((c) => c.name === name) || null;
 }
 
 function renderCurrentNode() {
   const node = engine.getCurrentNode();
-  const stream = document.getElementById("panel-stream");
-  const readerNav = document.getElementById("reader-nav");
 
-  const panel = document.createElement("div");
-  panel.className = `node-panel${node.type === "ending" ? " ending-panel" : ""}`;
+  const bg = document.getElementById("vn-bg");
+  const charImg = document.getElementById("vn-character");
+  const speakerEl = document.getElementById("vn-speaker-name");
+  const systemTag = document.getElementById("vn-system-tag");
+  const textEl = document.getElementById("vn-text");
+  const optionsEl = document.getElementById("vn-options");
+  const continueBtn = document.getElementById("btn-reader-continue");
+  const endingCard = document.getElementById("vn-ending-card");
+  const dialogueBox = document.getElementById("vn-dialogue-box");
 
-  // el fondo del nodo: si tiene backgroundUrl (elegido en el admin) se usa
-  // esa imagen; si no, queda el degradé de siempre.
-  const bgStyle = node.backgroundUrl
-    ? ` style="background-image:url('${node.backgroundUrl}');background-size:cover;background-position:center;"`
-    : "";
+  // ---- fondo ----
+  bg.style.backgroundImage = node.backgroundUrl ? `url('${node.backgroundUrl}')` : "";
 
-  const portraitUrl = findCharacterImage(node.character);
-  const portraitHtml = portraitUrl
-    ? `<img class="node-speaker-portrait" src="${portraitUrl}" alt="${node.character}" />`
-    : "";
+  // ---- final: tapa toda la escena, no se usa la caja de diálogo ----
+  if (node.type === "ending") {
+    dialogueBox.style.visibility = "hidden";
+    charImg.hidden = true;
+    endingCard.hidden = false;
+    document.getElementById("vn-ending-title").textContent = node.title || "";
+    document.getElementById("vn-ending-summary").textContent = node.summary || "";
+    return;
+  }
+  endingCard.hidden = true;
+  dialogueBox.style.visibility = "visible";
 
-  let inner = `
-    <div class="node-panel-bg"${bgStyle}></div>
-    <div class="node-panel-body">`;
-
-  switch (node.type) {
-    case "dialogue":
-      inner += `${node.character ? `<div class="node-speaker">${portraitHtml}<span>${node.character}</span></div>` : ""}
-                 <div class="node-text">${node.text}</div>`;
-      break;
-
-    case "event":
-      inner += `<div class="node-system-tag">◆ evento</div>
-                 <div class="node-text">${node.text}</div>`;
-      break;
-
-    case "condition":
-      inner += `<div class="node-system-tag">◆ el sistema evalúa la situación...</div>`;
-      break;
-
-    case "random":
-      inner += `<div class="node-system-tag">🎲 el destino decide...</div>
-                 <div class="node-text">${node.text || ""}</div>`;
-      break;
-
-    case "choice":
-      inner += `${node.character ? `<div class="node-speaker">${portraitHtml}<span>${node.character}</span></div>` : ""}
-                 <div class="node-text">${node.text}</div>
-                 <div class="node-options" id="node-options"></div>`;
-      break;
-
-    case "ending":
-      inner += `<div class="ending-title">${node.title}</div>
-                 <div class="node-text">${node.summary}</div>`;
-      break;
+  // ---- personaje parado sobre el fondo ----
+  const character = findCharacter(node.character);
+  const portrait = character && character.images && character.images[0];
+  if (portrait) {
+    charImg.src = portrait.url;
+    charImg.alt = character.name;
+    charImg.hidden = false;
+  } else {
+    charImg.hidden = true;
   }
 
-  inner += `</div>`;
-  panel.innerHTML = inner;
-  stream.appendChild(panel);
-  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  // ---- nombre de quien habla ----
+  if (node.character) {
+    speakerEl.textContent = node.character;
+    speakerEl.hidden = false;
+  } else {
+    speakerEl.hidden = true;
+  }
 
+  // ---- tag de sistema (evento / condición / ruleta interna) ----
+  const systemLabels = {
+    event: "◆ evento",
+    condition: "◆ el sistema evalúa la situación...",
+    random: "🎲 el destino decide..."
+  };
+  if (systemLabels[node.type]) {
+    systemTag.textContent = systemLabels[node.type];
+    systemTag.hidden = false;
+  } else {
+    systemTag.hidden = true;
+  }
+
+  // ---- texto ----
+  textEl.textContent = node.text || "";
+
+  // ---- opciones (choice) vs. continuar (dialogue/event/condition/random) ----
   if (node.type === "choice") {
-    const optionsWrap = panel.querySelector("#node-options");
+    optionsEl.innerHTML = "";
+    optionsEl.hidden = false;
+    continueBtn.hidden = true;
     node.options.forEach((option, i) => {
       const btn = document.createElement("button");
       btn.className = "node-option-btn";
       btn.textContent = option.text;
       btn.addEventListener("click", () => {
-        optionsWrap.querySelectorAll("button").forEach((b) => (b.disabled = true));
+        optionsEl.querySelectorAll("button").forEach((b) => (b.disabled = true));
         engine.choose(i);
         renderCurrentNode();
       });
-      optionsWrap.appendChild(btn);
+      optionsEl.appendChild(btn);
     });
-    readerNav.hidden = true;
-    return;
+  } else {
+    optionsEl.hidden = true;
+    continueBtn.hidden = false;
   }
-
-  if (node.type === "ending") {
-    readerNav.hidden = true;
-    return;
-  }
-
-  // dialogue / event / condition / random: el jugador solo avanza
-  readerNav.hidden = false;
 }
 
 function initGameControls() {
   document.getElementById("btn-reader-continue").addEventListener("click", () => {
     // dialogue, event, condition y random se resuelven todos con advance();
-    // condition y random deciden el siguiente nodo solos, sin pedirle nada al jugador.
+    // condition y random deciden solos el siguiente nodo, sin preguntarle nada al jugador.
     engine.advance();
     renderCurrentNode();
   });
@@ -160,7 +157,7 @@ function initGameControls() {
     }
   });
 
-  document.getElementById("btn-hud-restart").addEventListener("click", () => {
+  function restart() {
     if (!confirm("¿Reiniciar tu historia desde el principio?")) return;
     Object.assign(player, {
       protagonist: null, route: null, job: null, housing: null,
@@ -168,7 +165,9 @@ function initGameControls() {
     });
     document.getElementById("hud-stats-panel").hidden = true;
     goToStepScreen(0);
-  });
+  }
+  document.getElementById("btn-hud-restart").addEventListener("click", restart);
+  document.getElementById("btn-hud-restart-2").addEventListener("click", restart);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
