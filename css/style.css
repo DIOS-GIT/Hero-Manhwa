@@ -392,3 +392,116 @@ body{
   width:26px;height:26px;border-radius:50%;object-fit:cover;
   border:1px solid var(--cyan-dim);
 }
+
+/* ======================================================================
+   PANTALLA DE LECTURA — ESTILO NOVELA VISUAL
+   fondo a pantalla completa + personaje grande + caja de diálogo abajo
+   ====================================================================== */
+.vn-screen{padding:0;}
+.vn-stage{
+  position:relative;
+  width:100%;height:100vh;height:100dvh;
+  overflow:hidden;
+  background:var(--void);
+}
+
+.vn-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg, #1a2036, #0c0f1a);
+  background-size:cover;background-position:center;
+  transition:background-image .25s ease;
+}
+.vn-bg::after{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(8,10,18,.92) 0%, rgba(8,10,18,.15) 42%, rgba(8,10,18,.35) 100%);
+}
+
+.vn-character{
+  position:absolute;
+  bottom:0;left:50%;
+  transform:translateX(-50%);
+  height:82%;
+  max-height:820px;
+  object-fit:contain;
+  object-position:bottom;
+  filter:drop-shadow(0 12px 30px rgba(0,0,0,.55));
+  animation:vn-char-in .3s ease both;
+}
+@keyframes vn-char-in{from{opacity:0;transform:translateX(-50%) translateY(14px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+.vn-hud{
+  position:absolute;top:0;left:0;right:0;
+  background:linear-gradient(to bottom, rgba(8,10,18,.85), transparent);
+  border-bottom:none;
+  backdrop-filter:none;
+}
+
+/* ---- caja de diálogo fija abajo ---- */
+.vn-dialogue-box{
+  position:absolute;left:0;right:0;bottom:0;
+  max-width:760px;margin:0 auto;
+  padding:20px 24px 26px;
+  background:linear-gradient(180deg, rgba(14,18,32,.55), rgba(8,10,18,.96) 30%);
+  border-top:1px solid var(--line);
+  min-height:130px;
+}
+.vn-system-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:8px;
+}
+.vn-speaker-name{
+  display:inline-block;
+  font-family:'Orbitron',sans-serif;
+  font-size:13px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--cyan);
+  background:rgba(79,216,255,.08);
+  border:1px solid var(--cyan-dim);
+  border-radius:2px;
+  padding:4px 12px;
+  margin-bottom:10px;
+}
+.vn-text{
+  font-size:18px;line-height:1.55;color:var(--text-bright);
+  min-height:52px;
+  animation:vn-text-in .2s ease both;
+}
+@keyframes vn-text-in{from{opacity:0;}to{opacity:1;}}
+
+.vn-continue-btn{
+  position:absolute;right:22px;bottom:18px;
+  width:38px;height:38px;
+  border-radius:50%;
+  border:1px solid var(--cyan-dim);
+  background:rgba(79,216,255,.08);
+  color:var(--cyan);
+  font-size:14px;
+  cursor:pointer;
+  animation:vn-bounce 1.4s ease-in-out infinite;
+}
+.vn-continue-btn:hover{background:rgba(79,216,255,.18);}
+@keyframes vn-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(4px);}}
+
+.vn-options{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+
+/* ---- tarjeta de final, tapa toda la escena ---- */
+.vn-ending-card{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;
+  padding:0 24px;
+  background:rgba(8,10,18,.92);
+  z-index:6;
+}
+.vn-ending-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;color:var(--gold);
+}
+.vn-ending-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:26px;color:var(--text-bright);margin:0;
+}
+.vn-ending-summary{
+  max-width:520px;color:var(--text-dim);font-size:15px;line-height:1.6;margin:0 0 8px;
+}
