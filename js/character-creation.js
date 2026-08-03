@@ -12,6 +12,15 @@
  * -----------------------------------------------------------------------
  */
 
+// Recorta la imagen centrada en la cara detectada (vía Cloudinary), en
+// vez de siempre agarrar la franja de arriba — así funciona incluso con
+// poses dinámicas (brazo levantado, salto, etc.) donde la cabeza no está
+// necesariamente en el borde superior de la imagen.
+function faceCropUrl(url, width, height) {
+  if (!url || !url.includes("/upload/")) return url;
+  return url.replace("/upload/", `/upload/w_${width},h_${height},c_fill,g_auto:face/`);
+}
+
 const HAREM_MAX = 3;
 
 const player = {
@@ -127,7 +136,7 @@ function renderCardGridStep(step) {
     card.className = `pick-card${isSelected ? " selected" : ""}`;
     card.innerHTML = `
       <div class="pick-card-check"></div>
-      ${firstImg ? `<img class="pick-card-img" src="${firstImg.url}" alt="${item.name}" />` : ""}
+      ${firstImg ? `<img class="pick-card-img" src="${faceCropUrl(firstImg.url, 800, 280)}" alt="${item.name}" />` : ""}
       <h3 class="pick-card-name">${item.name}</h3>
       <p class="pick-card-desc">${item.desc}</p>
       ${step.renderExtra ? step.renderExtra(item) : ""}
@@ -164,7 +173,7 @@ function renderRouletteStep(step) {
       const card = document.createElement("div");
       card.className = "pick-card selected roulette-result";
       card.innerHTML = `
-        ${firstImg ? `<img class="pick-card-img" src="${firstImg.url}" alt="${item.name}" />` : ""}
+        ${firstImg ? `<img class="pick-card-img" src="${faceCropUrl(firstImg.url, 800, 280)}" alt="${item.name}" />` : ""}
         <h3 class="pick-card-name">${item.name}</h3>
         <p class="pick-card-desc">${item.desc}</p>
         ${step.renderExtra ? step.renderExtra(item) : ""}
