@@ -79,20 +79,41 @@
     </div>
   </section>
 
-  <!-- ================= LECTURA (motor de nodos, estilo webtoon vertical) ================= -->
-  <section id="screen-game" class="screen">
-    <header class="game-hud">
-      <button class="hud-btn" id="btn-hud-stats">📊 stats</button>
-      <div class="hud-title">Manhwa Legend</div>
-      <button class="hud-btn" id="btn-hud-restart">↺ reiniciar</button>
-    </header>
+  <!-- ================= LECTURA — ESTILO NOVELA VISUAL ================= -->
+  <section id="screen-game" class="screen vn-screen">
+    <div class="vn-stage">
 
-    <div class="hud-stats-panel" id="hud-stats-panel" hidden></div>
+      <!-- fondo a pantalla completa -->
+      <div class="vn-bg" id="vn-bg"></div>
 
-    <div id="panel-stream" class="panel-stream"></div>
+      <!-- personaje parado sobre el fondo -->
+      <img class="vn-character" id="vn-character" src="" alt="" hidden>
 
-    <div class="reader-nav" id="reader-nav" hidden>
-      <button class="btn-primary" id="btn-reader-continue">continuar ↓</button>
+      <!-- barra superior -->
+      <header class="game-hud vn-hud">
+        <button class="hud-btn" id="btn-hud-stats">📊 stats</button>
+        <div class="hud-title">Manhwa Legend</div>
+        <button class="hud-btn" id="btn-hud-restart">↺ reiniciar</button>
+      </header>
+      <div class="hud-stats-panel" id="hud-stats-panel" hidden></div>
+
+      <!-- tarjeta de final (solo visible cuando el nodo es "ending") -->
+      <div class="vn-ending-card" id="vn-ending-card" hidden>
+        <div class="vn-ending-tag">FINAL</div>
+        <h2 class="vn-ending-title" id="vn-ending-title"></h2>
+        <p class="vn-ending-summary" id="vn-ending-summary"></p>
+        <button class="btn-primary" id="btn-hud-restart-2">↺ jugar de nuevo</button>
+      </div>
+
+      <!-- caja de diálogo, fija abajo -->
+      <div class="vn-dialogue-box" id="vn-dialogue-box">
+        <div class="vn-system-tag" id="vn-system-tag" hidden></div>
+        <div class="vn-speaker-name" id="vn-speaker-name" hidden></div>
+        <div class="vn-text" id="vn-text"></div>
+        <div class="vn-options" id="vn-options" hidden></div>
+        <button class="vn-continue-btn" id="btn-reader-continue" hidden>▼</button>
+      </div>
+
     </div>
   </section>
 
@@ -100,7 +121,6 @@
 
 <script type="module" src="js/data-loader.js"></script>
 <script src="js/story-engine.js"></script>
-<script src="js/demo-story.js"></script>
 <script src="js/character-creation.js"></script>
 <script src="js/main.js"></script>
 </body>
