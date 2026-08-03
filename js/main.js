@@ -46,6 +46,16 @@ async function startStory() {
   renderCurrentNode();
 }
 
+function findCharacterImage(name) {
+  if (!name) return null;
+  const all = [
+    ...(window.GAME_DATA.PROTAGONISTS || []),
+    ...(window.GAME_DATA.HEROINES || [])
+  ];
+  const found = all.find((c) => c.name === name);
+  return found && found.images && found.images[0] ? found.images[0].url : null;
+}
+
 function renderCurrentNode() {
   const node = engine.getCurrentNode();
   const stream = document.getElementById("panel-stream");
@@ -54,16 +64,24 @@ function renderCurrentNode() {
   const panel = document.createElement("div");
   panel.className = `node-panel${node.type === "ending" ? " ending-panel" : ""}`;
 
-  const sceneTag = node.scene ? node.scene.replace(/_/g, " ") : "";
+  // el fondo del nodo: si tiene backgroundUrl (elegido en el admin) se usa
+  // esa imagen; si no, queda el degradé de siempre.
+  const bgStyle = node.backgroundUrl
+    ? ` style="background-image:url('${node.backgroundUrl}');background-size:cover;background-position:center;"`
+    : "";
+
+  const portraitUrl = findCharacterImage(node.character);
+  const portraitHtml = portraitUrl
+    ? `<img class="node-speaker-portrait" src="${portraitUrl}" alt="${node.character}" />`
+    : "";
+
   let inner = `
-    <div class="node-panel-bg">
-      <span class="node-panel-scene-tag">${sceneTag}</span>
-    </div>
+    <div class="node-panel-bg"${bgStyle}></div>
     <div class="node-panel-body">`;
 
   switch (node.type) {
     case "dialogue":
-      inner += `${node.speaker ? `<div class="node-speaker">${node.speaker}</div>` : ""}
+      inner += `${node.character ? `<div class="node-speaker">${portraitHtml}<span>${node.character}</span></div>` : ""}
                  <div class="node-text">${node.text}</div>`;
       break;
 
@@ -82,7 +100,7 @@ function renderCurrentNode() {
       break;
 
     case "choice":
-      inner += `${node.speaker ? `<div class="node-speaker">${node.speaker}</div>` : ""}
+      inner += `${node.character ? `<div class="node-speaker">${portraitHtml}<span>${node.character}</span></div>` : ""}
                  <div class="node-text">${node.text}</div>
                  <div class="node-options" id="node-options"></div>`;
       break;
