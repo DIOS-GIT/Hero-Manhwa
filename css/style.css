@@ -357,3 +357,38 @@ body{
   .sys-window-body{padding:20px 16px 22px;}
   .boot-title{font-size:22px;}
 }
+
+/* ---- ruleta de protagonista / heroínas ---- */
+.roulette-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:14px;}
+.roulette-revealed{display:flex;flex-wrap:wrap;gap:12px;width:100%;}
+.roulette-result{position:relative;min-width:220px;flex:1 1 220px;animation:roulette-pop .25s ease;}
+@keyframes roulette-pop{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+.roulette-remove-btn{
+  margin-top:8px;background:transparent;border:1px solid var(--panel-2);
+  color:var(--text-dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;
+}
+.roulette-remove-btn:hover{color:#ff6b81;border-color:#ff6b81;}
+.roulette-btn{align-self:flex-start;}
+
+/* ---- imágenes: retratos en cartas/ruleta, fondo real de nodo, foto del que habla ---- */
+.pick-card-img{
+  width:100%;height:180px;object-fit:cover;border-radius:2px;
+  margin-bottom:10px;display:block;
+}
+.node-panel-bg{
+  background-size:cover;
+  background-position:center;
+}
+.node-speaker{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Orbitron',sans-serif;
+  font-size:12px;
+  color:var(--cyan);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin-bottom:6px;
+}
+.node-speaker-portrait{
+  width:26px;height:26px;border-radius:50%;object-fit:cover;
+  border:1px solid var(--cyan-dim);
+}
