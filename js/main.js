@@ -139,6 +139,19 @@ async function startStory() {
   renderCurrentNode();
 }
 
+async function goToNextChapter(nextStoryId) {
+  if (!nextStoryId) {
+    alert('Este nodo "chapter_end" todavía no tiene una Historia siguiente configurada en el admin.');
+    return;
+  }
+  currentStoryId = nextStoryId;
+  await window.loadStory(currentStoryId);
+  engine.loadChapter(window.DEMO_STORY.nodes, window.DEMO_STORY.startNode);
+  currentBgUrl = null;
+  document.getElementById("vn-ending-card").hidden = true;
+  renderCurrentNode();
+}
+
 function renderCurrentNode() {
   const node = engine.getCurrentNode();
 
@@ -157,13 +170,30 @@ function renderCurrentNode() {
   // ---- fondo (con crossfade) ----
   setBackground(node.backgroundUrl || "");
 
-  // ---- final: tapa toda la escena ----
-  if (node.type === "ending") {
+  // ---- final real, o fin de capítulo que sigue con la próxima historia ----
+  if (node.type === "ending" || node.type === "chapter_end") {
     dialogueBox.style.visibility = "hidden";
     charImg.hidden = true;
     endingCard.hidden = false;
-    document.getElementById("vn-ending-title").textContent = node.title || "";
-    document.getElementById("vn-ending-summary").textContent = node.summary || "";
+
+    const tagEl = document.getElementById("vn-ending-tag");
+    const restartBtn = document.getElementById("btn-hud-restart-2");
+    const chapterContinueBtn = document.getElementById("btn-chapter-continue");
+
+    if (node.type === "chapter_end") {
+      tagEl.textContent = "FIN DEL CAPÍTULO";
+      document.getElementById("vn-ending-title").textContent = node.title || "";
+      document.getElementById("vn-ending-summary").textContent = node.text || node.summary || "";
+      restartBtn.hidden = true;
+      chapterContinueBtn.hidden = false;
+      chapterContinueBtn.onclick = () => goToNextChapter(node.nextStoryId);
+    } else {
+      tagEl.textContent = "FINAL";
+      document.getElementById("vn-ending-title").textContent = node.title || "";
+      document.getElementById("vn-ending-summary").textContent = node.summary || "";
+      restartBtn.hidden = false;
+      chapterContinueBtn.hidden = true;
+    }
     return;
   }
   endingCard.hidden = true;
