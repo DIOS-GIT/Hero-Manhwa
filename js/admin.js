@@ -655,6 +655,8 @@ function buildNodesSection() {
     <p class="hint">
       El ID del nodo se asigna solo (n001, n002...). Si el personaje elegido tiene
       varias imágenes cargadas, podés elegir cuál expresión mostrar en este nodo puntual.
+      Usá <b>chapter_end</b> para encadenar una Historia con la siguiente sin volver a
+      pasar por la reencarnación — <b>ending</b> es solo para un final real de partida.
       Los tipos <b>condition</b> y <b>random</b> son avanzados y se editan como JSON
       para no perder flexibilidad.
     </p>
@@ -675,7 +677,8 @@ function buildNodesSection() {
           <option value="event">event — narrativa automática</option>
           <option value="condition">condition — bifurca según stats (JSON)</option>
           <option value="random">random — ruleta de probabilidad (JSON)</option>
-          <option value="ending">ending — final</option>
+          <option value="chapter_end">chapter_end — termina esta Historia y sigue con la siguiente</option>
+          <option value="ending">ending — final real de la partida</option>
         </select>
       </div>
       <div class="field" style="grid-column: 1 / -1;">
@@ -697,6 +700,10 @@ function buildNodesSection() {
       <div class="field" id="next-field">
         <label>Siguiente nodo (para dialogue/event)</label>
         <select name="next" id="next-select"></select>
+      </div>
+      <div class="field" id="chapter-end-field" hidden>
+        <label>Próxima historia (a dónde sigue)</label>
+        <select name="nextStoryId" id="next-story-select"></select>
       </div>
       <div class="field" id="options-field" hidden style="grid-column: 1 / -1;">
         <label>Opciones (choice)</label>
@@ -722,6 +729,8 @@ function buildNodesSection() {
   const typeSelect = form.elements.type;
   const nextField = section.querySelector("#next-field");
   const nextSelect = section.querySelector("#next-select");
+  const chapterEndField = section.querySelector("#chapter-end-field");
+  const nextStorySelect = section.querySelector("#next-story-select");
   const optionsField = section.querySelector("#options-field");
   const optionsRows = section.querySelector("#options-rows");
   const addOptionBtn = section.querySelector("#add-option-btn");
@@ -828,6 +837,19 @@ function buildNodesSection() {
     bgSelect.value = current;
   });
 
+  // historias disponibles (para el selector de "próxima historia" en chapter_end)
+  onSnapshot(collection(db, "stories"), (snap) => {
+    const current = nextStorySelect.value;
+    nextStorySelect.innerHTML = '<option value="">(elegir historia)</option>';
+    snap.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = d.data().title || d.id;
+      nextStorySelect.appendChild(opt);
+    });
+    nextStorySelect.value = current;
+  });
+
   // personajes (protagonistas + heroínas) para el selector con foto
   const expressionField = section.querySelector("#expression-field");
   const expressionSelect = section.querySelector("#expression-select");
@@ -908,6 +930,7 @@ function buildNodesSection() {
     nextField.hidden = !(t === "dialogue" || t === "event");
     optionsField.hidden = t !== "choice";
     advancedField.hidden = !(t === "condition" || t === "random");
+    chapterEndField.hidden = t !== "chapter_end";
   }
   typeSelect.addEventListener("change", updateVisibleFields);
   updateVisibleFields();
@@ -962,6 +985,12 @@ function buildNodesSection() {
     };
     if (data.type === "dialogue" || data.type === "event") {
       data.next = nextSelect.value;
+    }
+    if (data.type === "chapter_end") {
+      data.nextStoryId = nextStorySelect.value;
+      if (!data.nextStoryId) {
+        return alert('Elegí a qué Historia sigue este "chapter_end" antes de guardar.');
+      }
     }
     if (data.type === "choice") {
       data.options = optionItems
@@ -1048,6 +1077,7 @@ function buildNodesSection() {
         bgSelect.value = item.backgroundUrl || "";
         form.elements.text.value = item.text || "";
         nextSelect.value = item.next || "";
+        nextStorySelect.value = item.nextStoryId || "";
         optionItems = (item.options || []).map((o) => ({
           text: o.text || "",
           next: o.next || "",
