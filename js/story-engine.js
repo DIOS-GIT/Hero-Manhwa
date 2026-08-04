@@ -66,8 +66,29 @@ class StoryEngine {
     if (!this.nodes[nodeId]) {
       throw new Error(`El nodo "${nodeId}" no existe (referenciado desde "${this.currentNodeId}").`);
     }
-    this.history.push(this.currentNodeId);
+    // guardamos una foto completa del estado ANTES de moverse, así el
+    // rollback puede restaurar stats/flags tal cual estaban, no solo el ID.
+    this.history.push({
+      nodeId: this.currentNodeId,
+      stats: { ...this.stats },
+      flags: [...this.flags]
+    });
     this.currentNodeId = nodeId;
+  }
+
+  canRollback() {
+    return this.history.length > 0;
+  }
+
+  // vuelve un paso atrás en el diálogo, restaurando stats y flags a como
+  // estaban en ese momento (equivalente al "rollback" de Ren'Py).
+  rollback() {
+    if (!this.canRollback()) return false;
+    const prev = this.history.pop();
+    this.currentNodeId = prev.nodeId;
+    this.stats = { ...prev.stats };
+    this.flags = new Set(prev.flags);
+    return true;
   }
 
   // ---- resolución de "choice": la llama la UI cuando el jugador clickea ----
