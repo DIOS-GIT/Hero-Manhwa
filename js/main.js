@@ -115,28 +115,37 @@ async function continueSavedGame() {
 }
 
 async function startStory() {
-  await window.loadStory(currentStoryId);
+  try {
+    await window.loadStory(currentStoryId);
 
-  const initialStats = { ...player.protagonist.stats };
-  const initialFlags = [
-    `protagonista_${player.protagonist.id}`,
-    `ruta_${player.route.id}`,
-    `trabajo_${player.job.id}`,
-    `vivienda_${player.housing.id}`,
-    ...(player.haremMode ? ["modo_harem"] : ["modo_fmc"]),
-    ...player.heroines.map((h) => `heroina_${h.id}`)
-  ];
+    const initialStats = { ...player.protagonist.stats };
+    const initialFlags = [
+      `protagonista_${player.protagonist.id}`,
+      `ruta_${player.route.id}`,
+      `trabajo_${player.job.id}`,
+      `vivienda_${player.housing.id}`,
+      ...(player.haremMode ? ["modo_harem"] : ["modo_fmc"]),
+      ...player.heroines.map((h) => `heroina_${h.id}`)
+    ];
 
-  engine = new window.StoryEngine(
-    window.DEMO_STORY.nodes,
-    window.DEMO_STORY.startNode,
-    initialStats,
-    initialFlags
-  );
+    engine = new window.StoryEngine(
+      window.DEMO_STORY.nodes,
+      window.DEMO_STORY.startNode,
+      initialStats,
+      initialFlags
+    );
 
-  currentBgUrl = null;
-  showScreen("screen-game");
-  renderCurrentNode();
+    currentBgUrl = null;
+    showScreen("screen-game");
+    renderCurrentNode();
+  } catch (err) {
+    console.error(err);
+    alert(
+      `No se pudo arrancar la historia: ${err.message}\n\n` +
+      `Revisá que "currentStoryId" en main.js tenga el ID real de la Historia ` +
+      `(no "TU_STORY_ID"), y que esa Historia tenga un nodo inicial válido cargado.`
+    );
+  }
 }
 
 async function goToNextChapter(nextStoryId) {
@@ -144,12 +153,17 @@ async function goToNextChapter(nextStoryId) {
     alert('Este nodo "chapter_end" todavía no tiene una Historia siguiente configurada en el admin.');
     return;
   }
-  currentStoryId = nextStoryId;
-  await window.loadStory(currentStoryId);
-  engine.loadChapter(window.DEMO_STORY.nodes, window.DEMO_STORY.startNode);
-  currentBgUrl = null;
-  document.getElementById("vn-ending-card").hidden = true;
-  renderCurrentNode();
+  try {
+    currentStoryId = nextStoryId;
+    await window.loadStory(currentStoryId);
+    engine.loadChapter(window.DEMO_STORY.nodes, window.DEMO_STORY.startNode);
+    currentBgUrl = null;
+    document.getElementById("vn-ending-card").hidden = true;
+    renderCurrentNode();
+  } catch (err) {
+    console.error(err);
+    alert(`No se pudo cargar el próximo capítulo: ${err.message}`);
+  }
 }
 
 function renderCurrentNode() {
