@@ -653,8 +653,9 @@ function buildNodesSection() {
   section.innerHTML = `
     <h2>🔀 Nodos / Decisiones</h2>
     <p class="hint">
-      El ID del nodo se asigna solo (n001, n002...). Los tipos
-      <b>condition</b> y <b>random</b> son avanzados y se editan como JSON
+      El ID del nodo se asigna solo (n001, n002...). Si el personaje elegido tiene
+      varias imágenes cargadas, podés elegir cuál expresión mostrar en este nodo puntual.
+      Los tipos <b>condition</b> y <b>random</b> son avanzados y se editan como JSON
       para no perder flexibilidad.
     </p>
     <form class="entity-form" id="form-nodes">
@@ -680,6 +681,10 @@ function buildNodesSection() {
       <div class="field" style="grid-column: 1 / -1;">
         <label>Personaje que habla</label>
         <div class="char-picker" id="char-picker"></div>
+      </div>
+      <div class="field" id="expression-field" hidden>
+        <label>Expresión (qué imagen de ese personaje usar en este nodo)</label>
+        <select name="characterExpression" id="expression-select"></select>
       </div>
       <div class="field">
         <label>Fondo</label>
@@ -824,6 +829,26 @@ function buildNodesSection() {
   });
 
   // personajes (protagonistas + heroínas) para el selector con foto
+  const expressionField = section.querySelector("#expression-field");
+  const expressionSelect = section.querySelector("#expression-select");
+
+  function refreshExpressionOptions(keepValue) {
+    const character = charactersList.find((c) => c.name === selectedCharacter);
+    const previous = keepValue !== undefined ? keepValue : expressionSelect.value;
+    if (!character || !character.images || character.images.length === 0) {
+      expressionField.hidden = true;
+      expressionSelect.innerHTML = "";
+      return;
+    }
+    expressionField.hidden = false;
+    expressionSelect.innerHTML = character.images
+      .map((img) => `<option value="${img.label}">${img.label || "(sin etiqueta)"}</option>`)
+      .join("");
+    if (previous && character.images.some((img) => img.label === previous)) {
+      expressionSelect.value = previous;
+    }
+  }
+
   function renderCharPicker() {
     charPicker.innerHTML = "";
     const noneChip = document.createElement("button");
@@ -833,6 +858,7 @@ function buildNodesSection() {
     noneChip.addEventListener("click", () => {
       selectedCharacter = "";
       renderCharPicker();
+      refreshExpressionOptions("");
     });
     charPicker.appendChild(noneChip);
 
@@ -851,6 +877,7 @@ function buildNodesSection() {
       chip.addEventListener("click", () => {
         selectedCharacter = c.name;
         renderCharPicker();
+        refreshExpressionOptions("");
       });
       charPicker.appendChild(chip);
     });
@@ -865,10 +892,12 @@ function buildNodesSection() {
         charactersList.push({
           name: data.name,
           thumbUrl: firstImg ? firstImg.url : "",
+          images: data.images || [],
           source: collectionName,
         });
       });
       renderCharPicker();
+      refreshExpressionOptions();
     });
   }
   subscribeCharacters("protagonists");
@@ -891,6 +920,7 @@ function buildNodesSection() {
     optionItems = [];
     renderOptionRows();
     renderCharPicker();
+    refreshExpressionOptions("");
     updateVisibleFields();
     refreshNodeIdSuggestion();
     cancelBtn.hidden = true;
@@ -926,6 +956,7 @@ function buildNodesSection() {
       storyId: form.elements.storyId.value.trim(),
       type: typeSelect.value,
       character: selectedCharacter,
+      characterExpression: expressionField.hidden ? "" : expressionSelect.value,
       backgroundUrl: bgSelect.value,
       text: form.elements.text.value,
     };
@@ -1013,6 +1044,7 @@ function buildNodesSection() {
         typeSelect.value = item.type || "dialogue";
         selectedCharacter = item.character || "";
         renderCharPicker();
+        refreshExpressionOptions(item.characterExpression || "");
         bgSelect.value = item.backgroundUrl || "";
         form.elements.text.value = item.text || "";
         nextSelect.value = item.next || "";
