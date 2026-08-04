@@ -24,6 +24,7 @@
         <h1 class="boot-title">Vas a reencarnar.<br>Elegí bien.</h1>
         <p class="boot-warning">contenido para audiencia adulta (+18) · verificación de edad a cargo del sitio donde publiques esto</p>
         <button class="btn-primary" id="btn-start">Iniciar reencarnación →</button>
+        <button class="btn-ghost" id="btn-continue-save" hidden>▶ Continuar partida guardada</button>
       </div>
     </div>
   </section>
@@ -83,16 +84,19 @@
   <section id="screen-game" class="screen vn-screen">
     <div class="vn-stage">
 
-      <!-- fondo a pantalla completa -->
-      <div class="vn-bg" id="vn-bg"></div>
+      <!-- fondo a pantalla completa, 2 capas para poder hacer un crossfade suave -->
+      <div class="vn-bg-layer" id="vn-bg-a"></div>
+      <div class="vn-bg-layer" id="vn-bg-b"></div>
 
       <!-- personaje parado sobre el fondo -->
       <img class="vn-character" id="vn-character" src="" alt="" hidden>
 
       <!-- barra superior -->
       <header class="game-hud vn-hud">
+        <button class="hud-btn" id="btn-hud-back">◀ atrás</button>
         <button class="hud-btn" id="btn-hud-stats">📊 stats</button>
         <div class="hud-title">Manhwa Legend</div>
+        <button class="hud-btn" id="btn-hud-save">💾 guardar</button>
         <button class="hud-btn" id="btn-hud-restart">↺ reiniciar</button>
       </header>
       <div class="hud-stats-panel" id="hud-stats-panel" hidden></div>
