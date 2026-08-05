@@ -660,16 +660,26 @@ function buildNodesSection() {
       Los tipos <b>condition</b> y <b>random</b> son avanzados y se editan como JSON
       para no perder flexibilidad.
     </p>
+    <div class="mode-toggle">
+      <button type="button" class="mode-toggle-btn active" id="mode-btn-full">📝 Formulario completo</button>
+      <button type="button" class="mode-toggle-btn" id="mode-btn-script">✍️ Modo guión (rápido)</button>
+    </div>
+    <p class="hint" id="script-mode-hint" hidden>
+      Elegí el personaje una vez y quedate escribiendo línea tras línea — cada
+      "Guardar y seguir" encadena sola con la anterior, sin que tengas que
+      elegir "siguiente nodo" a mano. Para decisiones, condiciones o finales,
+      volvé al formulario completo.
+    </p>
     <form class="entity-form" id="form-nodes">
       <div class="field">
         <label>ID del nodo (automático)</label>
         <input type="text" id="node-id-display" readonly />
       </div>
       <div class="field">
-        <label>Historia (título de la colección "stories")</label>
-        <input type="text" name="storyId" placeholder="Ej: capitulo-1" />
+        <label>Historia</label>
+        <select name="storyId" id="story-select"></select>
       </div>
-      <div class="field">
+      <div class="field" id="type-field">
         <label>Tipo</label>
         <select name="type">
           <option value="dialogue">dialogue — diálogo simple</option>
@@ -680,6 +690,13 @@ function buildNodesSection() {
           <option value="chapter_end">chapter_end — termina esta Historia y sigue con la siguiente</option>
           <option value="ending">ending — final real de la partida</option>
         </select>
+      </div>
+      <div class="field" id="script-event-field" hidden>
+        <label>&nbsp;</label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="script-is-event" />
+          Es narración/evento (no habla nadie)
+        </label>
       </div>
       <div class="field" style="grid-column: 1 / -1;">
         <label>Personaje que habla</label>
@@ -695,11 +712,15 @@ function buildNodesSection() {
       </div>
       <div class="field" style="grid-column: 1 / -1;">
         <label>Texto</label>
-        <textarea name="text" placeholder="Ej: —Nunca pensé que volvería a verte —dijo, sin apartar la mirada."></textarea>
+        <textarea name="text" id="text-field" placeholder="Ej: —Nunca pensé que volvería a verte —dijo, sin apartar la mirada."></textarea>
       </div>
       <div class="field" id="next-field">
         <label>Siguiente nodo (para dialogue/event)</label>
         <select name="next" id="next-select"></select>
+      </div>
+      <div class="field" id="continue-after-field" hidden style="grid-column: 1 / -1;">
+        <label>Esta línea continúa después de...</label>
+        <select id="continue-after-select"></select>
       </div>
       <div class="field" id="chapter-end-field" hidden>
         <label>Próxima historia (a dónde sigue)</label>
@@ -712,13 +733,14 @@ function buildNodesSection() {
       </div>
       <div class="field" id="advanced-field" hidden style="grid-column: 1 / -1;">
         <label>JSON avanzado (checks para condition / outcomes para random)</label>
-        <textarea name="advancedJson" placeholder='[{"stat":"carisma","op":">=","value":5,"next":"n020"}]'></textarea>
+        <textarea name="advancedJson" placeholder='[{"checks":[{"stat":"carisma","operator":">=","value":5,"next":"n020"}],"fallbackNext":"n021"}]'></textarea>
       </div>
       <div class="form-actions">
-        <button type="submit">Guardar nodo</button>
+        <button type="submit" id="submit-node-btn">Guardar nodo</button>
         <button type="button" id="cancel-node" hidden>Cancelar edición</button>
       </div>
     </form>
+    <div class="script-transcript" id="script-transcript" hidden></div>
     <table class="entity-table">
       <thead><tr><th>ID</th><th>Historia</th><th>Tipo</th><th>Personaje</th><th>Texto</th><th>Acciones</th></tr></thead>
       <tbody id="tbody-nodes"></tbody>
@@ -727,8 +749,13 @@ function buildNodesSection() {
 
   const form = section.querySelector("#form-nodes");
   const typeSelect = form.elements.type;
+  const typeField = section.querySelector("#type-field");
+  const scriptEventField = section.querySelector("#script-event-field");
+  const scriptIsEventCheckbox = section.querySelector("#script-is-event");
   const nextField = section.querySelector("#next-field");
   const nextSelect = section.querySelector("#next-select");
+  const continueAfterField = section.querySelector("#continue-after-field");
+  const continueAfterSelect = section.querySelector("#continue-after-select");
   const chapterEndField = section.querySelector("#chapter-end-field");
   const nextStorySelect = section.querySelector("#next-story-select");
   const optionsField = section.querySelector("#options-field");
@@ -739,7 +766,15 @@ function buildNodesSection() {
   const nodeIdDisplay = section.querySelector("#node-id-display");
   const charPicker = section.querySelector("#char-picker");
   const cancelBtn = section.querySelector("#cancel-node");
+  const storySelect = section.querySelector("#story-select");
+  const textField = section.querySelector("#text-field");
+  const submitBtn = section.querySelector("#submit-node-btn");
+  const modeBtnFull = section.querySelector("#mode-btn-full");
+  const modeBtnScript = section.querySelector("#mode-btn-script");
+  const scriptModeHint = section.querySelector("#script-mode-hint");
+  const scriptTranscript = section.querySelector("#script-transcript");
 
+  let editorMode = "full"; // "full" | "script"
   let editingId = null;
   let currentNodeId = "";
   let selectedCharacter = "";
@@ -775,6 +810,26 @@ function buildNodesSection() {
       nextSelect.appendChild(opt);
     });
     nextSelect.value = current;
+  }
+
+  // solo nodos dialogue/event que todavía NO tienen "next" asignado —
+  // son los únicos puntos válidos para "enganchar" la próxima línea sin
+  // pisar una conexión que ya existía.
+  function refreshContinueAfterSelect(preferId) {
+    const current = preferId !== undefined ? preferId : continueAfterSelect.value;
+    const openThreads = allNodes.filter(
+      (n) => (n.type === "dialogue" || n.type === "event") && !n.next
+    );
+    continueAfterSelect.innerHTML = '<option value="">(ninguno — nodo suelto)</option>';
+    openThreads.forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n.id;
+      opt.textContent = `${n.id} — ${n.character || "narrador"}: ${(n.text || "").slice(0, 40)}`;
+      continueAfterSelect.appendChild(opt);
+    });
+    if (current && openThreads.some((n) => n.id === current)) {
+      continueAfterSelect.value = current;
+    }
   }
 
   function renderOptionRows() {
@@ -837,17 +892,26 @@ function buildNodesSection() {
     bgSelect.value = current;
   });
 
-  // historias disponibles (para el selector de "próxima historia" en chapter_end)
+  // historias disponibles: alimenta tanto el selector "Historia" del nodo
+  // como el de "próxima historia" en chapter_end.
   onSnapshot(collection(db, "stories"), (snap) => {
-    const current = nextStorySelect.value;
+    const currentStory = storySelect.value;
+    const currentNext = nextStorySelect.value;
+    storySelect.innerHTML = '<option value="">(elegir historia)</option>';
     nextStorySelect.innerHTML = '<option value="">(elegir historia)</option>';
     snap.forEach((d) => {
-      const opt = document.createElement("option");
-      opt.value = d.id;
-      opt.textContent = d.data().title || d.id;
-      nextStorySelect.appendChild(opt);
+      const label = d.data().title || d.id;
+      const opt1 = document.createElement("option");
+      opt1.value = d.id;
+      opt1.textContent = label;
+      storySelect.appendChild(opt1);
+      const opt2 = document.createElement("option");
+      opt2.value = d.id;
+      opt2.textContent = label;
+      nextStorySelect.appendChild(opt2);
     });
-    nextStorySelect.value = current;
+    storySelect.value = currentStory;
+    nextStorySelect.value = currentNext;
   });
 
   // personajes (protagonistas + heroínas) para el selector con foto
@@ -927,11 +991,39 @@ function buildNodesSection() {
 
   function updateVisibleFields() {
     const t = typeSelect.value;
-    nextField.hidden = !(t === "dialogue" || t === "event");
-    optionsField.hidden = t !== "choice";
-    advancedField.hidden = !(t === "condition" || t === "random");
-    chapterEndField.hidden = t !== "chapter_end";
+    if (editorMode === "script") {
+      typeField.hidden = true;
+      scriptEventField.hidden = false;
+      nextField.hidden = true;
+      continueAfterField.hidden = false;
+      optionsField.hidden = true;
+      advancedField.hidden = true;
+      chapterEndField.hidden = true;
+    } else {
+      typeField.hidden = false;
+      scriptEventField.hidden = true;
+      continueAfterField.hidden = true;
+      nextField.hidden = !(t === "dialogue" || t === "event");
+      optionsField.hidden = t !== "choice";
+      advancedField.hidden = !(t === "condition" || t === "random");
+      chapterEndField.hidden = t !== "chapter_end";
+    }
   }
+
+  function setEditorMode(mode) {
+    editorMode = mode;
+    modeBtnFull.classList.toggle("active", mode === "full");
+    modeBtnScript.classList.toggle("active", mode === "script");
+    scriptModeHint.hidden = mode !== "script";
+    scriptTranscript.hidden = mode !== "script";
+    submitBtn.textContent = mode === "script" ? "Guardar y seguir escribiendo →" : "Guardar nodo";
+    if (mode === "script") {
+      refreshContinueAfterSelect();
+    }
+    updateVisibleFields();
+  }
+  modeBtnFull.addEventListener("click", () => setEditorMode("full"));
+  modeBtnScript.addEventListener("click", () => setEditorMode("script"));
   typeSelect.addEventListener("change", updateVisibleFields);
   updateVisibleFields();
 
@@ -947,6 +1039,34 @@ function buildNodesSection() {
     updateVisibleFields();
     refreshNodeIdSuggestion();
     cancelBtn.hidden = true;
+  }
+
+  function softResetForScript(newNodeId, savedText) {
+    // no toca Historia/Personaje/Expresión/Fondo — son las que querés
+    // mantener mientras escribís varias líneas seguidas.
+    textField.value = "";
+    textField.focus();
+    // el nodo recién creado pasa a ser el próximo "hilo abierto" por
+    // default, así la línea siguiente se engancha sola sin elegir nada.
+    if (!allNodes.some((n) => n.id === newNodeId)) {
+      allNodes.push({
+        id: newNodeId,
+        type: scriptIsEventCheckbox.checked ? "event" : "dialogue",
+        text: savedText,
+        character: selectedCharacter
+      });
+    }
+    refreshContinueAfterSelect(newNodeId);
+    refreshNodeIdSuggestion();
+  }
+
+  function appendTranscriptLine(character, text) {
+    scriptTranscript.hidden = false;
+    const line = document.createElement("div");
+    line.className = "transcript-line";
+    line.innerHTML = `<b>${character || "narrador"}:</b> ${text}`;
+    scriptTranscript.appendChild(line);
+    scriptTranscript.scrollTop = scriptTranscript.scrollHeight;
   }
 
   cancelBtn.addEventListener("click", resetForm);
@@ -975,8 +1095,34 @@ function buildNodesSection() {
         );
       }
     }
+
+    if (editorMode === "script") {
+      if (!storySelect.value) return alert("Elegí a qué Historia pertenece antes de guardar.");
+      if (!textField.value.trim()) return alert("El texto no puede estar vacío.");
+      const data = {
+        storyId: storySelect.value,
+        type: scriptIsEventCheckbox.checked ? "event" : "dialogue",
+        character: selectedCharacter,
+        characterExpression: expressionField.hidden ? "" : expressionSelect.value,
+        backgroundUrl: bgSelect.value,
+        text: textField.value
+      };
+      try {
+        await setDoc(doc(db, "nodes", nodeId), data);
+        if (continueAfterSelect.value) {
+          await updateDoc(doc(db, "nodes", continueAfterSelect.value), { next: nodeId });
+        }
+        logActivity("create", "nodes", nodeId, data.text.slice(0, 40));
+        appendTranscriptLine(data.character, data.text);
+        softResetForScript(nodeId, data.text);
+      } catch (err) {
+        alert("Error guardando la línea: " + err.message);
+      }
+      return;
+    }
+
     const data = {
-      storyId: form.elements.storyId.value.trim(),
+      storyId: storySelect.value,
       type: typeSelect.value,
       character: selectedCharacter,
       characterExpression: expressionField.hidden ? "" : expressionSelect.value,
@@ -1034,6 +1180,7 @@ function buildNodesSection() {
     allNodes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     refreshNodeIdSuggestion();
     refreshNextSelect();
+    if (editorMode === "script") refreshContinueAfterSelect();
     if (!optionsField.hidden) renderOptionRows(); // refresca los <select> de next en las filas visibles
 
     tbody.innerHTML = "";
@@ -1066,6 +1213,7 @@ function buildNodesSection() {
             return;
         }
         acquireLock("nodes", item.id);
+        setEditorMode("full");
         editingId = item.id;
         currentNodeId = item.id;
         nodeIdDisplay.value = item.id;
