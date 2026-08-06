@@ -186,12 +186,17 @@ main { flex: 1; padding: 24px; overflow-x: auto; }
 .dynamic-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .imagelist-row, .statlist-row, .option-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
   background: #0f0f1a;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 10px;
+}
+.imagelist-row, .statlist-row {
+  flex-direction: row;
+  align-items: center;
 }
 .imagelist-row input, .statlist-row input, .option-row input, .option-row select {
   padding: 6px 8px;
@@ -277,3 +282,45 @@ main { flex: 1; padding: 24px; overflow-x: auto; }
 .transcript-line { padding: 4px 0; border-bottom: 1px solid #1c1c2e; color: var(--text); }
 .transcript-line:last-child { border-bottom: none; }
 .transcript-line b { color: var(--accent-2); }
+
+/* ---- checklist de tags (heroínas) ---- */
+.tag-checklist { display: flex; flex-wrap: wrap; gap: 10px; }
+.tag-check-label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 8px;
+  background: #0f0f1a; border: 1px solid var(--border);
+  font-size: 13px; color: var(--text); cursor: pointer;
+}
+.tag-check-label input { width: auto; }
+
+/* ---- chips de efectos (stat +N) ---- */
+.effects-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.effect-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(139, 92, 246, 0.2); border: 1px solid var(--accent);
+  color: var(--text); border-radius: 14px; padding: 3px 4px 3px 10px; font-size: 12px;
+}
+.effect-chip button {
+  border: none; background: transparent; color: var(--muted);
+  cursor: pointer; font-size: 11px; padding: 2px 6px;
+}
+.effects-add-row { display: flex; gap: 6px; align-items: center; }
+.effects-add-row select { flex: 1; }
+.effects-add-row input[type="number"] { width: 70px; flex: 0 0 70px; }
+
+/* ---- filas de la condición / random (dropdowns en vez de JSON) ---- */
+.check-row {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  background: #0f0f1a; border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; margin-bottom: 8px;
+}
+.outcome-row {
+  display: flex; flex-direction: column; gap: 8px;
+  background: #0f0f1a; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; margin-bottom: 8px;
+}
+.check-row select, .check-row input, .outcome-row select, .outcome-row input {
+  padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: #12121e; color: var(--text);
+}
+.check-row-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; }
