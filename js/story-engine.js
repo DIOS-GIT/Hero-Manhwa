@@ -54,6 +54,16 @@ class StoryEngine {
 
   applyEffects(effects = {}) {
     Object.entries(effects).forEach(([stat, delta]) => {
+      // "afinidad" es especial: en vez de una stat plana, sube la afinidad
+      // de TODAS las heroínas que el jugador tiene en esta partida puntual
+      // (sembradas como afinidad_<heroinaId> al arrancar la historia) — así
+      // los nodos no necesitan saber qué heroína le tocó a cada jugador.
+      if (stat === "afinidad") {
+        Object.keys(this.stats).forEach((k) => {
+          if (k.startsWith("afinidad_")) this.stats[k] = (this.stats[k] || 0) + delta;
+        });
+        return;
+      }
       this.stats[stat] = (this.stats[stat] || 0) + delta;
     });
   }
