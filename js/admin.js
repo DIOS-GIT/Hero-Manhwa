@@ -382,6 +382,134 @@ function subscribeLocks(collectionName, onChange) {
   );
 }
 
+// ---------- CAMPO: checklist de tags (tag-multiselect) ----------
+// Junta los tags únicos que ya existen en Trabajos y Vivienda, y los
+// muestra como checkboxes — así nunca se puede tipear un tag mal escrito
+// que no matchee con nada.
+function buildTagMultiselectField(container) {
+  let checkedTags = [];
+  let jobTags = new Set();
+  let housingTags = new Set();
+  const wrap = document.createElement("div");
+  wrap.className = "tag-checklist";
+
+  function render() {
+    const available = Array.from(new Set([...jobTags, ...housingTags])).sort();
+    wrap.innerHTML = "";
+    if (available.length === 0) {
+      wrap.innerHTML = '<p class="hint" style="margin:0;">Todavía no hay tags cargados en Trabajos ni Vivienda.</p>';
+      return;
+    }
+    available.forEach((tag) => {
+      const label = document.createElement("label");
+      label.className = "tag-check-label";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = checkedTags.includes(tag);
+      cb.addEventListener("change", () => {
+        checkedTags = cb.checked
+          ? [...new Set([...checkedTags, tag])]
+          : checkedTags.filter((t) => t !== tag);
+      });
+      label.append(cb, document.createTextNode(" " + tag));
+      wrap.appendChild(label);
+    });
+  }
+
+  onSnapshot(collection(db, "jobs"), (snap) => {
+    jobTags = new Set();
+    snap.forEach((d) => d.data().tag && jobTags.add(d.data().tag));
+    render();
+  });
+  onSnapshot(collection(db, "housing"), (snap) => {
+    housingTags = new Set();
+    snap.forEach((d) => d.data().tag && housingTags.add(d.data().tag));
+    render();
+  });
+
+  container.appendChild(wrap);
+  return {
+    getValue: () => [...checkedTags],
+    setValue: (v) => {
+      checkedTags = Array.isArray(v) ? [...v] : [];
+      render();
+    },
+  };
+}
+
+// stats que existen en el juego — se usa en varios selectores (efectos,
+// condiciones). "afinidad" es especial: el motor la aplica automáticamente
+// a la(s) heroína(s) que el jugador tenga en esa partida puntual.
+const STAT_OPTIONS = [
+  { value: "carisma", label: "Carisma" },
+  { value: "inteligencia", label: "Inteligencia" },
+  { value: "fisico", label: "Físico" },
+  { value: "riqueza", label: "Riqueza" },
+  { value: "afinidad", label: "Afinidad (de la/s heroína/s de esta partida)" },
+];
+
+// ---------- CAMPO: efectos en stats, como chips (para opciones de choice y outcomes de random) ----------
+function buildEffectsPicker(container, initial, onChange) {
+  let effects = initial ? Object.entries(initial).map(([stat, value]) => ({ stat, value })) : [];
+  const chipsEl = document.createElement("div");
+  chipsEl.className = "effects-chips";
+  const addRow = document.createElement("div");
+  addRow.className = "effects-add-row";
+  const statSel = document.createElement("select");
+  statSel.innerHTML = STAT_OPTIONS.map((s) => `<option value="${s.value}">${s.label}</option>`).join("");
+  const valInput = document.createElement("input");
+  valInput.type = "number";
+  valInput.placeholder = "+/-";
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "add-row-btn";
+  addBtn.textContent = "+ Agregar efecto";
+  function currentValue() {
+    const obj = {};
+    effects.forEach((e) => (obj[e.stat] = e.value));
+    return obj;
+  }
+  addBtn.addEventListener("click", () => {
+    const value = Number(valInput.value);
+    if (!value) return;
+    effects = effects.filter((e) => e.stat !== statSel.value);
+    effects.push({ stat: statSel.value, value });
+    valInput.value = "";
+    renderChips();
+    if (onChange) onChange(currentValue());
+  });
+  addRow.append(statSel, valInput, addBtn);
+
+  function renderChips() {
+    chipsEl.innerHTML = "";
+    effects.forEach((e) => {
+      const chip = document.createElement("span");
+      chip.className = "effect-chip";
+      const label = STAT_OPTIONS.find((s) => s.value === e.stat)?.label.split(" (")[0] || e.stat;
+      chip.textContent = `${label} ${e.value > 0 ? "+" : ""}${e.value} `;
+      const x = document.createElement("button");
+      x.type = "button";
+      x.textContent = "✕";
+      x.addEventListener("click", () => {
+        effects = effects.filter((ef) => ef !== e);
+        renderChips();
+        if (onChange) onChange(currentValue());
+      });
+      chip.appendChild(x);
+      chipsEl.appendChild(chip);
+    });
+  }
+  renderChips();
+  container.append(chipsEl, addRow);
+  return {
+    getValue: currentValue,
+    setValue: (v) => {
+      effects = v ? Object.entries(v).map(([stat, value]) => ({ stat, value })) : [];
+      renderChips();
+    },
+  };
+}
+
 // ---------- CRUD GENÉRICO ----------
 function buildCollectionSection(cfg) {
   const section = document.createElement("div");
@@ -451,6 +579,10 @@ function buildCollectionSection(cfg) {
       const container = document.createElement("div");
       complexFields[f.key] = buildFixedStatsField(container, f.keys, {});
       wrap.appendChild(container);
+    } else if (f.type === "tag-multiselect") {
+      const container = document.createElement("div");
+      complexFields[f.key] = buildTagMultiselectField(container);
+      wrap.appendChild(container);
     } else {
       const input = document.createElement("input");
       input.type = f.type === "number" ? "number" : "text";
@@ -478,6 +610,7 @@ function buildCollectionSection(cfg) {
       if (f.type === "image-list") complexFields[f.key].setValue([]);
       if (f.type === "stat-list") complexFields[f.key].setValue({});
       if (f.type === "fixed-stats") complexFields[f.key].setValue({});
+      if (f.type === "tag-multiselect") complexFields[f.key].setValue([]);
     });
   }
 
@@ -501,13 +634,14 @@ function buildCollectionSection(cfg) {
     e.preventDefault();
     const data = {};
     for (const f of cfg.fields) {
-      if (f.type === "image-list" || f.type === "stat-list" || f.type === "fixed-stats") {
+      if (f.type === "image-list" || f.type === "stat-list" || f.type === "fixed-stats" || f.type === "tag-multiselect") {
         data[f.key] = complexFields[f.key].getValue();
         continue;
       }
       const el = form.elements[f.key];
       let val = el.value;
       if (f.type === "number") val = val === "" ? null : Number(val);
+      if (f.normalize === "lowercase" && typeof val === "string") val = val.trim().toLowerCase();
       if (f.type === "json") {
         if (val.trim() === "") {
           val = null;
@@ -575,6 +709,8 @@ function buildCollectionSection(cfg) {
           td.textContent = Object.entries(item[f.key])
             .map(([k, v]) => `${k}:${v}`)
             .join(", ");
+        } else if (f.type === "tag-multiselect" && item[f.key]) {
+          td.textContent = (item[f.key] || []).join(", ");
         } else if (f.type === "json" && item[f.key]) {
           td.textContent = JSON.stringify(item[f.key]);
         } else {
@@ -609,6 +745,8 @@ function buildCollectionSection(cfg) {
             complexFields[f.key].setValue(val || []);
           } else if (f.type === "stat-list" || f.type === "fixed-stats") {
             complexFields[f.key].setValue(val || {});
+          } else if (f.type === "tag-multiselect") {
+            complexFields[f.key].setValue(val || []);
           } else if (f.type === "json") {
             form.elements[f.key].value = val ? JSON.stringify(val, null, 2) : "";
           } else if (f.type === "image") {
@@ -706,6 +844,50 @@ function buildNodesSection() {
         <label>Expresión (qué imagen de ese personaje usar en este nodo)</label>
         <select name="characterExpression" id="expression-select"></select>
       </div>
+      <div class="field" id="position-field" hidden>
+        <label>Posición en pantalla</label>
+        <select name="position" id="position-select">
+          <option value="centro">Centro</option>
+          <option value="izquierda">Izquierda</option>
+          <option value="derecha">Derecha</option>
+        </select>
+      </div>
+      <div class="field" id="effect-field" hidden>
+        <label>Efecto visual (opcional)</label>
+        <select name="effect" id="effect-select">
+          <option value="">Ninguno</option>
+          <option value="zoom">Zoom (acercamiento sutil)</option>
+          <option value="shake">Temblor</option>
+          <option value="pop">Aparición con rebote</option>
+          <option value="tilt">Inclinación</option>
+        </select>
+      </div>
+      <div class="field" id="second-char-field" hidden style="grid-column: 1 / -1;">
+        <label>Otro personaje en escena (opcional, no habla, queda atenuado)</label>
+        <select id="second-char-select"></select>
+      </div>
+      <div class="field" id="second-char-expression-field" hidden>
+        <label>Expresión del 2do personaje</label>
+        <select id="second-char-expression-select"></select>
+      </div>
+      <div class="field" id="second-char-position-field" hidden>
+        <label>Posición del 2do personaje</label>
+        <select id="second-char-position-select">
+          <option value="izquierda">Izquierda</option>
+          <option value="centro">Centro</option>
+          <option value="derecha">Derecha</option>
+        </select>
+      </div>
+      <div class="field" id="transition-field">
+        <label>Transición de escena</label>
+        <select name="transition" id="transition-select">
+          <option value="">Dissolve (crossfade, por defecto)</option>
+          <option value="wipe_left">Barrido hacia la izquierda</option>
+          <option value="wipe_right">Barrido hacia la derecha</option>
+          <option value="curtain">Cortina (corte a negro)</option>
+          <option value="shake">Temblor de cámara</option>
+        </select>
+      </div>
       <div class="field">
         <label>Fondo</label>
         <select name="backgroundUrl" id="bg-select"></select>
@@ -732,8 +914,13 @@ function buildNodesSection() {
         <button type="button" class="add-row-btn" id="add-option-btn">+ Agregar opción</button>
       </div>
       <div class="field" id="advanced-field" hidden style="grid-column: 1 / -1;">
-        <label>JSON avanzado (checks para condition / outcomes para random)</label>
-        <textarea name="advancedJson" placeholder='[{"checks":[{"stat":"carisma","operator":">=","value":5,"next":"n020"}],"fallbackNext":"n021"}]'></textarea>
+        <label id="advanced-label">Condiciones</label>
+        <div class="check-row-wrap" id="checks-rows"></div>
+        <button type="button" class="add-row-btn" id="add-check-btn">+ Agregar condición</button>
+        <div id="fallback-wrap" style="margin-top:10px;">
+          <label>Si ninguna se cumple, ir a</label>
+          <select id="fallback-select"></select>
+        </div>
       </div>
       <div class="form-actions">
         <button type="submit" id="submit-node-btn">Guardar nodo</button>
@@ -762,6 +949,22 @@ function buildNodesSection() {
   const optionsRows = section.querySelector("#options-rows");
   const addOptionBtn = section.querySelector("#add-option-btn");
   const advancedField = section.querySelector("#advanced-field");
+  const advancedLabel = section.querySelector("#advanced-label");
+  const checksRows = section.querySelector("#checks-rows");
+  const addCheckBtn = section.querySelector("#add-check-btn");
+  const fallbackWrap = section.querySelector("#fallback-wrap");
+  const fallbackSelect = section.querySelector("#fallback-select");
+  const positionField = section.querySelector("#position-field");
+  const positionSelect = section.querySelector("#position-select");
+  const effectField = section.querySelector("#effect-field");
+  const effectSelect = section.querySelector("#effect-select");
+  const secondCharField = section.querySelector("#second-char-field");
+  const secondCharSelect = section.querySelector("#second-char-select");
+  const secondCharExpressionField = section.querySelector("#second-char-expression-field");
+  const secondCharExpressionSelect = section.querySelector("#second-char-expression-select");
+  const secondCharPositionField = section.querySelector("#second-char-position-field");
+  const secondCharPositionSelect = section.querySelector("#second-char-position-select");
+  const transitionSelect = section.querySelector("#transition-select");
   const bgSelect = section.querySelector("#bg-select");
   const nodeIdDisplay = section.querySelector("#node-id-display");
   const charPicker = section.querySelector("#char-picker");
@@ -779,7 +982,9 @@ function buildNodesSection() {
   let currentNodeId = "";
   let selectedCharacter = "";
   let allNodes = []; // [{id, type, text, character}]
-  let optionItems = []; // [{text, next, effectsRaw}]
+  let optionItems = []; // [{text, next, effects}]
+  let checkItems = []; // [{mode:'stat'|'flag', stat, operator, value, flag, equals, next}]
+  let outcomeItems = []; // [{probability, next, effects}]
   let charactersList = []; // [{name, thumbUrl}]
   let locksMap = {};
   subscribeLocks("nodes", (map) => (locksMap = map));
@@ -837,6 +1042,11 @@ function buildNodesSection() {
     optionItems.forEach((opt, idx) => {
       const row = document.createElement("div");
       row.className = "option-row";
+      const topRow = document.createElement("div");
+      topRow.style.display = "flex";
+      topRow.style.gap = "8px";
+      topRow.style.width = "100%";
+
       const textInput = document.createElement("input");
       textInput.type = "text";
       textInput.placeholder = "Ej: Aceptar la misión";
@@ -854,12 +1064,6 @@ function buildNodesSection() {
       nextSel.value = opt.next || "";
       nextSel.addEventListener("change", () => (optionItems[idx].next = nextSel.value));
 
-      const effectsInput = document.createElement("input");
-      effectsInput.type = "text";
-      effectsInput.placeholder = 'efectos JSON opcional, ej: {"carisma":1}';
-      effectsInput.value = opt.effectsRaw || "";
-      effectsInput.addEventListener("input", () => (optionItems[idx].effectsRaw = effectsInput.value));
-
       const del = document.createElement("button");
       del.type = "button";
       del.className = "danger";
@@ -869,15 +1073,228 @@ function buildNodesSection() {
         renderOptionRows();
       });
 
-      row.append(textInput, nextSel, effectsInput, del);
+      topRow.append(textInput, nextSel, del);
+      row.appendChild(topRow);
+
+      const effectsContainer = document.createElement("div");
+      effectsContainer.style.width = "100%";
+      buildEffectsPicker(effectsContainer, opt.effects || {}, (val) => {
+        optionItems[idx].effects = val;
+      });
+      row.appendChild(effectsContainer);
+
       optionsRows.appendChild(row);
     });
   }
 
   addOptionBtn.addEventListener("click", () => {
-    optionItems.push({ text: "", next: "", effectsRaw: "" });
+    optionItems.push({ text: "", next: "", effects: {} });
     renderOptionRows();
   });
+
+  // ---- condición (checks + fallbackNext) ----
+  function renderCheckRows() {
+    checksRows.innerHTML = "";
+    checkItems.forEach((c, idx) => {
+      const row = document.createElement("div");
+      row.className = "check-row";
+
+      const statSel = document.createElement("select");
+      statSel.innerHTML =
+        STAT_OPTIONS.map((s) => `<option value="${s.value}">${s.label.split(" (")[0]}</option>`).join("") +
+        '<option value="__flag__">Flag (avanzado)</option>';
+      statSel.value = c.flag ? "__flag__" : c.stat || "carisma";
+
+      const flagInput = document.createElement("input");
+      flagInput.type = "text";
+      flagInput.placeholder = "nombre del flag";
+      flagInput.value = c.flag || "";
+      flagInput.hidden = !c.flag;
+
+      const opSel = document.createElement("select");
+      [
+        [">=", "≥"],
+        ["<=", "≤"],
+        [">", ">"],
+        ["<", "<"],
+        ["==", "=="],
+      ].forEach(([value, label]) => {
+        const o = document.createElement("option");
+        o.value = value;
+        o.textContent = label;
+        opSel.appendChild(o);
+      });
+      opSel.value = c.operator || ">=";
+      opSel.hidden = !!c.flag;
+
+      const valInput = document.createElement("input");
+      valInput.type = "number";
+      valInput.placeholder = "valor";
+      valInput.value = c.value ?? "";
+      valInput.style.width = "80px";
+      valInput.hidden = !!c.flag;
+
+      const nextSel = document.createElement("select");
+      nextSel.innerHTML = '<option value="">(nodo si se cumple)</option>';
+      allNodes.forEach((n) => {
+        const o = document.createElement("option");
+        o.value = n.id;
+        o.textContent = `${n.id} — ${(n.text || "").slice(0, 30)}`;
+        nextSel.appendChild(o);
+      });
+      nextSel.value = c.next || "";
+
+      statSel.addEventListener("change", () => {
+        if (statSel.value === "__flag__") {
+          checkItems[idx] = { flag: "", equals: true, next: checkItems[idx].next };
+        } else {
+          checkItems[idx] = { stat: statSel.value, operator: ">=", value: 0, next: checkItems[idx].next };
+        }
+        renderCheckRows();
+      });
+      flagInput.addEventListener("input", () => (checkItems[idx].flag = flagInput.value));
+      opSel.addEventListener("change", () => (checkItems[idx].operator = opSel.value));
+      valInput.addEventListener("input", () => (checkItems[idx].value = Number(valInput.value)));
+      nextSel.addEventListener("change", () => (checkItems[idx].next = nextSel.value));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Quitar";
+      del.addEventListener("click", () => {
+        checkItems.splice(idx, 1);
+        renderCheckRows();
+      });
+
+      row.append(statSel, flagInput, opSel, valInput, nextSel, del);
+      checksRows.appendChild(row);
+    });
+  }
+
+  // ---- random (outcomes pesados por probabilidad) ----
+  function renderOutcomeRows() {
+    checksRows.innerHTML = "";
+    outcomeItems.forEach((o, idx) => {
+      const row = document.createElement("div");
+      row.className = "outcome-row";
+      const topRow = document.createElement("div");
+      topRow.style.display = "flex";
+      topRow.style.gap = "8px";
+      topRow.style.width = "100%";
+      topRow.style.alignItems = "center";
+
+      const probInput = document.createElement("input");
+      probInput.type = "number";
+      probInput.placeholder = "% (ej: 30)";
+      probInput.style.width = "80px";
+      probInput.value = o.probability ?? "";
+      probInput.addEventListener("input", () => (outcomeItems[idx].probability = Number(probInput.value)));
+
+      const nextSel = document.createElement("select");
+      nextSel.innerHTML = '<option value="">(nodo destino)</option>';
+      allNodes.forEach((n) => {
+        const opt = document.createElement("option");
+        opt.value = n.id;
+        opt.textContent = `${n.id} — ${(n.text || "").slice(0, 30)}`;
+        nextSel.appendChild(opt);
+      });
+      nextSel.value = o.next || "";
+      nextSel.addEventListener("change", () => (outcomeItems[idx].next = nextSel.value));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "danger";
+      del.textContent = "Quitar";
+      del.addEventListener("click", () => {
+        outcomeItems.splice(idx, 1);
+        renderOutcomeRows();
+      });
+
+      topRow.append(probInput, nextSel, del);
+      row.appendChild(topRow);
+
+      const effectsContainer = document.createElement("div");
+      effectsContainer.style.width = "100%";
+      buildEffectsPicker(effectsContainer, o.effects || {}, (val) => {
+        outcomeItems[idx].effects = val;
+      });
+      row.appendChild(effectsContainer);
+
+      checksRows.appendChild(row);
+    });
+    const total = outcomeItems.reduce((sum, o) => sum + (Number(o.probability) || 0), 0);
+    const totalNote = document.createElement("p");
+    totalNote.className = "hint";
+    totalNote.style.margin = "4px 0 0";
+    totalNote.textContent =
+      total === 100 ? `✅ Suma ${total}%` : `⚠ Suma ${total}% — debería sumar 100%`;
+    checksRows.appendChild(totalNote);
+  }
+
+  addCheckBtn.addEventListener("click", () => {
+    if (typeSelect.value === "random") {
+      outcomeItems.push({ probability: 0, next: "", effects: {} });
+      renderOutcomeRows();
+    } else {
+      checkItems.push({ stat: "carisma", operator: ">=", value: 0, next: "" });
+      renderCheckRows();
+    }
+  });
+
+  function refreshFallbackSelect() {
+    const current = fallbackSelect.value;
+    fallbackSelect.innerHTML = '<option value="">(elegir nodo)</option>';
+    allNodes.forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n.id;
+      opt.textContent = `${n.id} — ${(n.text || "").slice(0, 30)}`;
+      fallbackSelect.appendChild(opt);
+    });
+    fallbackSelect.value = current;
+  }
+
+  function refreshAdvancedUI() {
+    if (typeSelect.value === "random") {
+      advancedLabel.textContent = "Desenlaces (deben sumar 100%)";
+      addCheckBtn.textContent = "+ Agregar desenlace";
+      fallbackWrap.hidden = true;
+      renderOutcomeRows();
+    } else if (typeSelect.value === "condition") {
+      advancedLabel.textContent = "Condiciones (se evalúan en orden, la primera que se cumpla gana)";
+      addCheckBtn.textContent = "+ Agregar condición";
+      fallbackWrap.hidden = false;
+      refreshFallbackSelect();
+      renderCheckRows();
+    }
+  }
+  typeSelect.addEventListener("change", refreshAdvancedUI);
+
+  // ---- segundo personaje en escena (opcional) ----
+  function refreshSecondCharSelect() {
+    const current = secondCharSelect.value;
+    secondCharSelect.innerHTML = '<option value="">(ninguno)</option>';
+    charactersList.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.name;
+      opt.textContent = c.name;
+      secondCharSelect.appendChild(opt);
+    });
+    secondCharSelect.value = current;
+    refreshSecondCharExpression();
+  }
+  function refreshSecondCharExpression() {
+    const character = charactersList.find((c) => c.name === secondCharSelect.value);
+    secondCharExpressionField.hidden = !character || !character.images || character.images.length === 0;
+    if (character && character.images) {
+      const current = secondCharExpressionSelect.value;
+      secondCharExpressionSelect.innerHTML = character.images
+        .map((img) => `<option value="${img.label}">${img.label || "(sin etiqueta)"}</option>`)
+        .join("");
+      if (character.images.some((img) => img.label === current)) secondCharExpressionSelect.value = current;
+    }
+    secondCharPositionField.hidden = !secondCharSelect.value;
+  }
+  secondCharSelect.addEventListener("change", refreshSecondCharExpression);
 
   // fondos
   onSnapshot(collection(db, "backgrounds"), (snap) => {
@@ -984,6 +1401,7 @@ function buildNodesSection() {
       });
       renderCharPicker();
       refreshExpressionOptions();
+      refreshSecondCharSelect();
     });
   }
   subscribeCharacters("protagonists");
@@ -991,6 +1409,7 @@ function buildNodesSection() {
 
   function updateVisibleFields() {
     const t = typeSelect.value;
+    const showsCharacter = t === "dialogue" || t === "choice" || t === "event";
     if (editorMode === "script") {
       typeField.hidden = true;
       scriptEventField.hidden = false;
@@ -999,6 +1418,11 @@ function buildNodesSection() {
       optionsField.hidden = true;
       advancedField.hidden = true;
       chapterEndField.hidden = true;
+      positionField.hidden = true;
+      effectField.hidden = true;
+      secondCharField.hidden = true;
+      secondCharExpressionField.hidden = true;
+      secondCharPositionField.hidden = true;
     } else {
       typeField.hidden = false;
       scriptEventField.hidden = true;
@@ -1007,6 +1431,12 @@ function buildNodesSection() {
       optionsField.hidden = t !== "choice";
       advancedField.hidden = !(t === "condition" || t === "random");
       chapterEndField.hidden = t !== "chapter_end";
+      positionField.hidden = !showsCharacter;
+      effectField.hidden = !showsCharacter;
+      secondCharField.hidden = !showsCharacter;
+      secondCharExpressionField.hidden = !showsCharacter || secondCharSelect.value === "";
+      secondCharPositionField.hidden = !showsCharacter || secondCharSelect.value === "";
+      if (t === "condition" || t === "random") refreshAdvancedUI();
     }
   }
 
@@ -1033,9 +1463,13 @@ function buildNodesSection() {
     form.reset();
     selectedCharacter = "";
     optionItems = [];
+    checkItems = [];
+    outcomeItems = [];
     renderOptionRows();
     renderCharPicker();
     refreshExpressionOptions("");
+    secondCharSelect.value = "";
+    refreshSecondCharExpression();
     updateVisibleFields();
     refreshNodeIdSuggestion();
     cancelBtn.hidden = true;
@@ -1126,7 +1560,13 @@ function buildNodesSection() {
       type: typeSelect.value,
       character: selectedCharacter,
       characterExpression: expressionField.hidden ? "" : expressionSelect.value,
+      position: positionField.hidden ? "centro" : positionSelect.value,
+      effect: effectField.hidden ? "" : effectSelect.value,
+      secondCharacter: secondCharField.hidden ? "" : secondCharSelect.value,
+      secondCharacterExpression: secondCharExpressionField.hidden ? "" : secondCharExpressionSelect.value,
+      secondCharacterPosition: secondCharPositionField.hidden ? "izquierda" : secondCharPositionSelect.value,
       backgroundUrl: bgSelect.value,
+      transition: transitionSelect.value,
       text: form.elements.text.value,
     };
     if (data.type === "dialogue" || data.type === "event") {
@@ -1143,27 +1583,27 @@ function buildNodesSection() {
         .filter((o) => o.text.trim())
         .map((o) => {
           const option = { text: o.text, next: o.next };
-          if (o.effectsRaw && o.effectsRaw.trim()) {
-            try {
-              option.effects = JSON.parse(o.effectsRaw);
-            } catch {
-              // efecto inválido: se ignora, no rompe el guardado
-            }
-          }
+          if (o.effects && Object.keys(o.effects).length) option.effects = o.effects;
           return option;
         });
     }
-    if (data.type === "condition" || data.type === "random") {
-      const raw = form.elements.advancedJson.value.trim();
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (data.type === "condition") data.checks = parsed;
-          else data.outcomes = parsed;
-        } catch (err) {
-          return alert("El JSON avanzado no es válido: " + err.message);
-        }
+    if (data.type === "condition") {
+      data.checks = checkItems.map((c) =>
+        c.flag
+          ? { flag: c.flag, equals: c.equals !== false, next: c.next }
+          : { stat: c.stat, operator: c.operator, value: c.value, next: c.next }
+      );
+      data.fallbackNext = fallbackSelect.value;
+      if (!data.fallbackNext) {
+        return alert('Un nodo "condition" necesita "si ninguna se cumple, ir a" completado.');
       }
+    }
+    if (data.type === "random") {
+      data.outcomes = outcomeItems.map((o) => {
+        const outcome = { probability: o.probability, next: o.next };
+        if (o.effects && Object.keys(o.effects).length) outcome.effects = o.effects;
+        return outcome;
+      });
     }
     try {
       const wasEditing = editingId;
@@ -1223,19 +1663,29 @@ function buildNodesSection() {
         renderCharPicker();
         refreshExpressionOptions(item.characterExpression || "");
         bgSelect.value = item.backgroundUrl || "";
+        positionSelect.value = item.position || "centro";
+        effectSelect.value = item.effect || "";
+        secondCharSelect.value = item.secondCharacter || "";
+        refreshSecondCharExpression();
+        if (item.secondCharacterExpression) secondCharExpressionSelect.value = item.secondCharacterExpression;
+        secondCharPositionSelect.value = item.secondCharacterPosition || "izquierda";
+        transitionSelect.value = item.transition || "";
         form.elements.text.value = item.text || "";
         nextSelect.value = item.next || "";
         nextStorySelect.value = item.nextStoryId || "";
         optionItems = (item.options || []).map((o) => ({
           text: o.text || "",
           next: o.next || "",
-          effectsRaw: o.effects ? JSON.stringify(o.effects) : "",
+          effects: o.effects || {},
         }));
         renderOptionRows();
-        if (item.checks) form.elements.advancedJson.value = JSON.stringify(item.checks, null, 2);
-        else if (item.outcomes) form.elements.advancedJson.value = JSON.stringify(item.outcomes, null, 2);
-        else form.elements.advancedJson.value = "";
+        checkItems = (item.checks || []).map((c) => ({ ...c }));
+        outcomeItems = (item.outcomes || []).map((o) => ({ ...o, effects: o.effects || {} }));
         updateVisibleFields();
+        if (item.type === "condition") {
+          refreshFallbackSelect();
+          fallbackSelect.value = item.fallbackNext || "";
+        }
         cancelBtn.hidden = false;
         form.scrollIntoView({ behavior: "smooth" });
       });
