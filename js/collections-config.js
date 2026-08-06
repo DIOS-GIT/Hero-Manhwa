@@ -36,7 +36,7 @@ export const COLLECTIONS = [
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true, placeholder: "Ej: Estudiante de élite" },
       { key: "desc", label: "Descripción", type: "textarea", placeholder: "Ej: vas a la academia más prestigiosa de la ciudad." },
-      { key: "tag", label: "Tag (ej: estudiante, oficinista)", type: "text", placeholder: "Ej: estudiante" },
+      { key: "tag", label: "Tag (ej: estudiante, oficinista)", type: "text", placeholder: "Ej: estudiante", normalize: "lowercase" },
     ],
   },
   {
@@ -47,12 +47,13 @@ export const COLLECTIONS = [
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true, placeholder: "Ej: Dormitorio compartido" },
       { key: "desc", label: "Descripción", type: "textarea", placeholder: "Ej: vivís con otros becados dentro del campus." },
-      { key: "tag", label: "Tag (ej: dormitorio, depto)", type: "text", placeholder: "Ej: dormitorio" },
+      { key: "tag", label: "Tag (ej: dormitorio, depto)", type: "text", placeholder: "Ej: dormitorio", normalize: "lowercase" },
       {
         key: "requiresJobTag",
         label: "Requiere este tag de trabajo (opcional)",
         type: "text",
         placeholder: "Ej: estudiante (vacío = disponible para todos)",
+        normalize: "lowercase",
       },
     ],
   },
@@ -60,16 +61,15 @@ export const COLLECTIONS = [
     key: "heroines",
     label: "Heroínas / Waifus",
     icon: "💗",
-    hint: "Los 'tags' tienen que matchear el tag de algún trabajo o vivienda — si no matchean ninguno, esa heroína nunca va a aparecer como opción en el juego.",
+    hint: "Los tags son una lista para tildar (ya no se escriben a mano, así no hay riesgo de un typo como 'Estudiante' vs 'estudiante' que rompa el match). Si no ves el tag que buscás, cargalo primero en Trabajos o Vivienda.",
     fields: [
       { key: "name", label: "Nombre", type: "text", required: true, placeholder: "Ej: Yua Tanaka" },
       { key: "desc", label: "Descripción", type: "textarea", placeholder: "Ej: tu compañera de clase, fría por fuera pero atenta con vos sin que se note." },
       { key: "images", label: "Imágenes (una por expresión)", type: "image-list" },
       {
         key: "tags",
-        label: "Tags separados por coma (deben matchear tag de trabajo o vivienda)",
-        type: "text",
-        placeholder: "estudiante,dormitorio",
+        label: "Tags (tildá los que correspondan — salen de los tags que ya cargaste en Trabajos y Vivienda)",
+        type: "tag-multiselect",
       },
       { key: "weight", label: "Peso en la ruleta (1-100, más alto = más probable)", type: "number", placeholder: "Ej: 50" },
       {
