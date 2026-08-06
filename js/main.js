@@ -2,19 +2,9 @@
  * main.js
  * -----------------------------------------------------------------------
  * Pega todas las piezas: cambia de pantalla, arranca el StoryEngine, y
- * renderiza la pantalla de lectura en formato novela visual clásica.
- *
- * Incorpora 4 ideas tomadas de cómo resuelve estas cosas Ren'Py, adaptadas
- * a nuestro stack (Firebase + admin propio en vez de archivos .rpy):
- *   1. Expresiones: cada nodo puede pedir una expresión puntual del
- *      personaje (la que se eligió en el admin); si no la especifica,
- *      usa la primera imagen cargada.
- *   2. Guardado/Continuar: guarda el progreso en localStorage del
- *      navegador (por ahora — más adelante puede migrar a Firestore
- *      por usuario, el motor ya lo deja preparado con serialize()).
- *   3. Rollback: volver un paso atrás en el diálogo, restaurando stats
- *      y flags a como estaban (no solo el texto).
- *   4. Transición: crossfade suave entre fondos en vez de corte seco.
+ * renderiza la pantalla de lectura en formato novela visual clásica —
+ * fondo, hasta 2 personajes en escena (posición + efecto), transiciones,
+ * guardado/rollback.
  * -----------------------------------------------------------------------
  */
 
@@ -41,27 +31,85 @@ function findById(arr, id) {
   return (arr || []).find((x) => x.id === id) || null;
 }
 
-// vuelve a disparar una animación CSS que ya está definida en la clase
-// del elemento (para que no se "salte" la primera vez y sí se repita en
-// cada línea nueva).
 function replayAnimation(el) {
   el.style.animation = "none";
-  void el.offsetWidth; // fuerza reflow
+  void el.offsetWidth;
   el.style.animation = "";
 }
 
-// ---- crossfade de fondo entre 2 capas superpuestas ----
+function setCharacterSlot(slotId, imgId, character, expressionLabel, position, dim, effectClass) {
+  const slot = document.getElementById(slotId);
+  const img = document.getElementById(imgId);
+
+  slot.classList.remove("vn-char-pos-izquierda", "vn-char-pos-centro", "vn-char-pos-derecha");
+  slot.classList.add(`vn-char-pos-${position || "centro"}`);
+  slot.classList.toggle("vn-char-dim", !!dim);
+
+  const portrait = character && character.images && character.images.length
+    ? character.images.find((im) => im.label === expressionLabel) || character.images[0]
+    : null;
+
+  if (!portrait) {
+    slot.hidden = true;
+    return;
+  }
+  slot.hidden = false;
+  if (img.src !== portrait.url) {
+    img.src = portrait.url;
+    img.alt = character.name;
+  }
+  img.classList.remove("vn-fx-zoom", "vn-fx-shake", "vn-fx-pop", "vn-fx-tilt");
+  if (effectClass) {
+    void img.offsetWidth;
+    img.classList.add(effectClass);
+  }
+}
+
+// ---- fondo con 2 capas superpuestas + librería de transiciones ----
 let activeBgLayer = "a";
 let currentBgUrl = null;
-function setBackground(url) {
+function setBackground(url, transitionType) {
   if (url === currentBgUrl) return;
   currentBgUrl = url;
-  const showing = document.getElementById(`vn-bg-${activeBgLayer}`);
+  const outgoing = document.getElementById(`vn-bg-${activeBgLayer}`);
   const nextLayer = activeBgLayer === "a" ? "b" : "a";
-  const hidden = document.getElementById(`vn-bg-${nextLayer}`);
-  hidden.style.backgroundImage = url ? `url('${url}')` : "";
-  hidden.style.opacity = "1";
-  showing.style.opacity = "0";
+  const incoming = document.getElementById(`vn-bg-${nextLayer}`);
+  const stage = document.getElementById("vn-stage-root");
+
+  incoming.style.backgroundImage = url ? `url('${url}')` : "";
+  incoming.classList.remove("wipe-left", "wipe-right");
+  incoming.style.zIndex = "";
+  incoming.style.clipPath = "";
+  void incoming.offsetWidth; // reflow, para poder re-disparar animaciones
+
+  if (transitionType === "wipe_left" || transitionType === "wipe_right") {
+    incoming.style.zIndex = "2";
+    outgoing.style.zIndex = "1";
+    incoming.style.opacity = "1";
+    incoming.classList.add(transitionType === "wipe_left" ? "wipe-left" : "wipe-right");
+  } else if (transitionType === "curtain") {
+    const curtain = document.getElementById("vn-curtain");
+    curtain.classList.remove("curtain-play");
+    void curtain.offsetWidth;
+    curtain.classList.add("curtain-play");
+    setTimeout(() => {
+      incoming.style.opacity = "1";
+      outgoing.style.opacity = "0";
+    }, 260);
+  } else {
+    // dissolve (default): crossfade normal de siempre
+    incoming.style.opacity = "1";
+    outgoing.style.opacity = "0";
+  }
+
+  if (transitionType === "shake") {
+    stage.classList.remove("cam-shake");
+    void stage.offsetWidth;
+    stage.classList.add("cam-shake");
+    incoming.style.opacity = "1";
+    outgoing.style.opacity = "0";
+  }
+
   activeBgLayer = nextLayer;
 }
 
@@ -109,7 +157,7 @@ async function continueSavedGame() {
   }
 
   engine = window.StoryEngine.fromSerialized(window.DEMO_STORY.nodes, saveData.engine);
-  currentBgUrl = null; // para que el próximo fondo sí dispare el crossfade
+  currentBgUrl = null;
   showScreen("screen-game");
   renderCurrentNode();
 }
@@ -119,6 +167,13 @@ async function startStory() {
     await window.loadStory(currentStoryId);
 
     const initialStats = { ...player.protagonist.stats };
+    // afinidad de cada heroína de ESTA partida, sembrada como stat propia
+    // (afinidad_<id>) — así las decisiones pueden subirla igual que
+    // cualquier otra stat, con el efecto genérico "afinidad".
+    player.heroines.forEach((h) => {
+      initialStats[`afinidad_${h.id}`] = (h.stats && h.stats.afinidad) || 0;
+    });
+
     const initialFlags = [
       `protagonista_${player.protagonist.id}`,
       `ruta_${player.route.id}`,
@@ -169,7 +224,6 @@ async function goToNextChapter(nextStoryId) {
 function renderCurrentNode() {
   const node = engine.getCurrentNode();
 
-  const charImg = document.getElementById("vn-character");
   const speakerEl = document.getElementById("vn-speaker-name");
   const systemTag = document.getElementById("vn-system-tag");
   const textEl = document.getElementById("vn-text");
@@ -181,13 +235,14 @@ function renderCurrentNode() {
 
   backBtn.disabled = !engine.canRollback();
 
-  // ---- fondo (con crossfade) ----
-  setBackground(node.backgroundUrl || "");
+  // ---- fondo, con la transición elegida en el nodo ----
+  setBackground(node.backgroundUrl || "", node.transition || "");
 
   // ---- final real, o fin de capítulo que sigue con la próxima historia ----
   if (node.type === "ending" || node.type === "chapter_end") {
     dialogueBox.style.visibility = "hidden";
-    charImg.hidden = true;
+    document.getElementById("vn-char-slot-primary").hidden = true;
+    document.getElementById("vn-char-slot-secondary").hidden = true;
     endingCard.hidden = false;
 
     const tagEl = document.getElementById("vn-ending-tag");
@@ -213,23 +268,31 @@ function renderCurrentNode() {
   endingCard.hidden = true;
   dialogueBox.style.visibility = "visible";
 
-  // ---- personaje + expresión ----
-  const character = findCharacter(node.character);
-  let portrait = null;
-  if (character && character.images && character.images.length) {
-    portrait =
-      character.images.find((img) => img.label === node.characterExpression) ||
-      character.images[0];
-  }
-  if (portrait) {
-    if (charImg.src !== portrait.url) {
-      charImg.src = portrait.url;
-      charImg.alt = character.name;
-      replayAnimation(charImg);
-    }
-    charImg.hidden = false;
+  // ---- personaje principal (quien habla): posición + efecto visual ----
+  const effectClassMap = { zoom: "vn-fx-zoom", shake: "vn-fx-shake", pop: "vn-fx-pop", tilt: "vn-fx-tilt" };
+  setCharacterSlot(
+    "vn-char-slot-primary",
+    "vn-character-primary",
+    findCharacter(node.character),
+    node.characterExpression,
+    node.position || "centro",
+    false,
+    effectClassMap[node.effect] || null
+  );
+
+  // ---- segundo personaje en escena (opcional, siempre atenuado) ----
+  if (node.secondCharacter) {
+    setCharacterSlot(
+      "vn-char-slot-secondary",
+      "vn-character-secondary",
+      findCharacter(node.secondCharacter),
+      node.secondCharacterExpression,
+      node.secondCharacterPosition || "izquierda",
+      true,
+      null
+    );
   } else {
-    charImg.hidden = true;
+    document.getElementById("vn-char-slot-secondary").hidden = true;
   }
 
   // ---- nombre de quien habla ----
@@ -253,7 +316,7 @@ function renderCurrentNode() {
     systemTag.hidden = true;
   }
 
-  // ---- texto (con fade de entrada en cada línea) ----
+  // ---- texto ----
   textEl.textContent = node.text || "";
   replayAnimation(textEl);
 
@@ -299,6 +362,8 @@ function initGameControls() {
     panel.hidden = !panel.hidden;
     if (!panel.hidden) {
       panel.innerHTML = Object.entries(engine.stats)
+        // la afinidad de las heroínas nunca se le muestra al jugador
+        .filter(([k]) => !k.startsWith("afinidad_"))
         .map(([k, v]) => `<div>${k}: <b class="accent">${v}</b></div>`)
         .join("");
     }
