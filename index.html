@@ -82,14 +82,22 @@
 
   <!-- ================= LECTURA — ESTILO NOVELA VISUAL ================= -->
   <section id="screen-game" class="screen vn-screen">
-    <div class="vn-stage">
+    <div class="vn-stage" id="vn-stage-root">
 
       <!-- fondo a pantalla completa, 2 capas para poder hacer un crossfade suave -->
       <div class="vn-bg-layer" id="vn-bg-a"></div>
       <div class="vn-bg-layer" id="vn-bg-b"></div>
 
-      <!-- personaje parado sobre el fondo -->
-      <img class="vn-character" id="vn-character" src="" alt="" hidden>
+      <!-- cortina para la transición tipo "curtain" -->
+      <div id="vn-curtain"></div>
+
+      <!-- personajes parados sobre el fondo: principal (quien habla) + uno opcional de fondo -->
+      <div class="vn-char-slot vn-char-pos-centro" id="vn-char-slot-primary" hidden>
+        <img class="vn-character" id="vn-character-primary" src="" alt="">
+      </div>
+      <div class="vn-char-slot vn-char-pos-izquierda vn-char-dim" id="vn-char-slot-secondary" hidden>
+        <img class="vn-character" id="vn-character-secondary" src="" alt="">
+      </div>
 
       <!-- barra superior -->
       <header class="game-hud vn-hud">
@@ -108,136 +116,6 @@
         <p class="vn-ending-summary" id="vn-ending-summary"></p>
         <button class="btn-primary" id="btn-hud-restart-2">↺ jugar de nuevo</button>
         <button class="btn-primary" id="btn-chapter-continue" hidden>Continuar al próximo capítulo →</button>
-      </div>
-
-      <!-- caja de diálogo, fija abajo -->
-      <div class="vn-dialogue-box" id="vn-dialogue-box">
-        <div class="vn-system-tag" id="vn-system-tag" hidden></div>
-        <div class="vn-speaker-name" id="vn-speaker-name" hidden></div>
-        <div class="vn-text" id="vn-text"></div>
-        <div class="vn-options" id="vn-options" hidden></div>
-        <button class="vn-continue-btn" id="btn-reader-continue" hidden>▼</button>
-      </div>
-
-    </div>
-  </section>
-
-</div>
-
-<script type="module" src="js/data-loader.js"></script>
-<script src="js/story-engine.js"></script>
-<script src="js/character-creation.js"></script>
-<script src="js/main.js"></script>
-</body>
-</html><!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manhwa Legend — Reencarnación</title>
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-
-<div id="app">
-
-  <!-- ================= BOOT / INTRO ================= -->
-  <section id="screen-boot" class="screen active">
-    <div class="sys-window boot-window">
-      <div class="sys-window-head">
-        <span class="sys-dot"></span><span class="sys-dot"></span><span class="sys-dot"></span>
-        <span class="sys-window-title">SISTEMA</span>
-      </div>
-      <div class="sys-window-body">
-        <p class="boot-line">detectando alma sin cuerpo asignado...</p>
-        <p class="boot-line">buscando mundo compatible...</p>
-        <p class="boot-line boot-line--hit">mundo encontrado: <span class="accent">MANHWA LEGEND</span></p>
-        <h1 class="boot-title">Vas a reencarnar.<br>Elegí bien.</h1>
-        <p class="boot-warning">contenido para audiencia adulta (+18) · verificación de edad a cargo del sitio donde publiques esto</p>
-        <button class="btn-primary" id="btn-start">Iniciar reencarnación →</button>
-        <button class="btn-ghost" id="btn-continue-save" hidden>▶ Continuar partida guardada</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= PASOS DE CREACIÓN (genérico, 1 al 5) ================= -->
-  <section id="screen-step" class="screen">
-    <div class="step-tracker">
-      <span class="step-tracker-label">PASO</span>
-      <span id="step-current">1</span><span class="step-tracker-sep">/</span><span id="step-total">5</span>
-      <span class="step-tracker-name" id="step-label">Reencarnación</span>
-    </div>
-
-    <div class="sys-window step-window">
-      <div class="sys-window-head">
-        <span class="sys-dot"></span><span class="sys-dot"></span><span class="sys-dot"></span>
-        <span class="sys-window-title" id="step-window-title">SISTEMA — SELECCIÓN</span>
-      </div>
-      <div class="sys-window-body">
-        <h2 id="step-title">título del paso</h2>
-        <p class="step-subtitle" id="step-subtitle">subtítulo del paso</p>
-
-        <!-- toggle especial solo para el paso de heroínas -->
-        <div class="harem-toggle" id="harem-toggle" hidden>
-          <button class="harem-toggle-btn active" data-mode="fmc">FMC única</button>
-          <button class="harem-toggle-btn" data-mode="harem">Harem</button>
-        </div>
-
-        <div class="card-grid" id="step-cards"></div>
-      </div>
-    </div>
-
-    <div class="step-nav">
-      <button class="btn-ghost" id="btn-step-back">← atrás</button>
-      <button class="btn-primary" id="btn-step-next" disabled>continuar →</button>
-    </div>
-  </section>
-
-  <!-- ================= RESUMEN ANTES DE EMPEZAR ================= -->
-  <section id="screen-summary" class="screen">
-    <div class="sys-window">
-      <div class="sys-window-head">
-        <span class="sys-dot"></span><span class="sys-dot"></span><span class="sys-dot"></span>
-        <span class="sys-window-title">SISTEMA — CONFIRMACIÓN</span>
-      </div>
-      <div class="sys-window-body">
-        <h2>Tu personaje está listo</h2>
-        <div id="summary-content" class="summary-grid"></div>
-        <div class="step-nav">
-          <button class="btn-ghost" id="btn-summary-back">← revisar</button>
-          <button class="btn-primary" id="btn-summary-confirm">Empezar tu historia →</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= LECTURA — ESTILO NOVELA VISUAL ================= -->
-  <section id="screen-game" class="screen vn-screen">
-    <div class="vn-stage">
-
-      <!-- fondo a pantalla completa, 2 capas para poder hacer un crossfade suave -->
-      <div class="vn-bg-layer" id="vn-bg-a"></div>
-      <div class="vn-bg-layer" id="vn-bg-b"></div>
-
-      <!-- personaje parado sobre el fondo -->
-      <img class="vn-character" id="vn-character" src="" alt="" hidden>
-
-      <!-- barra superior -->
-      <header class="game-hud vn-hud">
-        <button class="hud-btn" id="btn-hud-back">◀ atrás</button>
-        <button class="hud-btn" id="btn-hud-stats">📊 stats</button>
-        <div class="hud-title">Manhwa Legend</div>
-        <button class="hud-btn" id="btn-hud-save">💾 guardar</button>
-        <button class="hud-btn" id="btn-hud-restart">↺ reiniciar</button>
-      </header>
-      <div class="hud-stats-panel" id="hud-stats-panel" hidden></div>
-
-      <!-- tarjeta de final (solo visible cuando el nodo es "ending") -->
-      <div class="vn-ending-card" id="vn-ending-card" hidden>
-        <div class="vn-ending-tag">FINAL</div>
-        <h2 class="vn-ending-title" id="vn-ending-title"></h2>
-        <p class="vn-ending-summary" id="vn-ending-summary"></p>
-        <button class="btn-primary" id="btn-hud-restart-2">↺ jugar de nuevo</button>
       </div>
 
       <!-- caja de diálogo, fija abajo -->
