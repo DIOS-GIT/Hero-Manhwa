@@ -209,7 +209,7 @@ function buildImageListField(container, initial) {
   return {
     getValue: () => items,
     setValue: (v) => {
-      items = v ? JSON.parse(JSON.stringify(v)) : [];
+      items = Array.isArray(v) ? JSON.parse(JSON.stringify(v)) : [];
       renderRows();
     },
   };
@@ -688,6 +688,7 @@ function buildCollectionSection(cfg) {
   onSnapshot(collection(db, cfg.key), (snap) => {
     tbody.innerHTML = "";
     snap.forEach((docSnap) => {
+      try {
       const item = docSnap.data();
       const tr = document.createElement("tr");
       cfg.fields.forEach((f) => {
@@ -698,7 +699,7 @@ function buildCollectionSection(cfg) {
           img.className = "cell-thumb";
           td.appendChild(img);
         } else if (f.type === "image-list" && item[f.key]) {
-          (item[f.key] || []).slice(0, 3).forEach((im) => {
+          (Array.isArray(item[f.key]) ? item[f.key] : []).slice(0, 3).forEach((im) => {
             const img = document.createElement("img");
             img.src = im.url;
             img.title = im.label || "";
@@ -710,7 +711,9 @@ function buildCollectionSection(cfg) {
             .map(([k, v]) => `${k}:${v}`)
             .join(", ");
         } else if (f.type === "tag-multiselect" && item[f.key]) {
-          td.textContent = (item[f.key] || []).join(", ");
+          // tolera datos viejos guardados como texto libre (antes de este
+          // campo pasar a checklist), en vez de romper con .join() en un string
+          td.textContent = Array.isArray(item[f.key]) ? item[f.key].join(", ") : String(item[f.key]);
         } else if (f.type === "json" && item[f.key]) {
           td.textContent = JSON.stringify(item[f.key]);
         } else {
@@ -776,6 +779,30 @@ function buildCollectionSection(cfg) {
       actionsTd.append(editBtn, delBtn);
       tr.appendChild(actionsTd);
       tbody.appendChild(tr);
+      } catch (err) {
+        // un documento con datos en formato viejo/roto no debe tumbar la
+        // lista para todo el equipo — se muestra como fila de aviso, con
+        // opción de borrarlo, y el resto de la tabla sigue funcionando.
+        console.error(`Error mostrando ${cfg.key}/${docSnap.id}:`, err);
+        const warnTr = document.createElement("tr");
+        const warnTd = document.createElement("td");
+        warnTd.colSpan = cfg.fields.length + 1;
+        warnTd.innerHTML =
+          `⚠ No se pudo mostrar este elemento (ID: <code>${docSnap.id}</code>) — probablemente tiene ` +
+          `datos en un formato viejo. `;
+        const fixDelBtn = document.createElement("button");
+        fixDelBtn.type = "button";
+        fixDelBtn.className = "danger";
+        fixDelBtn.textContent = "Borrar este elemento";
+        fixDelBtn.addEventListener("click", async () => {
+          if (confirm("¿Borrar este elemento con datos rotos? No se puede deshacer.")) {
+            await deleteDoc(doc(db, cfg.key, docSnap.id));
+          }
+        });
+        warnTd.appendChild(fixDelBtn);
+        warnTr.appendChild(warnTd);
+        tbody.appendChild(warnTr);
+      }
     });
   });
 
