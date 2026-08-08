@@ -94,7 +94,7 @@ export const COLLECTIONS = [
     key: "stories",
     label: "Historias / Capítulos",
     icon: "📖",
-    hint: "El 'ID del nodo inicial' es el ID (n001, n002...) del primer nodo que armes para esta historia en la pestaña Nodos/Decisiones.",
+    hint: "El 'ID del nodo inicial' es el ID (n001, n002...) del primer nodo que armes para esta historia en la pestaña Nodos/Decisiones. Tildá 'Es la Historia de introducción' en UNA sola — el juego siempre arranca por ahí, sin importar cuántas otras historias tengas cargadas.",
     fields: [
       { key: "title", label: "Título", type: "text", required: true, placeholder: "Ej: Capítulo 1 — El despertar" },
       { key: "description", label: "Descripción", type: "textarea", placeholder: "Ej: el protagonista descubre que reencarnó en el mundo del manhwa." },
@@ -103,6 +103,11 @@ export const COLLECTIONS = [
         label: "ID del nodo inicial (ej: n001)",
         type: "text",
         placeholder: "Ej: n001",
+      },
+      {
+        key: "isIntro",
+        label: "Es la Historia de introducción (el juego siempre arranca acá)",
+        type: "boolean",
       },
     ],
   },
