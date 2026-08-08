@@ -9,7 +9,7 @@
  */
 
 let engine = null;
-let currentStoryId = "TU_STORY_ID"; // el ID del documento en Firestore > stories
+let currentStoryId = null; // se resuelve solo: busca la Historia marcada como introducción
 const SAVE_KEY = "manhwa_legend_save_v1";
 
 function showScreen(id) {
@@ -164,6 +164,15 @@ async function continueSavedGame() {
 
 async function startStory() {
   try {
+    currentStoryId = await window.findIntroStoryId();
+    if (!currentStoryId) {
+      alert(
+        'Todavía no marcaste ninguna Historia como "Historia de introducción" en el admin.\n\n' +
+        "Andá a Historias/Capítulos, editá la que quieras que sea el arranque del juego, " +
+        'tildá "Es la Historia de introducción", guardá, y volvé a intentar.'
+      );
+      return;
+    }
     await window.loadStory(currentStoryId);
 
     const initialStats = { ...player.protagonist.stats };
@@ -197,8 +206,8 @@ async function startStory() {
     console.error(err);
     alert(
       `No se pudo arrancar la historia: ${err.message}\n\n` +
-      `Revisá que "currentStoryId" en main.js tenga el ID real de la Historia ` +
-      `(no "TU_STORY_ID"), y que esa Historia tenga un nodo inicial válido cargado.`
+      `Revisá que la Historia marcada como introducción tenga un "ID del nodo inicial" ` +
+      `válido, y que ese nodo exista en Nodos/Decisiones.`
     );
   }
 }
