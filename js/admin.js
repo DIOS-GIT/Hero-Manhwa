@@ -511,85 +511,6 @@ function buildEffectsPicker(container, initial, onChange) {
   };
 }
 
-// ---------- APERTURA ESTÁNDAR ("Sistema") para Historias nuevas ----------
-// Los 3 nodos con los que arranca SIEMPRE una Historia: el jugador se
-// despierta, el sistema le mete los recuerdos prestados, y elige cómo
-// reacciona. El texto es solo el default — cualquiera del equipo lo
-// puede editar después desde la pestaña Nodos, como cualquier otro nodo.
-// El personaje "Sistema"/"Vos" es un rótulo de texto libre (no hace
-// falta que exista como Protagonista/Heroína): al no matchear ningún
-// personaje real, el juego lo muestra como texto sin retrato — que es
-// justo el efecto buscado para la voz del sistema.
-const STANDARD_OPENING_NODES = [
-  {
-    type: "dialogue",
-    character: "Sistema",
-    text: "Abrís los ojos. Esta no es tu habitación. Esta no es tu vida.",
-  },
-  {
-    type: "event",
-    character: "",
-    text: "Los recuerdos de otra persona se acomodan en tu cabeza como si siempre hubieran estado ahí.",
-  },
-  {
-    type: "choice",
-    character: "Vos",
-    text: "¿Cómo reaccionás ante esto?",
-    options: [
-      { text: "Con calma. Hay que entender las reglas de este mundo primero.", effects: { inteligencia: 1 } },
-      { text: "Con pánico. Nada de esto tiene sentido.", effects: { carisma: -1 } },
-    ],
-  },
-];
-
-// busca el próximo ID libre (n001, n002...) empezando desde `from`,
-// re-chequeando contra Firestore por si otro admin creó nodos justo
-// en el medio (mismo criterio que usa el guardado manual de nodos).
-async function nextFreeNodeId(from) {
-  let n = from;
-  while (true) {
-    const id = "n" + String(n).padStart(3, "0");
-    const existing = await getDoc(doc(db, "nodes", id));
-    if (!existing.exists()) return id;
-    n++;
-  }
-}
-
-// crea los 3 nodos de apertura para `storyId`, encadenados entre sí, y
-// deja el último (la elección) con next:"" en cada opción — el equipo
-// lo conecta a mano con el contenido personalizado de esa Historia.
-// Devuelve el ID del primer nodo, para completar "startNode" solo.
-async function seedStandardOpening(storyId) {
-  const nodesSnap = await getDocs(collection(db, "nodes"));
-  let max = 0;
-  nodesSnap.forEach((d) => {
-    const m = /^n(\d+)$/.exec(d.id);
-    if (m) max = Math.max(max, parseInt(m[1], 10));
-  });
-
-  const ids = [];
-  let cursor = max + 1;
-  for (let i = 0; i < STANDARD_OPENING_NODES.length; i++) {
-    const id = await nextFreeNodeId(cursor);
-    ids.push(id);
-    cursor = parseInt(id.slice(1), 10) + 1;
-  }
-
-  for (let i = 0; i < STANDARD_OPENING_NODES.length; i++) {
-    const base = STANDARD_OPENING_NODES[i];
-    const data = { ...base, storyId };
-    if (base.type === "choice") {
-      data.options = base.options.map((o) => ({ ...o, next: "" }));
-    } else {
-      data.next = ids[i + 1] || "";
-    }
-    await setDoc(doc(db, "nodes", ids[i]), data);
-    logActivity("create", "nodes", ids[i], data.text.slice(0, 40));
-  }
-
-  return ids[0];
-}
-
 // ---------- CRUD GENÉRICO ----------
 function buildCollectionSection(cfg) {
   const section = document.createElement("div");
@@ -617,6 +538,19 @@ function buildCollectionSection(cfg) {
   cfg.fields.forEach((f) => {
     const wrap = document.createElement("div");
     wrap.className = "field";
+
+    if (f.type === "boolean") {
+      const checkLabel = document.createElement("label");
+      checkLabel.className = "checkbox-label";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.name = f.key;
+      checkLabel.append(input, document.createTextNode(" " + f.label));
+      wrap.appendChild(checkLabel);
+      form.appendChild(wrap);
+      return;
+    }
+
     const label = document.createElement("label");
     label.textContent = f.label;
     wrap.appendChild(label);
@@ -673,29 +607,6 @@ function buildCollectionSection(cfg) {
     form.appendChild(wrap);
   });
 
-  // ---- checkbox especial, solo para Historias: sembrar la apertura estándar ----
-  let openingCheckbox = null;
-  if (cfg.key === "stories") {
-    const openingWrap = document.createElement("div");
-    openingWrap.className = "field";
-    openingWrap.style.gridColumn = "1 / -1";
-    const openingLabel = document.createElement("label");
-    openingLabel.className = "checkbox-label";
-    openingCheckbox = document.createElement("input");
-    openingCheckbox.type = "checkbox";
-    openingCheckbox.checked = true;
-    openingLabel.append(openingCheckbox, document.createTextNode(
-      " Cargar la apertura estándar (Sistema → recuerdos → \"¿Cómo reaccionás?\") como inicio de esta Historia"
-    ));
-    openingWrap.appendChild(openingLabel);
-    const openingHint = document.createElement("p");
-    openingHint.className = "hint";
-    openingHint.textContent =
-      "Crea 3 nodos ya encadenados y completa \"ID del nodo inicial\" solo. Después los editás como cualquier nodo en la pestaña Nodos — el texto es un default, no algo fijo.";
-    openingWrap.appendChild(openingHint);
-    form.appendChild(openingWrap);
-  }
-
   const actions = document.createElement("div");
   actions.className = "form-actions";
   const saveBtn = document.createElement("button");
@@ -723,10 +634,6 @@ function buildCollectionSection(cfg) {
     form.reset();
     resetComplexFields();
     form.querySelectorAll(".img-preview").forEach((p) => (p.hidden = true));
-    if (openingCheckbox) {
-      openingCheckbox.closest(".field").hidden = false;
-      openingCheckbox.checked = true;
-    }
     cancelBtn.hidden = true;
   });
 
@@ -743,6 +650,10 @@ function buildCollectionSection(cfg) {
     for (const f of cfg.fields) {
       if (f.type === "image-list" || f.type === "stat-list" || f.type === "fixed-stats" || f.type === "tag-multiselect") {
         data[f.key] = complexFields[f.key].getValue();
+        continue;
+      }
+      if (f.type === "boolean") {
+        data[f.key] = form.elements[f.key].checked;
         continue;
       }
       const el = form.elements[f.key];
@@ -769,18 +680,23 @@ function buildCollectionSection(cfg) {
     }
     try {
       const wasEditing = editingId;
+      let savedId = editingId;
       if (editingId) {
         await updateDoc(doc(db, cfg.key, editingId), data);
         await releaseLock(cfg.key, editingId);
-      } else if (cfg.key === "stories" && openingCheckbox && openingCheckbox.checked) {
-        // creamos la Historia primero (sin startNode todavía), sembramos
-        // los 3 nodos de apertura contra su ID real, y recién ahí
-        // completamos "startNode" con el primer nodo generado.
-        const newRef = await addDoc(collection(db, cfg.key), data);
-        const firstNodeId = await seedStandardOpening(newRef.id);
-        await updateDoc(newRef, { startNode: firstNodeId });
       } else {
-        await addDoc(collection(db, cfg.key), data);
+        const ref = await addDoc(collection(db, cfg.key), data);
+        savedId = ref.id;
+      }
+      // solo puede haber UNA historia de introducción a la vez — si esta
+      // se marcó, le sacamos el tilde a cualquier otra que lo tuviera.
+      if (cfg.key === "stories" && data.isIntro) {
+        const others = await getDocs(query(collection(db, "stories"), where("isIntro", "==", true)));
+        const unset = [];
+        others.forEach((d) => {
+          if (d.id !== savedId) unset.push(updateDoc(doc(db, "stories", d.id), { isIntro: false }));
+        });
+        await Promise.all(unset);
       }
       logActivity(
         wasEditing ? "update" : "create",
@@ -791,7 +707,6 @@ function buildCollectionSection(cfg) {
       form.reset();
       resetComplexFields();
       form.querySelectorAll(".img-preview").forEach((p) => (p.hidden = true));
-      if (openingCheckbox) openingCheckbox.checked = true;
       editingId = null;
       cancelBtn.hidden = true;
     } catch (err) {
@@ -829,6 +744,8 @@ function buildCollectionSection(cfg) {
           // tolera datos viejos guardados como texto libre (antes de este
           // campo pasar a checklist), en vez de romper con .join() en un string
           td.textContent = Array.isArray(item[f.key]) ? item[f.key].join(", ") : String(item[f.key]);
+        } else if (f.type === "boolean") {
+          td.textContent = item[f.key] ? "✅ Sí" : "No";
         } else if (f.type === "json" && item[f.key]) {
           td.textContent = JSON.stringify(item[f.key]);
         } else {
@@ -865,6 +782,8 @@ function buildCollectionSection(cfg) {
             complexFields[f.key].setValue(val || {});
           } else if (f.type === "tag-multiselect") {
             complexFields[f.key].setValue(val || []);
+          } else if (f.type === "boolean") {
+            form.elements[f.key].checked = !!val;
           } else if (f.type === "json") {
             form.elements[f.key].value = val ? JSON.stringify(val, null, 2) : "";
           } else if (f.type === "image") {
@@ -879,10 +798,6 @@ function buildCollectionSection(cfg) {
             form.elements[f.key].value = val ?? "";
           }
         });
-        // editando una Historia que ya existe no tiene sentido volver a
-        // sembrar la apertura (le pisaría el startNode) — se oculta el
-        // checkbox mientras dure la edición.
-        if (openingCheckbox) openingCheckbox.closest(".field").hidden = true;
         cancelBtn.hidden = false;
         form.scrollIntoView({ behavior: "smooth" });
       });
