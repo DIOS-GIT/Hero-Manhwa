@@ -869,6 +869,7 @@ function buildNodesSection() {
       elegir "siguiente nodo" a mano. Para decisiones, condiciones o finales,
       volvé al formulario completo.
     </p>
+    <div class="node-editor-layout">
     <form class="entity-form" id="form-nodes">
       <div class="field">
         <label>ID del nodo (automático)</label>
@@ -986,13 +987,60 @@ function buildNodesSection() {
       <div class="form-actions">
         <button type="submit" id="submit-node-btn">Guardar nodo</button>
         <button type="button" id="cancel-node" hidden>Cancelar edición</button>
+        <button type="button" id="playtest-from-form-btn" class="ghost-btn">▶ Probar desde este nodo</button>
       </div>
     </form>
+
+    <div class="node-preview-panel">
+      <div class="node-preview-label">👁️ Vista previa en vivo</div>
+      <div class="node-preview-stage" id="node-preview-stage">
+        <div class="np-bg" id="np-bg"></div>
+        <div class="np-char-slot np-pos-centro" id="np-char-slot-primary" hidden>
+          <img id="np-char-primary" src="" alt="" />
+        </div>
+        <div class="np-char-slot np-pos-izquierda np-dim" id="np-char-slot-secondary" hidden>
+          <img id="np-char-secondary" src="" alt="" />
+        </div>
+        <div class="np-dialogue-box">
+          <div class="np-system-tag" id="np-system-tag" hidden></div>
+          <div class="np-speaker" id="np-speaker" hidden></div>
+          <div class="np-text" id="np-text">La vista previa se arma sola a medida que completás el formulario.</div>
+          <div class="np-options" id="np-options" hidden></div>
+        </div>
+      </div>
+    </div>
+    </div>
     <div class="script-transcript" id="script-transcript" hidden></div>
     <table class="entity-table">
       <thead><tr><th>ID</th><th>Historia</th><th>Tipo</th><th>Personaje</th><th>Texto</th><th>Acciones</th></tr></thead>
       <tbody id="tbody-nodes"></tbody>
     </table>
+
+    <div class="playtest-overlay" id="playtest-overlay" hidden>
+      <div class="playtest-window">
+        <div class="playtest-header">
+          <span>▶ Probando la historia (con la lógica real del juego)</span>
+          <button type="button" id="playtest-close-btn">✕ Cerrar</button>
+        </div>
+        <div class="playtest-stage" id="playtest-stage">
+          <div class="np-bg" id="pt-bg"></div>
+          <div class="np-char-slot np-pos-centro" id="pt-char-slot-primary" hidden>
+            <img id="pt-char-primary" src="" alt="" />
+          </div>
+          <div class="np-char-slot np-pos-izquierda np-dim" id="pt-char-slot-secondary" hidden>
+            <img id="pt-char-secondary" src="" alt="" />
+          </div>
+          <div class="np-dialogue-box">
+            <div class="np-system-tag" id="pt-system-tag" hidden></div>
+            <div class="np-speaker" id="pt-speaker" hidden></div>
+            <div class="np-text" id="pt-text"></div>
+            <div class="np-options" id="pt-options" hidden></div>
+            <button type="button" id="pt-continue-btn" class="np-continue-btn" hidden>continuar ▼</button>
+          </div>
+        </div>
+        <div class="playtest-footer" id="playtest-footer"></div>
+      </div>
+    </div>
   `;
 
   const form = section.querySelector("#form-nodes");
@@ -1049,6 +1097,91 @@ function buildNodesSection() {
   let charactersList = []; // [{name, thumbUrl}]
   let locksMap = {};
   subscribeLocks("nodes", (map) => (locksMap = map));
+
+  function findCharInList(name) {
+    return charactersList.find((c) => c.name === name) || null;
+  }
+
+  function setPreviewCharSlot(prefix, slotSuffix, character, expressionLabel, position, dim) {
+    const slot = document.getElementById(`${prefix}-char-slot-${slotSuffix}`);
+    const img = document.getElementById(`${prefix}-char-${slotSuffix}`);
+    if (!slot || !img) return;
+    slot.classList.remove("np-pos-izquierda", "np-pos-centro", "np-pos-derecha");
+    slot.classList.add(`np-pos-${position || "centro"}`);
+    slot.classList.toggle("np-dim", !!dim);
+    const portrait =
+      character && character.images && character.images.length
+        ? character.images.find((im) => im.label === expressionLabel) || character.images[0]
+        : null;
+    if (!portrait) {
+      slot.hidden = true;
+      return;
+    }
+    slot.hidden = false;
+    img.src = portrait.url;
+    img.alt = character.name;
+  }
+
+  function renderNodePreview() {
+    const bg = document.getElementById("np-bg");
+    const speakerEl = document.getElementById("np-speaker");
+    const systemTag = document.getElementById("np-system-tag");
+    const textEl = document.getElementById("np-text");
+    const optionsEl = document.getElementById("np-options");
+    if (!bg) return; // el panel de vista previa vive solo en modo "full"
+
+    const type = typeSelect.value;
+    bg.style.backgroundImage = bgSelect.value ? `url('${bgSelect.value}')` : "";
+
+    const showsCharacter = type === "dialogue" || type === "choice" || type === "event";
+    if (showsCharacter) {
+      setPreviewCharSlot("np", "primary", findCharInList(selectedCharacter), expressionSelect.value, positionSelect.value, false);
+      if (secondCharSelect.value) {
+        setPreviewCharSlot(
+          "np", "secondary",
+          findCharInList(secondCharSelect.value),
+          secondCharExpressionSelect.value,
+          secondCharPositionSelect.value,
+          true
+        );
+      } else {
+        document.getElementById("np-char-slot-secondary").hidden = true;
+      }
+    } else {
+      document.getElementById("np-char-slot-primary").hidden = true;
+      document.getElementById("np-char-slot-secondary").hidden = true;
+    }
+
+    speakerEl.hidden = !(selectedCharacter && showsCharacter);
+    if (!speakerEl.hidden) speakerEl.textContent = selectedCharacter;
+
+    const systemLabels = {
+      event: "◆ evento",
+      condition: "◆ este nodo evalúa condiciones y salta solo — no hay texto que previsualizar",
+      random: "🎲 este nodo sortea entre desenlaces — no hay texto que previsualizar",
+      chapter_end: "⏭ fin de capítulo — sigue con la próxima historia",
+      ending: "🏁 final de la partida",
+    };
+    const isSystemOnly = type === "condition" || type === "random";
+    systemTag.hidden = !systemLabels[type] || type === "dialogue" || type === "choice";
+    if (!systemTag.hidden) systemTag.textContent = systemLabels[type];
+
+    textEl.textContent = isSystemOnly ? "" : textField.value || "Escribí el texto para verlo acá...";
+
+    if (type === "choice") {
+      optionsEl.innerHTML = "";
+      const withText = optionItems.filter((o) => o.text.trim());
+      optionsEl.hidden = withText.length === 0;
+      withText.forEach((o) => {
+        const btn = document.createElement("div");
+        btn.className = "np-option-preview";
+        btn.textContent = o.text;
+        optionsEl.appendChild(btn);
+      });
+    } else {
+      optionsEl.hidden = true;
+    }
+  }
 
   function computeNextId() {
     let max = 0;
@@ -1112,7 +1245,10 @@ function buildNodesSection() {
       textInput.type = "text";
       textInput.placeholder = "Ej: Aceptar la misión";
       textInput.value = opt.text || "";
-      textInput.addEventListener("input", () => (optionItems[idx].text = textInput.value));
+      textInput.addEventListener("input", () => {
+        optionItems[idx].text = textInput.value;
+        renderNodePreview();
+      });
 
       const nextSel = document.createElement("select");
       nextSel.innerHTML = '<option value="">(siguiente nodo)</option>';
@@ -1146,6 +1282,7 @@ function buildNodesSection() {
 
       optionsRows.appendChild(row);
     });
+    renderNodePreview();
   }
 
   addOptionBtn.addEventListener("click", () => {
@@ -1354,8 +1491,14 @@ function buildNodesSection() {
       if (character.images.some((img) => img.label === current)) secondCharExpressionSelect.value = current;
     }
     secondCharPositionField.hidden = !secondCharSelect.value;
+    renderNodePreview();
   }
   secondCharSelect.addEventListener("change", refreshSecondCharExpression);
+  secondCharExpressionSelect.addEventListener("change", renderNodePreview);
+  secondCharPositionSelect.addEventListener("change", renderNodePreview);
+  positionSelect.addEventListener("change", renderNodePreview);
+  effectSelect.addEventListener("change", renderNodePreview);
+  textField.addEventListener("input", renderNodePreview);
 
   // fondos
   onSnapshot(collection(db, "backgrounds"), (snap) => {
@@ -1368,7 +1511,9 @@ function buildNodesSection() {
       bgSelect.appendChild(opt);
     });
     bgSelect.value = current;
+    renderNodePreview();
   });
+  bgSelect.addEventListener("change", renderNodePreview);
 
   // historias disponibles: alimenta tanto el selector "Historia" del nodo
   // como el de "próxima historia" en chapter_end.
@@ -1411,7 +1556,9 @@ function buildNodesSection() {
     if (previous && character.images.some((img) => img.label === previous)) {
       expressionSelect.value = previous;
     }
+    renderNodePreview();
   }
+  expressionSelect.addEventListener("change", renderNodePreview);
 
   function renderCharPicker() {
     charPicker.innerHTML = "";
@@ -1423,6 +1570,7 @@ function buildNodesSection() {
       selectedCharacter = "";
       renderCharPicker();
       refreshExpressionOptions("");
+      renderNodePreview();
     });
     charPicker.appendChild(noneChip);
 
@@ -1442,6 +1590,7 @@ function buildNodesSection() {
         selectedCharacter = c.name;
         renderCharPicker();
         refreshExpressionOptions("");
+        renderNodePreview();
       });
       charPicker.appendChild(chip);
     });
@@ -1499,6 +1648,7 @@ function buildNodesSection() {
       secondCharPositionField.hidden = !showsCharacter || secondCharSelect.value === "";
       if (t === "condition" || t === "random") refreshAdvancedUI();
     }
+    renderNodePreview();
   }
 
   function setEditorMode(mode) {
@@ -1759,14 +1909,149 @@ function buildNodesSection() {
           logActivity("delete", "nodes", item.id, (item.text || "").slice(0, 40));
         }
       });
-      actionsTd.append(editBtn, delBtn);
+      const playBtn = document.createElement("button");
+      playBtn.textContent = "▶ Probar";
+      playBtn.addEventListener("click", () => openPlaytest(item.id));
+      actionsTd.append(editBtn, playBtn, delBtn);
       tr.appendChild(actionsTd);
       tbody.appendChild(tr);
     });
   });
 
+  // ---------- MODO "PROBAR" (juega la historia real, con el motor real) ----------
+  let ptEngine = null;
+
+  function openPlaytest(startNodeId) {
+    const nodesMap = {};
+    allNodes.forEach((n) => (nodesMap[n.id] = n));
+    if (!window.StoryEngine) {
+      alert('No se pudo cargar el motor del juego (story-engine.js) — revisá que admin.html lo esté importando.');
+      return;
+    }
+    try {
+      ptEngine = new window.StoryEngine(nodesMap, startNodeId, { carisma: 5, inteligencia: 5, fisico: 5, riqueza: 5 }, []);
+    } catch (err) {
+      alert("No se pudo iniciar la prueba: " + err.message);
+      return;
+    }
+    document.getElementById("playtest-overlay").hidden = false;
+    renderPlaytestNode();
+  }
+
+  function closePlaytest() {
+    document.getElementById("playtest-overlay").hidden = true;
+    ptEngine = null;
+  }
+
+  function renderPlaytestNode() {
+    const footer = document.getElementById("playtest-footer");
+    footer.textContent = "";
+    const speakerEl = document.getElementById("pt-speaker");
+    const systemTag = document.getElementById("pt-system-tag");
+    const textEl = document.getElementById("pt-text");
+    const optionsEl = document.getElementById("pt-options");
+    const continueBtn = document.getElementById("pt-continue-btn");
+    const bg = document.getElementById("pt-bg");
+
+    let node;
+    try {
+      node = ptEngine.getCurrentNode();
+      if (!node) throw new Error("ese nodo no existe");
+    } catch (err) {
+      bg.style.backgroundImage = "";
+      document.getElementById("pt-char-slot-primary").hidden = true;
+      document.getElementById("pt-char-slot-secondary").hidden = true;
+      speakerEl.hidden = true;
+      systemTag.hidden = true;
+      textEl.textContent = "";
+      optionsEl.hidden = true;
+      continueBtn.hidden = true;
+      footer.innerHTML = `⚠ <b>Conexión rota:</b> el "siguiente nodo" apunta a algo que no existe (${err.message}). Revisá el nodo anterior.`;
+      return;
+    }
+
+    bg.style.backgroundImage = node.backgroundUrl ? `url('${node.backgroundUrl}')` : "";
+
+    if (node.type === "ending" || node.type === "chapter_end") {
+      document.getElementById("pt-char-slot-primary").hidden = true;
+      document.getElementById("pt-char-slot-secondary").hidden = true;
+      speakerEl.hidden = true;
+      systemTag.hidden = false;
+      systemTag.textContent = node.type === "ending" ? "🏁 FINAL" : "⏭ FIN DEL CAPÍTULO";
+      textEl.textContent = node.type === "ending" ? node.summary || node.title || "" : node.text || "";
+      optionsEl.hidden = true;
+      continueBtn.hidden = true;
+      footer.textContent =
+        node.type === "ending"
+          ? "Llegaste a un final. Cerrá y probá otro camino si querés."
+          : "Este nodo saltaría a otra Historia — la prueba no sigue capítulos distintos todavía, pero hasta acá la cadena está sana.";
+      return;
+    }
+
+    const character = findCharInList(node.character);
+    setPreviewCharSlot("pt", "primary", character, node.characterExpression, node.position, false);
+    if (node.secondCharacter) {
+      setPreviewCharSlot(
+        "pt", "secondary",
+        findCharInList(node.secondCharacter),
+        node.secondCharacterExpression,
+        node.secondCharacterPosition,
+        true
+      );
+    } else {
+      document.getElementById("pt-char-slot-secondary").hidden = true;
+    }
+
+    speakerEl.hidden = !node.character;
+    if (node.character) speakerEl.textContent = node.character;
+
+    const systemLabels = { event: "◆ evento", condition: "◆ el sistema evalúa la situación...", random: "🎲 el destino decide..." };
+    systemTag.hidden = !systemLabels[node.type];
+    if (!systemTag.hidden) systemTag.textContent = systemLabels[node.type];
+
+    textEl.textContent = node.text || "";
+
+    if (node.type === "choice") {
+      optionsEl.innerHTML = "";
+      optionsEl.hidden = false;
+      continueBtn.hidden = true;
+      (node.options || []).forEach((option, i) => {
+        const btn = document.createElement("button");
+        btn.className = "node-option-btn";
+        btn.textContent = option.text;
+        btn.addEventListener("click", () => {
+          try {
+            ptEngine.choose(i);
+            renderPlaytestNode();
+          } catch (err) {
+            footer.innerHTML = `⚠ <b>Conexión rota en esta opción:</b> ${err.message}`;
+          }
+        });
+        optionsEl.appendChild(btn);
+      });
+    } else {
+      optionsEl.hidden = true;
+      continueBtn.hidden = false;
+    }
+  }
+
+  document.getElementById("playtest-close-btn").addEventListener("click", closePlaytest);
+  document.getElementById("playtest-from-form-btn").addEventListener("click", () => {
+    if (!currentNodeId) return alert("Todavía no hay un nodo para probar.");
+    openPlaytest(currentNodeId);
+  });
+  document.getElementById("pt-continue-btn").addEventListener("click", () => {
+    try {
+      ptEngine.advance();
+      renderPlaytestNode();
+    } catch (err) {
+      document.getElementById("playtest-footer").innerHTML = `⚠ <b>Conexión rota:</b> ${err.message}`;
+    }
+  });
+
   renderCharPicker();
   refreshNodeIdSuggestion();
+  renderNodePreview();
 
   return section;
 }
