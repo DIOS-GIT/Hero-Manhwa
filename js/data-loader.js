@@ -60,6 +60,15 @@ window.GAME_DATA_READY = (async () => {
   return window.GAME_DATA;
 })();
 
+// Devuelve el ID de la Historia marcada como "introducción" en el admin
+// (checkbox "Es la Historia de introducción"), o null si todavía no se
+// marcó ninguna. El juego siempre arranca por ahí — así no depende de
+// que alguien escriba bien un ID a mano en el código.
+window.findIntroStoryId = async function findIntroStoryId() {
+  const snap = await getDocs(query(collection(db, "stories"), where("isIntro", "==", true)));
+  return snap.empty ? null : snap.docs[0].id;
+};
+
 // Carga los nodos de UNA historia puntual (por su ID de documento en
 // "stories") y arma el mapa plano { [nodeId]: nodo } que espera
 // StoryEngine, tal como describe INTEGRACION.md. Se llama desde main.js
