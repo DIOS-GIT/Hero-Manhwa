@@ -384,6 +384,14 @@ main { flex: 1; padding: 24px; overflow-x: auto; }
   position: fixed; inset: 0; background: rgba(0,0,0,.75);
   display: flex; align-items: center; justify-content: center; z-index: 50;
 }
+.playtest-overlay[hidden] { display: none !important; }
+
+/* el atributo "hidden" nativo tiene que ganarle SIEMPRE a cualquier
+   "display" que le pongamos a mano a una clase — si no, ocultar un
+   elemento por JS (el.hidden = true) puede no hacer nada visualmente,
+   como pasó con el panel de "Probar". Esta regla lo garantiza para
+   todo el panel de una sola vez. */
+[hidden] { display: none !important; }
 .playtest-window {
   background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
   width: min(420px, 92vw); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
