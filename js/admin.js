@@ -1945,19 +1945,95 @@ function buildNodesSection() {
 
   function renderPlaytestNode() {
     const footer = document.getElementById("playtest-footer");
-    footer.textContent = "";
     const speakerEl = document.getElementById("pt-speaker");
     const systemTag = document.getElementById("pt-system-tag");
     const textEl = document.getElementById("pt-text");
     const optionsEl = document.getElementById("pt-options");
     const continueBtn = document.getElementById("pt-continue-btn");
     const bg = document.getElementById("pt-bg");
+    footer.textContent = "";
 
-    let node;
     try {
-      node = ptEngine.getCurrentNode();
+      const node = ptEngine.getCurrentNode();
       if (!node) throw new Error("ese nodo no existe");
+
+      bg.style.backgroundImage = node.backgroundUrl ? `url('${node.backgroundUrl}')` : "";
+
+      if (node.type === "ending" || node.type === "chapter_end") {
+        document.getElementById("pt-char-slot-primary").hidden = true;
+        document.getElementById("pt-char-slot-secondary").hidden = true;
+        speakerEl.hidden = true;
+        systemTag.hidden = false;
+        systemTag.textContent = node.type === "ending" ? "🏁 FINAL" : "⏭ FIN DEL CAPÍTULO";
+        textEl.textContent = node.type === "ending" ? node.summary || node.title || "" : node.text || "";
+        optionsEl.hidden = true;
+        continueBtn.hidden = true;
+        footer.textContent =
+          node.type === "ending"
+            ? "Llegaste a un final. Cerrá y probá otro camino si querés."
+            : "Este nodo saltaría a otra Historia — la prueba no sigue capítulos distintos todavía, pero hasta acá la cadena está sana.";
+        return;
+      }
+
+      const character = findCharInList(node.character);
+      setPreviewCharSlot("pt", "primary", character, node.characterExpression, node.position, false);
+      if (node.secondCharacter) {
+        setPreviewCharSlot(
+          "pt", "secondary",
+          findCharInList(node.secondCharacter),
+          node.secondCharacterExpression,
+          node.secondCharacterPosition,
+          true
+        );
+      } else {
+        document.getElementById("pt-char-slot-secondary").hidden = true;
+      }
+
+      speakerEl.hidden = !node.character;
+      if (node.character) speakerEl.textContent = node.character;
+
+      const systemLabels = { event: "◆ evento", condition: "◆ el sistema evalúa la situación...", random: "🎲 el destino decide..." };
+      systemTag.hidden = !systemLabels[node.type];
+      if (!systemTag.hidden) systemTag.textContent = systemLabels[node.type];
+
+      textEl.textContent = node.text || "(este nodo todavía no tiene texto cargado)";
+
+      if (node.type === "choice") {
+        optionsEl.innerHTML = "";
+        const hasOptions = (node.options || []).some((o) => o.next);
+        optionsEl.hidden = false;
+        continueBtn.hidden = true;
+        if (!hasOptions) {
+          footer.innerHTML = "⚠ Este nodo todavía no tiene opciones con un destino elegido.";
+        }
+        (node.options || []).forEach((option, i) => {
+          const btn = document.createElement("button");
+          btn.className = "node-option-btn";
+          btn.textContent = option.text || "(opción sin texto)";
+          btn.disabled = !option.next;
+          btn.addEventListener("click", () => {
+            try {
+              ptEngine.choose(i);
+              renderPlaytestNode();
+            } catch (err) {
+              footer.innerHTML = `⚠ <b>Conexión rota en esta opción:</b> ${err.message}`;
+            }
+          });
+          optionsEl.appendChild(btn);
+        });
+      } else if (node.type === "dialogue" || node.type === "event") {
+        optionsEl.hidden = true;
+        continueBtn.hidden = false;
+        if (!node.next) {
+          footer.innerHTML = "⚠ Este nodo todavía no tiene un \"siguiente nodo\" elegido — es normal si lo estás armando ahora.";
+        }
+      } else {
+        // condition / random: se resuelven solas al tocar "continuar"
+        optionsEl.hidden = true;
+        continueBtn.hidden = false;
+      }
     } catch (err) {
+      console.error("Error en playtest:", err);
       bg.style.backgroundImage = "";
       document.getElementById("pt-char-slot-primary").hidden = true;
       document.getElementById("pt-char-slot-secondary").hidden = true;
@@ -1966,76 +2042,14 @@ function buildNodesSection() {
       textEl.textContent = "";
       optionsEl.hidden = true;
       continueBtn.hidden = true;
-      footer.innerHTML = `⚠ <b>Conexión rota:</b> el "siguiente nodo" apunta a algo que no existe (${err.message}). Revisá el nodo anterior.`;
-      return;
-    }
-
-    bg.style.backgroundImage = node.backgroundUrl ? `url('${node.backgroundUrl}')` : "";
-
-    if (node.type === "ending" || node.type === "chapter_end") {
-      document.getElementById("pt-char-slot-primary").hidden = true;
-      document.getElementById("pt-char-slot-secondary").hidden = true;
-      speakerEl.hidden = true;
-      systemTag.hidden = false;
-      systemTag.textContent = node.type === "ending" ? "🏁 FINAL" : "⏭ FIN DEL CAPÍTULO";
-      textEl.textContent = node.type === "ending" ? node.summary || node.title || "" : node.text || "";
-      optionsEl.hidden = true;
-      continueBtn.hidden = true;
-      footer.textContent =
-        node.type === "ending"
-          ? "Llegaste a un final. Cerrá y probá otro camino si querés."
-          : "Este nodo saltaría a otra Historia — la prueba no sigue capítulos distintos todavía, pero hasta acá la cadena está sana.";
-      return;
-    }
-
-    const character = findCharInList(node.character);
-    setPreviewCharSlot("pt", "primary", character, node.characterExpression, node.position, false);
-    if (node.secondCharacter) {
-      setPreviewCharSlot(
-        "pt", "secondary",
-        findCharInList(node.secondCharacter),
-        node.secondCharacterExpression,
-        node.secondCharacterPosition,
-        true
-      );
-    } else {
-      document.getElementById("pt-char-slot-secondary").hidden = true;
-    }
-
-    speakerEl.hidden = !node.character;
-    if (node.character) speakerEl.textContent = node.character;
-
-    const systemLabels = { event: "◆ evento", condition: "◆ el sistema evalúa la situación...", random: "🎲 el destino decide..." };
-    systemTag.hidden = !systemLabels[node.type];
-    if (!systemTag.hidden) systemTag.textContent = systemLabels[node.type];
-
-    textEl.textContent = node.text || "";
-
-    if (node.type === "choice") {
-      optionsEl.innerHTML = "";
-      optionsEl.hidden = false;
-      continueBtn.hidden = true;
-      (node.options || []).forEach((option, i) => {
-        const btn = document.createElement("button");
-        btn.className = "node-option-btn";
-        btn.textContent = option.text;
-        btn.addEventListener("click", () => {
-          try {
-            ptEngine.choose(i);
-            renderPlaytestNode();
-          } catch (err) {
-            footer.innerHTML = `⚠ <b>Conexión rota en esta opción:</b> ${err.message}`;
-          }
-        });
-        optionsEl.appendChild(btn);
-      });
-    } else {
-      optionsEl.hidden = true;
-      continueBtn.hidden = false;
+      footer.innerHTML = `⚠ <b>Algo se rompió mostrando este nodo:</b> ${err.message}. Cerrá y avisale al admin principal con este mensaje.`;
     }
   }
 
   section.querySelector("#playtest-close-btn").addEventListener("click", closePlaytest);
+  section.querySelector("#playtest-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "playtest-overlay") closePlaytest();
+  });
   section.querySelector("#playtest-from-form-btn").addEventListener("click", () => {
     if (!currentNodeId) return alert("Todavía no hay un nodo para probar.");
     openPlaytest(currentNodeId);
