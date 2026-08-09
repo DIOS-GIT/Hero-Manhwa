@@ -2035,12 +2035,12 @@ function buildNodesSection() {
     }
   }
 
-  document.getElementById("playtest-close-btn").addEventListener("click", closePlaytest);
-  document.getElementById("playtest-from-form-btn").addEventListener("click", () => {
+  section.querySelector("#playtest-close-btn").addEventListener("click", closePlaytest);
+  section.querySelector("#playtest-from-form-btn").addEventListener("click", () => {
     if (!currentNodeId) return alert("Todavía no hay un nodo para probar.");
     openPlaytest(currentNodeId);
   });
-  document.getElementById("pt-continue-btn").addEventListener("click", () => {
+  section.querySelector("#pt-continue-btn").addEventListener("click", () => {
     try {
       ptEngine.advance();
       renderPlaytestNode();
