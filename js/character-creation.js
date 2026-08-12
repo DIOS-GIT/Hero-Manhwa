@@ -29,7 +29,9 @@ const player = {
   job: null,
   housing: null,
   haremMode: false,
-  heroines: []
+  heroines: [],
+  allocatedStats: { carisma: 0, inteligencia: 0, fisico: 0, riqueza: 0 },
+  spinsUsed: {}
 };
 
 // Elige un item al azar, pesado por item.weight (1-100). Si falta el
@@ -53,13 +55,21 @@ const STEPS = [
     id: "protagonist",
     label: "Reencarnación",
     title: "¿En quién reencarnás?",
-    subtitle: "El sistema decide por vos. Girá la ruleta.",
+    subtitle: "El sistema decide por vos. Girá la ruleta — tenés 3 intentos.",
     isRoulette: true,
+    maxSpins: 3,
     source: () => window.GAME_DATA.PROTAGONISTS,
     renderExtra: (item) => `
       <div class="stat-row">
         ${Object.entries(item.stats || {}).map(([k, v]) => `<span>${k}: <b>${v}</b></span>`).join("")}
       </div>`
+  },
+  {
+    id: "statAllocation",
+    label: "Estadísticas",
+    title: "Repartí tus 15 puntos",
+    subtitle: "Vos decidís cómo se dividen entre las 4 stats — cada partida puede jugarse distinto.",
+    isAllocation: true,
   },
   {
     id: "route",
@@ -111,6 +121,11 @@ function currentStep() {
 
 function stepIsSatisfied() {
   const step = currentStep();
+  if (step.isAllocation) {
+    const total = ["carisma", "inteligencia", "fisico", "riqueza"]
+      .reduce((sum, k) => sum + (player.allocatedStats[k] || 0), 0);
+    return total === 15;
+  }
   return step.isHarem ? player.heroines.length > 0 : Boolean(playerValueFor(step.id));
 }
 
@@ -160,7 +175,9 @@ function renderRouletteStep(step) {
 
   const isHaremActive = step.isHarem && player.haremMode;
   const picks = step.isHarem ? player.heroines : (player[step.id] ? [player[step.id]] : []);
-  const canSpin = isHaremActive ? player.heroines.length < HAREM_MAX : true;
+  let canSpin = isHaremActive ? player.heroines.length < HAREM_MAX : true;
+  const spinsUsed = player.spinsUsed[step.id] || 0;
+  if (step.maxSpins) canSpin = canSpin && spinsUsed < step.maxSpins;
 
   const wrap = document.createElement("div");
   wrap.className = "roulette-wrap";
@@ -203,13 +220,15 @@ function renderRouletteStep(step) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "btn-primary roulette-btn";
-    btn.textContent = picks.length
+    const remaining = step.maxSpins ? ` (${step.maxSpins - spinsUsed} ${step.maxSpins - spinsUsed === 1 ? "intento" : "intentos"})` : "";
+    btn.textContent = (picks.length
       ? (isHaremActive ? "🎰 Girar de nuevo (sumar otra)" : "🎲 Volver a girar")
-      : "🎰 Girar la ruleta";
+      : "🎰 Girar la ruleta") + remaining;
     btn.addEventListener("click", () => {
       const excludeIds = isHaremActive ? player.heroines.map((h) => h.id) : [];
       const result = weightedPick(items, excludeIds);
       if (!result) return;
+      if (step.maxSpins) player.spinsUsed[step.id] = spinsUsed + 1;
       if (step.isHarem) {
         if (player.haremMode) player.heroines.push(result);
         else player.heroines = [result];
@@ -219,9 +238,63 @@ function renderRouletteStep(step) {
       renderStep();
     });
     wrap.appendChild(btn);
+  } else if (step.maxSpins && picks.length) {
+    const note = document.createElement("p");
+    note.className = "pick-card-desc";
+    note.textContent = "Ya usaste tus " + step.maxSpins + " tiradas — este es tu personaje.";
+    wrap.appendChild(note);
   }
 
   grid.appendChild(wrap);
+}
+
+function renderAllocationStep() {
+  const grid = document.getElementById("step-cards");
+  const keys = ["carisma", "inteligencia", "fisico", "riqueza"];
+  const labels = { carisma: "Carisma", inteligencia: "Inteligencia", fisico: "Físico", riqueza: "Riqueza" };
+
+  const wrap = document.createElement("div");
+  wrap.className = "allocation-wrap";
+
+  const totalEl = document.createElement("div");
+  totalEl.className = "allocation-total";
+
+  function currentTotal() {
+    return keys.reduce((sum, k) => sum + (player.allocatedStats[k] || 0), 0);
+  }
+
+  function refresh() {
+    const total = currentTotal();
+    totalEl.innerHTML = `Puntos usados: <b class="${total === 15 ? "ok" : "warn"}">${total} / 15</b>`;
+    keys.forEach((k) => {
+      const input = wrap.querySelector(`input[data-stat="${k}"]`);
+      const valueLabel = wrap.querySelector(`span[data-stat-value="${k}"]`);
+      const otherSum = total - (player.allocatedStats[k] || 0);
+      input.max = 15 - otherSum;
+      valueLabel.textContent = player.allocatedStats[k] || 0;
+    });
+    refreshNextButton();
+  }
+
+  keys.forEach((k) => {
+    const row = document.createElement("div");
+    row.className = "allocation-row";
+    row.innerHTML = `
+      <label>${labels[k]}</label>
+      <input type="range" min="0" max="15" value="${player.allocatedStats[k] || 0}" data-stat="${k}" />
+      <span class="allocation-value" data-stat-value="${k}">${player.allocatedStats[k] || 0}</span>
+    `;
+    const input = row.querySelector("input");
+    input.addEventListener("input", () => {
+      player.allocatedStats[k] = Number(input.value);
+      refresh();
+    });
+    wrap.appendChild(row);
+  });
+
+  wrap.appendChild(totalEl);
+  grid.appendChild(wrap);
+  refresh();
 }
 
 function renderStep() {
@@ -246,6 +319,8 @@ function renderStep() {
 
   if (step.isRoulette) {
     renderRouletteStep(step);
+  } else if (step.isAllocation) {
+    renderAllocationStep();
   } else {
     renderCardGridStep(step);
   }
@@ -265,8 +340,12 @@ function goToStepScreen(index) {
 }
 
 function renderSummary() {
+  const statsStr = ["carisma", "inteligencia", "fisico", "riqueza"]
+    .map((k) => `${k}: ${player.allocatedStats[k] || 0}`)
+    .join(" · ");
   const rows = [
     ["Protagonista", player.protagonist.name],
+    ["Stats", statsStr],
     ["Ruta", player.route.name],
     ["Ocupación", player.job.name],
     ["Vivienda", player.housing.name],
