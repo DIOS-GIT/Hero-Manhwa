@@ -22,7 +22,8 @@ function findCharacter(name) {
   if (!name) return null;
   const all = [
     ...(window.GAME_DATA.PROTAGONISTS || []),
-    ...(window.GAME_DATA.HEROINES || [])
+    ...(window.GAME_DATA.HEROINES || []),
+    ...(window.GAME_DATA.SPECIAL_CHARACTERS || [])
   ];
   return all.find((c) => c.name === name) || null;
 }
