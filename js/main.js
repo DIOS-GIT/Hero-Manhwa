@@ -175,7 +175,10 @@ async function startStory() {
     }
     await window.loadStory(currentStoryId);
 
-    const initialStats = { ...player.protagonist.stats };
+    // las stats iniciales ahora las reparte el jugador (15 puntos entre las
+    // 4), no vienen fijas del protagonista — "Stats iniciales" en el admin
+    // quedó como referencia/lore, no se usa acá.
+    const initialStats = { ...player.allocatedStats };
     // afinidad de cada heroína de ESTA partida, sembrada como stat propia
     // (afinidad_<id>) — así las decisiones pueden subirla igual que
     // cualquier otra stat, con el efecto genérico "afinidad".
@@ -382,7 +385,9 @@ function initGameControls() {
     if (!confirm("¿Reiniciar tu historia desde el principio? (esto no borra tu partida guardada)")) return;
     Object.assign(player, {
       protagonist: null, route: null, job: null, housing: null,
-      haremMode: false, heroines: []
+      haremMode: false, heroines: [],
+      allocatedStats: { carisma: 0, inteligencia: 0, fisico: 0, riqueza: 0 },
+      spinsUsed: {}
     });
     document.getElementById("hud-stats-panel").hidden = true;
     goToStepScreen(0);
