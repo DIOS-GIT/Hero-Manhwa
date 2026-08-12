@@ -43,12 +43,13 @@ async function loadArray(collectionName) {
 }
 
 window.GAME_DATA_READY = (async () => {
-  const [protagonists, routes, jobs, housing, heroines] = await Promise.all([
+  const [protagonists, routes, jobs, housing, heroines, specialCharacters] = await Promise.all([
     loadArray("protagonists"),
     loadArray("routes"),
     loadArray("jobs"),
     loadArray("housing"),
     loadArray("heroines"),
+    loadArray("specialCharacters"),
   ]);
   window.GAME_DATA = {
     PROTAGONISTS: protagonists,
@@ -56,6 +57,7 @@ window.GAME_DATA_READY = (async () => {
     JOBS: jobs,
     HOUSING: housing,
     HEROINES: heroines,
+    SPECIAL_CHARACTERS: specialCharacters,
   };
   return window.GAME_DATA;
 })();
