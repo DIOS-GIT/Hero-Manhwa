@@ -81,6 +81,17 @@ export const COLLECTIONS = [
     ],
   },
   {
+    key: "specialCharacters",
+    label: "Personajes especiales",
+    icon: "🎙️",
+    hint: "Voces fijas como 'Sistema' o 'Narrador' — no se sortean, no tienen stats ni tags, están siempre disponibles para cualquier admin como personaje que habla en un nodo.",
+    fields: [
+      { key: "name", label: "Nombre", type: "text", required: true, placeholder: "Ej: Sistema" },
+      { key: "desc", label: "Descripción (interna, no la ve el jugador)", type: "textarea", placeholder: "Ej: la voz que narra las mecánicas del mundo." },
+      { key: "images", label: "Imágenes (una por expresión, opcional)", type: "image-list" },
+    ],
+  },
+  {
     key: "backgrounds",
     label: "Fondos",
     icon: "🖼️",
