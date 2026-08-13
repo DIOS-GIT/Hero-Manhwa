@@ -1887,6 +1887,9 @@ function buildNodesSection() {
   }
 
 
+}
+
+  function loadNodeIntoForm(item) {
     acquireLock("nodes", item.id);
     setEditorMode("full");
     editingId = item.id;
