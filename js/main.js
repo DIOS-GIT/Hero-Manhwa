@@ -18,8 +18,22 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
+// Mismo valor reservado que usa el admin (admin.js, HEROINA_SORTEADA) en el
+// chip comodín del selector de personaje — tiene que ser IDÉNTICO carácter
+// por carácter en los dos archivos, porque acá se compara como string.
+const HEROINA_SORTEADA = "__heroina_sorteada__";
+
 function findCharacter(name) {
   if (!name) return null;
+  if (name === HEROINA_SORTEADA) {
+    // Se resuelve contra la heroína de ESTA partida, no por nombre fijo —
+    // hoy player.heroines lo llena la elección de heroína de la
+    // reencarnación; cuando exista el nodo "sorteo_heroina" (item 4.3),
+    // va a llenarse ahí en su lugar sin que este código tenga que cambiar.
+    // En modo harem, se usa la última agregada (la más reciente).
+    if (!player.heroines || player.heroines.length === 0) return null;
+    return player.heroines[player.heroines.length - 1];
+  }
   const all = [
     ...(window.GAME_DATA.PROTAGONISTS || []),
     ...(window.GAME_DATA.HEROINES || []),
@@ -283,10 +297,11 @@ function renderCurrentNode() {
 
   // ---- personaje principal (quien habla): posición + efecto visual ----
   const effectClassMap = { zoom: "vn-fx-zoom", shake: "vn-fx-shake", pop: "vn-fx-pop", tilt: "vn-fx-tilt" };
+  const speakingCharacter = findCharacter(node.character);
   setCharacterSlot(
     "vn-char-slot-primary",
     "vn-character-primary",
-    findCharacter(node.character),
+    speakingCharacter,
     node.characterExpression,
     node.position || "centro",
     false,
@@ -310,8 +325,22 @@ function renderCurrentNode() {
 
   // ---- nombre de quien habla ----
   if (node.character) {
-    speakerEl.textContent = node.character;
-    speakerEl.hidden = false;
+    // el jugador nunca tiene que ver el valor técnico del comodín
+    // (__heroina_sorteada__): si se resolvió a un personaje real, se
+    // muestra su nombre; si por algún motivo no se pudo resolver (partida
+    // vieja sin heroína asignada, etc.) se oculta el nombre en vez de
+    // mostrar el ID interno.
+    if (node.character === HEROINA_SORTEADA) {
+      if (speakingCharacter) {
+        speakerEl.textContent = speakingCharacter.name;
+        speakerEl.hidden = false;
+      } else {
+        speakerEl.hidden = true;
+      }
+    } else {
+      speakerEl.textContent = node.character;
+      speakerEl.hidden = false;
+    }
   } else {
     speakerEl.hidden = true;
   }
