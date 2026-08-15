@@ -12,6 +12,23 @@ let engine = null;
 let currentStoryId = null; // se resuelve solo: busca la Historia marcada como introducción
 const SAVE_KEY = "manhwa_legend_save_v1";
 
+// Mismo criterio de sorteo pesado que usa character-creation.js para la
+// ruleta del protagonista — acá se reusa para elegir_ruta/elegir_trabajo/
+// elegir_vivienda/sorteo_heroina, así que vive en main.js (no depende de
+// character-creation.js para no acoplar los dos archivos entre sí).
+function weightedPick(items, excludeIds = []) {
+  const pool = items.filter((i) => !excludeIds.includes(i.id));
+  if (pool.length === 0) return null;
+  const weightOf = (i) => (Number(i.weight) > 0 ? Number(i.weight) : 1);
+  const total = pool.reduce((sum, i) => sum + weightOf(i), 0);
+  let r = Math.random() * total;
+  for (const item of pool) {
+    r -= weightOf(item);
+    if (r < 0) return item;
+  }
+  return pool[pool.length - 1];
+}
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -26,13 +43,12 @@ const HEROINA_SORTEADA = "__heroina_sorteada__";
 function findCharacter(name) {
   if (!name) return null;
   if (name === HEROINA_SORTEADA) {
-    // Se resuelve contra la heroína de ESTA partida, no por nombre fijo —
-    // hoy player.heroines lo llena la elección de heroína de la
-    // reencarnación; cuando exista el nodo "sorteo_heroina" (item 4.3),
-    // va a llenarse ahí en su lugar sin que este código tenga que cambiar.
-    // En modo harem, se usa la última agregada (la más reciente).
-    if (!player.heroines || player.heroines.length === 0) return null;
-    return player.heroines[player.heroines.length - 1];
+    // Se resuelve contra la heroína más reciente sorteada en ESTA partida
+    // (engine.selectedHeroines lo va llenando el nodo sorteo_heroina a
+    // medida que la historia pasa por ahí — puede haber más de una en
+    // rutas de harem, se usa siempre la última).
+    if (!engine || !engine.selectedHeroines || engine.selectedHeroines.length === 0) return null;
+    return engine.selectedHeroines[engine.selectedHeroines.length - 1];
   }
   const all = [
     ...(window.GAME_DATA.PROTAGONISTS || []),
@@ -129,19 +145,16 @@ function setBackground(url, transitionType) {
 }
 
 // ---------- GUARDAR / CONTINUAR ----------
+// Ruta/Trabajo/Vivienda/Heroína ya no viven en `player` — están adentro de
+// `engine` (selectedRoute/selectedJob/selectedHousing/selectedHeroines),
+// así que engine.serialize() ya los incluye. Acá solo hace falta guardar
+// aparte el protagonista, que sigue siendo parte de la reencarnación fija.
 function saveGame() {
   if (!engine) return;
   const saveData = {
     storyId: currentStoryId,
     engine: engine.serialize(),
-    player: {
-      protagonistId: player.protagonist.id,
-      routeId: player.route.id,
-      jobId: player.job.id,
-      housingId: player.housing.id,
-      haremMode: player.haremMode,
-      heroineIds: player.heroines.map((h) => h.id)
-    }
+    protagonistId: player.protagonist.id
   };
   localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
 }
@@ -157,15 +170,7 @@ async function continueSavedGame() {
   currentStoryId = saveData.storyId;
   await window.loadStory(currentStoryId);
 
-  player.protagonist = findById(window.GAME_DATA.PROTAGONISTS, saveData.player.protagonistId);
-  player.route = findById(window.GAME_DATA.ROUTES, saveData.player.routeId);
-  player.job = findById(window.GAME_DATA.JOBS, saveData.player.jobId);
-  player.housing = findById(window.GAME_DATA.HOUSING, saveData.player.housingId);
-  player.haremMode = saveData.player.haremMode;
-  player.heroines = saveData.player.heroineIds
-    .map((id) => findById(window.GAME_DATA.HEROINES, id))
-    .filter(Boolean);
-
+  player.protagonist = findById(window.GAME_DATA.PROTAGONISTS, saveData.protagonistId);
   if (!player.protagonist) {
     alert("No se pudo continuar: el protagonista guardado ya no existe (puede haber sido borrado del admin).");
     return;
@@ -192,23 +197,12 @@ async function startStory() {
 
     // las stats iniciales ahora las reparte el jugador (15 puntos entre las
     // 4), no vienen fijas del protagonista — "Stats iniciales" en el admin
-    // quedó como referencia/lore, no se usa acá.
+    // quedó como referencia/lore, no se usa acá. Ruta/Trabajo/Vivienda/
+    // Heroína ya no se deciden acá tampoco — son nodos dentro de la propia
+    // historia (elegir_ruta/elegir_trabajo/elegir_vivienda/sorteo_heroina),
+    // así que los flags y la afinidad de la heroína se siembran ahí, no acá.
     const initialStats = { ...player.allocatedStats };
-    // afinidad de cada heroína de ESTA partida, sembrada como stat propia
-    // (afinidad_<id>) — así las decisiones pueden subirla igual que
-    // cualquier otra stat, con el efecto genérico "afinidad".
-    player.heroines.forEach((h) => {
-      initialStats[`afinidad_${h.id}`] = (h.stats && h.stats.afinidad) || 0;
-    });
-
-    const initialFlags = [
-      `protagonista_${player.protagonist.id}`,
-      `ruta_${player.route.id}`,
-      `trabajo_${player.job.id}`,
-      `vivienda_${player.housing.id}`,
-      ...(player.haremMode ? ["modo_harem"] : ["modo_fmc"]),
-      ...player.heroines.map((h) => `heroina_${h.id}`)
-    ];
+    const initialFlags = [`protagonista_${player.protagonist.id}`];
 
     engine = new window.StoryEngine(
       window.DEMO_STORY.nodes,
@@ -248,6 +242,36 @@ async function goToNextChapter(nextStoryId) {
   }
 }
 
+// ---- opciones disponibles para elegir_ruta/elegir_trabajo/elegir_vivienda/
+// sorteo_heroina — el motor no sabe nada de esto (ver story-engine.js), así
+// que la lista se arma acá mismo a partir de window.GAME_DATA + lo que ya
+// eligió el jugador en ESTA partida (engine.selectedJob/selectedHousing).
+function pickerPool(node) {
+  switch (node.type) {
+    case "elegir_ruta":
+      return window.GAME_DATA.ROUTES || [];
+    case "elegir_trabajo":
+      return window.GAME_DATA.JOBS || [];
+    case "elegir_vivienda":
+      // si todavía no se eligió trabajo en esta historia (el escritor puso
+      // este nodo antes que elegir_trabajo), no filtramos por nada — mejor
+      // mostrar todas las viviendas que dejar al jugador sin opciones.
+      return (window.GAME_DATA.HOUSING || []).filter(
+        (h) => !h.requiresJobTag || !engine.selectedJob || h.requiresJobTag === engine.selectedJob.tag
+      );
+    case "sorteo_heroina": {
+      const yaSalieron = engine.selectedHeroines.map((h) => h.id);
+      const jobTag = engine.selectedJob && engine.selectedJob.tag;
+      const housingTag = engine.selectedHousing && engine.selectedHousing.tag;
+      return (window.GAME_DATA.HEROINES || []).filter(
+        (h) => !yaSalieron.includes(h.id) && ((jobTag && h.tags.includes(jobTag)) || (housingTag && h.tags.includes(housingTag)))
+      );
+    }
+    default:
+      return [];
+  }
+}
+
 function renderCurrentNode() {
   const node = engine.getCurrentNode();
 
@@ -261,6 +285,18 @@ function renderCurrentNode() {
   const backBtn = document.getElementById("btn-hud-back");
 
   backBtn.disabled = !engine.canRollback();
+
+  // ---- elegir_ruta/elegir_trabajo/elegir_vivienda/sorteo_heroina: si no
+  // hay ninguna opción disponible con el filtro actual, saltamos derecho
+  // al fallback sin mostrarle nada al jugador (nunca lo dejamos trabado).
+  // Se revisa ANTES de dibujar nada de este nodo, para no hacer parpadear
+  // la pantalla con un nodo que ni se va a llegar a ver.
+  const PICKER_NODE_TYPES = ["elegir_ruta", "elegir_trabajo", "elegir_vivienda", "sorteo_heroina"];
+  if (PICKER_NODE_TYPES.includes(node.type) && pickerPool(node).length === 0) {
+    engine.goTo(node.fallbackNext);
+    renderCurrentNode();
+    return;
+  }
 
   // ---- fondo, con la transición elegida en el nodo ----
   setBackground(node.backgroundUrl || "", node.transition || "");
@@ -349,7 +385,11 @@ function renderCurrentNode() {
   const systemLabels = {
     event: "◆ evento",
     condition: "◆ el sistema evalúa la situación...",
-    random: "🎲 el destino decide..."
+    random: "🎲 el destino decide...",
+    elegir_ruta: "🧭 elegí tu camino",
+    elegir_trabajo: "💼 elegí tu ocupación",
+    elegir_vivienda: "🏠 elegí dónde vivís",
+    sorteo_heroina: "🎲 el sistema busca a alguien para vos..."
   };
   if (systemLabels[node.type]) {
     systemTag.textContent = systemLabels[node.type];
@@ -362,7 +402,7 @@ function renderCurrentNode() {
   textEl.textContent = node.text || "";
   replayAnimation(textEl);
 
-  // ---- opciones (choice) vs. continuar ----
+  // ---- opciones (choice / elegir_*) vs. continuar (resto, incl. sorteo_heroina) ----
   if (node.type === "choice") {
     optionsEl.innerHTML = "";
     optionsEl.hidden = false;
@@ -378,7 +418,27 @@ function renderCurrentNode() {
       });
       optionsEl.appendChild(btn);
     });
+  } else if (node.type === "elegir_ruta" || node.type === "elegir_trabajo" || node.type === "elegir_vivienda") {
+    // acá ya sabemos que pickerPool(node) tiene al menos 1 item (si no,
+    // ya nos habríamos ido al fallback más arriba, antes de dibujar nada).
+    optionsEl.innerHTML = "";
+    optionsEl.hidden = false;
+    continueBtn.hidden = true;
+    pickerPool(node).forEach((item) => {
+      const btn = document.createElement("button");
+      btn.className = "node-option-btn";
+      btn.textContent = item.desc ? `${item.name} — ${item.desc}` : item.name;
+      btn.addEventListener("click", () => {
+        optionsEl.querySelectorAll("button").forEach((b) => (b.disabled = true));
+        engine.resolvePicker(item);
+        renderCurrentNode();
+      });
+      optionsEl.appendChild(btn);
+    });
   } else {
+    // dialogue / event / condition / random / sorteo_heroina: todos
+    // avanzan con el botón "continuar" — sorteo_heroina se resuelve ahí
+    // mismo (ver initGameControls), los demás vía engine.advance().
     optionsEl.hidden = true;
     continueBtn.hidden = false;
   }
@@ -386,7 +446,15 @@ function renderCurrentNode() {
 
 function initGameControls() {
   document.getElementById("btn-reader-continue").addEventListener("click", () => {
-    engine.advance();
+    const node = engine.getCurrentNode();
+    if (node.type === "sorteo_heroina") {
+      // el pool ya se validó no-vacío al renderizar este nodo (si hubiera
+      // estado vacío, nunca se habría llegado a mostrar "continuar" acá).
+      const chosen = weightedPick(pickerPool(node));
+      engine.resolveSorteoHeroina(chosen);
+    } else {
+      engine.advance();
+    }
     renderCurrentNode();
   });
 
@@ -414,8 +482,7 @@ function initGameControls() {
   function restart() {
     if (!confirm("¿Reiniciar tu historia desde el principio? (esto no borra tu partida guardada)")) return;
     Object.assign(player, {
-      protagonist: null, route: null, job: null, housing: null,
-      haremMode: false, heroines: [],
+      protagonist: null,
       allocatedStats: { carisma: 0, inteligencia: 0, fisico: 0, riqueza: 0 },
       spinsUsed: {}
     });
