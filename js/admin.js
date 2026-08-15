@@ -1182,7 +1182,10 @@ function buildNodesSection() {
     }
 
     speakerEl.hidden = !(selectedCharacter && showsCharacter);
-    if (!speakerEl.hidden) speakerEl.textContent = selectedCharacter;
+    if (!speakerEl.hidden) {
+      speakerEl.textContent =
+        selectedCharacter === HEROINA_SORTEADA ? "🎲 la heroína de esta partida" : selectedCharacter;
+    }
 
     const systemLabels = {
       event: "◆ evento",
@@ -1596,6 +1599,11 @@ function buildNodesSection() {
   }
   expressionSelect.addEventListener("change", renderNodePreview);
 
+  // Valor reservado para el chip comodín (ver HEROINA_SORTEADA más abajo):
+  // no es el nombre de ningún personaje real, así que nunca puede chocar
+  // con uno. El juego (main.js) lo detecta por este mismo string exacto.
+  const HEROINA_SORTEADA = "__heroina_sorteada__";
+
   function renderCharPicker() {
     charPicker.innerHTML = "";
     const noneChip = document.createElement("button");
@@ -1609,6 +1617,24 @@ function buildNodesSection() {
       renderNodePreview();
     });
     charPicker.appendChild(noneChip);
+
+    // chip comodín: en vez de un nombre fijo, se resuelve en el juego contra
+    // la heroína que efectivamente salió sorteada en esa partida puntual —
+    // necesario porque con el sorteo de heroína a mitad de historia (nodo
+    // "sorteo_heroina"), un escritor no puede saber de antemano qué heroína
+    // le va a tocar a cada jugador.
+    const wildcardChip = document.createElement("button");
+    wildcardChip.type = "button";
+    wildcardChip.className = "char-chip" + (selectedCharacter === HEROINA_SORTEADA ? " selected" : "");
+    wildcardChip.textContent = "🎲 la heroína de esta partida";
+    wildcardChip.title = "Se resuelve en el juego contra la heroína que salió sorteada en la partida de cada jugador.";
+    wildcardChip.addEventListener("click", () => {
+      selectedCharacter = HEROINA_SORTEADA;
+      renderCharPicker();
+      refreshExpressionOptions("");
+      renderNodePreview();
+    });
+    charPicker.appendChild(wildcardChip);
 
     charactersList.forEach((c) => {
       const chip = document.createElement("button");
