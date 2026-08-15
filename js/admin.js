@@ -889,6 +889,10 @@ function buildNodesSection() {
           <option value="random">random — ruleta de probabilidad (JSON)</option>
           <option value="chapter_end">chapter_end — termina esta Historia y sigue con la siguiente</option>
           <option value="ending">ending — final real de la partida</option>
+          <option value="elegir_ruta">elegir_ruta — el jugador elige una Ruta acá, en la historia</option>
+          <option value="elegir_trabajo">elegir_trabajo — el jugador elige un Trabajo acá, en la historia</option>
+          <option value="elegir_vivienda">elegir_vivienda — el jugador elige una Vivienda acá, en la historia</option>
+          <option value="sorteo_heroina">sorteo_heroina — el sistema sortea una heroína nueva acá</option>
         </select>
       </div>
       <div class="field" id="script-event-field" hidden>
@@ -1193,6 +1197,10 @@ function buildNodesSection() {
       random: "🎲 este nodo sortea entre desenlaces — no hay texto que previsualizar",
       chapter_end: "⏭ fin de capítulo — sigue con la próxima historia",
       ending: "🏁 final de la partida",
+      elegir_ruta: "🧭 el jugador elige una Ruta acá (las opciones se arman solas en el juego)",
+      elegir_trabajo: "💼 el jugador elige un Trabajo acá (las opciones se arman solas en el juego)",
+      elegir_vivienda: "🏠 el jugador elige una Vivienda acá (las opciones se arman solas en el juego)",
+      sorteo_heroina: "🎲 el sistema sortea una heroína nueva acá",
     };
     const isSystemOnly = type === "condition" || type === "random";
     systemTag.hidden = !systemLabels[type] || type === "dialogue" || type === "choice";
@@ -1483,18 +1491,39 @@ function buildNodesSection() {
     fallbackSelect.value = current;
   }
 
+  const PICKER_FALLBACK_LABELS = {
+    elegir_ruta: "Si todavía no hay ninguna Ruta cargada, ir a",
+    elegir_trabajo: "Si todavía no hay ningún Trabajo cargado, ir a",
+    elegir_vivienda: "Si no queda ninguna Vivienda disponible (según el Trabajo ya elegido), ir a",
+    sorteo_heroina: "Si no queda ninguna heroína disponible para sortear (o ya salieron todas), ir a",
+  };
+
   function refreshAdvancedUI() {
     if (typeSelect.value === "random") {
+      checksRows.hidden = false;
+      addCheckBtn.hidden = false;
       advancedLabel.textContent = "Desenlaces (deben sumar 100%)";
       addCheckBtn.textContent = "+ Agregar desenlace";
       fallbackWrap.hidden = true;
       renderOutcomeRows();
     } else if (typeSelect.value === "condition") {
+      checksRows.hidden = false;
+      addCheckBtn.hidden = false;
       advancedLabel.textContent = "Condiciones (se evalúan en orden, la primera que se cumpla gana)";
       addCheckBtn.textContent = "+ Agregar condición";
       fallbackWrap.hidden = false;
       refreshFallbackSelect();
       renderCheckRows();
+    } else if (PICKER_TYPES.includes(typeSelect.value)) {
+      // estos 4 tipos no tienen condiciones/desenlaces para armar a mano —
+      // las opciones se arman solas en el juego. Solo hace falta el "si no
+      // hay opciones, ir a".
+      checksRows.innerHTML = "";
+      checksRows.hidden = true;
+      addCheckBtn.hidden = true;
+      advancedLabel.textContent = PICKER_FALLBACK_LABELS[typeSelect.value];
+      fallbackWrap.hidden = false;
+      refreshFallbackSelect();
     }
   }
   typeSelect.addEventListener("change", refreshAdvancedUI);
@@ -1604,6 +1633,14 @@ function buildNodesSection() {
   // con uno. El juego (main.js) lo detecta por este mismo string exacto.
   const HEROINA_SORTEADA = "__heroina_sorteada__";
 
+  // Los 4 tipos de nodo "elegir_*" / "sorteo_heroina": el jugador (o el
+  // sistema, en sorteo_heroina) elige entre opciones que NO se cargan a
+  // mano en este formulario — se arman solas en el juego a partir de las
+  // colecciones Rutas/Trabajos/Viviendas/Heroínas. Acá solo hace falta
+  // "siguiente nodo" (adonde va sea cual sea la elegida) y "si no hay
+  // opciones, ir a" (mismo patrón que ya usa "condition").
+  const PICKER_TYPES = ["elegir_ruta", "elegir_trabajo", "elegir_vivienda", "sorteo_heroina"];
+
   function renderCharPicker() {
     charPicker.innerHTML = "";
     const noneChip = document.createElement("button");
@@ -1700,16 +1737,16 @@ function buildNodesSection() {
       typeField.hidden = false;
       scriptEventField.hidden = true;
       continueAfterField.hidden = true;
-      nextField.hidden = !(t === "dialogue" || t === "event");
+      nextField.hidden = !(t === "dialogue" || t === "event" || PICKER_TYPES.includes(t));
       optionsField.hidden = t !== "choice";
-      advancedField.hidden = !(t === "condition" || t === "random");
+      advancedField.hidden = !(t === "condition" || t === "random" || PICKER_TYPES.includes(t));
       chapterEndField.hidden = t !== "chapter_end";
       positionField.hidden = !showsCharacter;
       effectField.hidden = !showsCharacter;
       secondCharField.hidden = !showsCharacter;
       secondCharExpressionField.hidden = !showsCharacter || secondCharSelect.value === "";
       secondCharPositionField.hidden = !showsCharacter || secondCharSelect.value === "";
-      if (t === "condition" || t === "random") refreshAdvancedUI();
+      if (t === "condition" || t === "random" || PICKER_TYPES.includes(t)) refreshAdvancedUI();
     }
     renderNodePreview();
   }
@@ -1750,6 +1787,15 @@ function buildNodesSection() {
     dialogue: "dot-blue", event: "dot-blue", choice: "dot-purple",
     condition: "dot-amber", random: "dot-amber",
     chapter_end: "dot-green", ending: "dot-gray",
+    elegir_ruta: "dot-purple", elegir_trabajo: "dot-purple", elegir_vivienda: "dot-purple",
+    sorteo_heroina: "dot-amber",
+  };
+
+  const PICKER_TYPE_LABELS = {
+    elegir_ruta: "🧭 elige ruta",
+    elegir_trabajo: "💼 elige trabajo",
+    elegir_vivienda: "🏠 elige vivienda",
+    sorteo_heroina: "🎲 sortea heroína",
   };
 
   function nodeOutgoingIds(node) {
@@ -1763,6 +1809,9 @@ function buildNodesSection() {
       if (node.fallbackNext) ids.push(node.fallbackNext);
     } else if (node.type === "random") {
       (node.outcomes || []).forEach((o) => o.next && ids.push(o.next));
+    } else if (PICKER_TYPES.includes(node.type)) {
+      if (node.next) ids.push(node.next);
+      if (node.fallbackNext) ids.push(node.fallbackNext);
     }
     return ids;
   }
@@ -1895,7 +1944,11 @@ function buildNodesSection() {
             <i class="dot ${dot}"></i>
             <span class="tree-card-id">${node.id}</span>
           </div>
-          <div class="tree-card-sub">${node.character || (node.type === "ending" ? "final" : node.type === "chapter_end" ? "fin de capítulo" : "narrador")}</div>
+          <div class="tree-card-sub">${
+            PICKER_TYPE_LABELS[node.type] ||
+            (node.character === HEROINA_SORTEADA ? "🎲 la heroína de esta partida" : node.character) ||
+            (node.type === "ending" ? "final" : node.type === "chapter_end" ? "fin de capítulo" : "narrador")
+          }</div>
           <div class="tree-card-text">${(node.text || node.title || "(sin texto)").slice(0, 70)}</div>
         `;
         card.addEventListener("click", () => loadNodeIntoForm(node));
@@ -1943,7 +1996,7 @@ function buildNodesSection() {
     checkItems = (item.checks || []).map((c) => ({ ...c }));
     outcomeItems = (item.outcomes || []).map((o) => ({ ...o, effects: o.effects || {} }));
     updateVisibleFields();
-    if (item.type === "condition") {
+    if (item.type === "condition" || PICKER_TYPES.includes(item.type)) {
       refreshFallbackSelect();
       fallbackSelect.value = item.fallbackNext || "";
     }
@@ -2063,8 +2116,14 @@ function buildNodesSection() {
       transition: transitionSelect.value,
       text: form.elements.text.value,
     };
-    if (data.type === "dialogue" || data.type === "event") {
+    if (data.type === "dialogue" || data.type === "event" || PICKER_TYPES.includes(data.type)) {
       data.next = nextSelect.value;
+    }
+    if (PICKER_TYPES.includes(data.type)) {
+      data.fallbackNext = fallbackSelect.value;
+      if (!data.fallbackNext) {
+        return alert(`Un nodo "${data.type}" necesita "${PICKER_FALLBACK_LABELS[data.type]}" completado.`);
+      }
     }
     if (data.type === "chapter_end") {
       data.nextStoryId = nextStorySelect.value;
