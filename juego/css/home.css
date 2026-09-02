@@ -1,0 +1,1247 @@
+/*
+  HOME.CSS — MOBILE FIRST
+  ---------------------------------------------------------------------
+  Todo lo de aquí abajo está pensado PRIMERO para un teléfono en la
+  mano: objetivos táctiles grandes, una sola columna donde tenga
+  sentido, texto legible sin hacer zoom, y navegación de pulgar (los
+  botones importantes quedan cómodos de alcanzar). Las reglas dentro
+  de @media (min-width: ...) son las que AMPLÍAN el layout para
+  pantallas más grandes — no al revés.
+
+  Respeta el "notch"/áreas seguras de teléfonos con env(safe-area-inset-*).
+  ---------------------------------------------------------------------
+*/
+
+:root {
+  --tap-min: 46px; /* alto mínimo cómodo para tocar con el dedo */
+}
+
+/* =======================================================================
+   PANTALLA DE TÍTULO
+   ======================================================================= */
+
+.titlescreen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: max(28px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
+  position: relative;
+  overflow: hidden;
+}
+
+.titlescreen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 500px 320px at 50% 15%, rgba(217, 164, 65, 0.16), transparent 65%),
+    radial-gradient(ellipse 600px 420px at 15% 100%, rgba(166, 104, 232, 0.09), transparent 60%),
+    radial-gradient(ellipse 600px 420px at 90% 90%, rgba(91, 143, 196, 0.09), transparent 60%);
+  pointer-events: none;
+}
+
+.titlescreen__emblema {
+  font-size: 38px;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 0 16px rgba(217, 164, 65, 0.35));
+}
+
+.titlescreen__logo {
+  font-family: var(--fuente-logo);
+  font-weight: 700;
+  font-size: clamp(28px, 9vw, 52px);
+  letter-spacing: 0.01em;
+  margin: 0;
+  line-height: 1.1;
+  background: linear-gradient(180deg, var(--acento-suave), var(--acento-quemado));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.titlescreen__lema {
+  font-family: var(--fuente-narrativa);
+  font-style: italic;
+  font-size: clamp(14px, 4vw, 18px);
+  color: var(--texto-tenue);
+  margin: 6px 0 30px;
+  position: relative;
+  z-index: 1;
+  padding: 0 10px;
+}
+
+.titlescreen__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-l);
+  padding: 22px 20px;
+  box-shadow: var(--sombra-elevada);
+}
+
+.titlescreen__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--texto-tenue);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borde);
+}
+.titlescreen__stat:last-of-type { border-bottom: none; }
+.titlescreen__stat strong { font-family: var(--fuente-numeros); color: var(--acento-suave); }
+
+.titlescreen__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn--titulo {
+  min-height: var(--tap-min);
+  padding: 13px 22px;
+  font-size: 14.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--acento-suave), var(--acento-quemado));
+  color: var(--bg-abismo);
+  border: none;
+}
+.btn--titulo:hover { box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.4); }
+
+.titlescreen__pie {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+  font-size: 11px;
+  color: var(--texto-tenue-2);
+}
+
+/* =======================================================================
+   SHELL DEL JUEGO
+   ======================================================================= */
+
+.game-shell__topbar {
+  padding: max(12px, env(safe-area-inset-top)) 16px 10px;
+  border-bottom: 1px solid var(--borde);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.05), transparent);
+}
+
+.game-shell__logo {
+  font-family: var(--fuente-logo);
+  font-size: 16px;
+  color: var(--acento-suave);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.game-shell__link-admin {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  text-decoration: none;
+  border: 1px solid var(--borde);
+  padding: 5px 10px;
+  border-radius: 20px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.viewport {
+  padding: 14px 14px max(24px, env(safe-area-inset-bottom));
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.view { display: none; }
+.view--activa { display: block; }
+
+/* =======================================================================
+   ENCABEZADO DE PANTALLA SECUNDARIA (con volver)
+   ======================================================================= */
+
+.screenheader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.screenheader__volver {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.screenheader__volver:hover { border-color: var(--acento); }
+
+.screenheader__titulo { margin: 0; font-size: 19px; }
+
+/* =======================================================================
+   HUB
+   ======================================================================= */
+
+.hubheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--sombra-panel);
+}
+
+.hubheader__moneda {
+  font-family: var(--fuente-numeros);
+  color: var(--acento-suave);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hubheader__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: var(--fuente-numeros);
+  font-size: 11px;
+  color: var(--texto-tenue);
+}
+
+.runbanner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.14), rgba(217, 164, 65, 0.04));
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.runbanner__icono { font-size: 24px; flex-shrink: 0; }
+.runbanner__texto strong { font-size: 13.5px; display: block; margin-bottom: 2px; }
+.runbanner__texto p { margin: 0; font-size: 12px; color: var(--texto-tenue); }
+
+.teampreview {
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.teampreview__label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-tenue);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.teampreview__cartas {
+  display: flex;
+  gap: 8px;
+}
+
+.teampreview__carta {
+  width: 52px;
+  height: 68px;
+  border-radius: var(--radio-s);
+  overflow: hidden;
+  border: 1px solid var(--borde-fuerte);
+  flex-shrink: 0;
+}
+
+.teampreview__carta img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.teampreview__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-abismo);
+  font-family: var(--fuente-titulos);
+  color: var(--texto-tenue);
+}
+
+.teampreview__protagonista {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--acento-suave);
+}
+
+.hubgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.hubtile {
+  min-height: 96px;
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--sombra-panel);
+  color: var(--texto);
+}
+
+.hubtile:active { transform: scale(0.97); }
+.hubtile:hover { border-color: var(--acento); box-shadow: var(--resplandor-acento); }
+
+.hubtile__icono { font-size: 28px; }
+.hubtile__label { font-family: var(--fuente-ui); font-weight: 700; font-size: 13px; }
+
+.btn--aventura {
+  width: 100%;
+  min-height: 56px;
+  font-size: 15.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--acento-suave), var(--acento-quemado));
+  color: var(--bg-abismo);
+  border: none;
+  box-shadow: 0 4px 18px rgba(217, 164, 65, 0.25);
+}
+.btn--aventura:hover { box-shadow: 0 4px 22px rgba(217, 164, 65, 0.4); }
+
+/* =======================================================================
+   COLECCIÓN
+   ======================================================================= */
+
+.collection__filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.collection__filtros select { flex: 1 1 100px; min-height: var(--tap-min); }
+
+.collection__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.collectioncard {
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-abismo));
+  border: 1px solid var(--borde);
+  border-top: 3px solid var(--rareza-comun);
+  border-radius: var(--radio);
+  padding: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.collectioncard--comun { border-top-color: var(--rareza-comun); }
+.collectioncard--rara { border-top-color: var(--rareza-rara); }
+.collectioncard--epica { border-top-color: var(--rareza-epica); }
+.collectioncard--legendaria { border-top-color: var(--rareza-legendaria); }
+.collectioncard--mitica {
+  border-top: 3px solid;
+  border-image: linear-gradient(90deg, var(--rareza-mitica-1), var(--rareza-mitica-2)) 1;
+}
+
+.collectioncard--bloqueada {
+  opacity: 0.45;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 130px;
+}
+
+.collectioncard__silueta { font-size: 28px; color: var(--texto-tenue-2); font-family: var(--fuente-titulos); }
+
+.collectioncard--caida { border-top-color: var(--peligro); }
+.collectioncard--caida::after {
+  content: "CAÍDA";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: var(--peligro-suave);
+  font-weight: 700;
+}
+
+.collectioncard__img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radio-s);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.collectioncard__nombre { font-weight: 700; font-family: var(--fuente-titulos); margin-bottom: 3px; font-size: 13px; }
+.collectioncard__nivel { font-size: 10px; color: var(--acento-suave); font-weight: 700; margin-bottom: 2px; }
+.collectioncard__xpbar { height: 4px; background: rgba(0,0,0,0.5); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.collectioncard__xpbar-fill { height: 100%; background: linear-gradient(90deg, var(--acento-suave), var(--acento)); }
+.collectioncard__meta { font-size: 10px; color: var(--texto-tenue); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.collectioncard__fmc {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: linear-gradient(135deg, #e0b93f, #e0473f);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+
+.collectioncard__evolucion {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--borde);
+  font-size: 11px;
+}
+.collectioncard__evotitulo { font-weight: 700; color: var(--acento-suave); margin-bottom: 3px; }
+.collectioncard__evolucion p { color: var(--peligro); margin: 1px 0; }
+.collectioncard__evolucion p.collectioncard__evook { color: var(--exito); }
+.btn--evolucionar { width: 100%; margin-top: 6px; }
+
+/* ---- modal de detalle de carta (arte grande + stats completos) ---- */
+
+.collectioncard[data-abrir-detalle] { cursor: pointer; }
+
+.carddetail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 11, 18, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.carddetail {
+  --rareza-color: var(--rareza-comun);
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(165deg, var(--bg-panel), var(--bg-abismo));
+  border: 2px solid var(--rareza-color);
+  border-radius: var(--radio-l);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--sombra-elevada);
+}
+.carddetail--rara { --rareza-color: var(--rareza-rara); }
+.carddetail--epica { --rareza-color: var(--rareza-epica); }
+.carddetail--legendaria { --rareza-color: var(--rareza-legendaria); }
+.carddetail--mitica { --rareza-color: var(--rareza-mitica-1); }
+
+.carddetail__cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--texto);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.carddetail__img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: var(--radio);
+  background: var(--bg-abismo);
+  margin-bottom: 12px;
+}
+.carddetail__sinarte {
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulos);
+  font-size: 64px;
+  color: var(--texto-tenue-2);
+  background: var(--bg-abismo);
+  border-radius: var(--radio);
+  margin-bottom: 12px;
+}
+
+.carddetail__nombre { font-family: var(--fuente-titulos); font-size: 20px; margin-bottom: 4px; }
+.carddetail__nivel { font-size: 13px; color: var(--acento-suave); font-weight: 700; margin: 6px 0 12px; }
+
+.carddetail__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.carddetail__stat {
+  background: var(--bg-panel-alt);
+  border-radius: var(--radio-s);
+  padding: 10px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.carddetail__stat strong { font-family: var(--fuente-numeros); font-size: 18px; color: var(--texto); }
+
+.carddetail__lista { text-align: left; list-style: none; padding: 0; margin: 4px 0 12px; font-size: 13px; }
+.carddetail__lista li { padding: 4px 0; border-bottom: 1px solid var(--borde); }
+.carddetail__lista li:last-child { border-bottom: none; }
+.collectioncard__stats { font-family: var(--fuente-numeros); font-size: 10px; color: var(--texto-tenue); margin-bottom: 8px; }
+.collectioncard__estado { font-size: 10.5px; color: var(--exito-suave); font-weight: 600; }
+.collectioncard .btn--revivir { width: 100%; min-height: 38px; font-size: 11.5px; }
+
+/* =======================================================================
+   PROTAGONISTAS
+   ======================================================================= */
+
+.protagonists__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.protagonistcard {
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-abismo));
+  border: 1px solid var(--acento-quemado);
+  border-radius: var(--radio);
+  padding: 16px;
+  box-shadow: var(--sombra-panel);
+}
+
+.protagonistcard__img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: var(--radio-s);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.protagonistcard__nombre { font-family: var(--fuente-titulos); font-size: 16px; margin-bottom: 2px; }
+.protagonistcard__arquetipo {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acento-suave);
+  margin-bottom: 10px;
+}
+.protagonistcard__descripcion {
+  font-family: var(--fuente-narrativa);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--texto-tenue);
+  margin-bottom: 12px;
+}
+.protagonistcard__activa {
+  background: rgba(217, 164, 65, 0.08);
+  border-left: 2px solid var(--acento);
+  padding: 8px 12px;
+  border-radius: var(--radio-s);
+  font-size: 12.5px;
+}
+.protagonistcard__activa strong { color: var(--acento-suave); }
+
+.protagonistcard__apodo { width: 100%; margin: 6px 0; }
+.protagonistcard__variante { width: 100%; margin-top: 6px; }
+
+/* =======================================================================
+   PRESETS (equipos)
+   ======================================================================= */
+
+.presets { display: grid; grid-template-columns: 1fr; gap: 22px; }
+
+.presetgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.presetcard {
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 13px;
+  font-size: 13.5px;
+  box-shadow: var(--sombra-panel);
+}
+
+.presetcard strong { font-family: var(--fuente-titulos); font-size: 15px; }
+
+.presetcard__miniaturas { display: flex; gap: 5px; margin: 8px 0; flex-wrap: wrap; }
+
+.presetmini {
+  --rareza-color: var(--rareza-comun);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radio-s);
+  border: 2px solid var(--rareza-color);
+  overflow: hidden;
+  background: var(--bg-abismo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulos);
+  color: var(--texto-tenue);
+}
+.presetmini img { width: 100%; height: 100%; object-fit: cover; }
+.presetmini--rara { --rareza-color: var(--rareza-rara); }
+.presetmini--epica { --rareza-color: var(--rareza-epica); }
+.presetmini--legendaria { --rareza-color: var(--rareza-legendaria); }
+.presetmini--mitica { --rareza-color: var(--rareza-mitica-1); }
+
+.presets__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.presets__acciones .btn { min-height: var(--tap-min); }
+
+.shopitem, .runhp__item, select, input, .btn { min-height: var(--tap-min); }
+
+/* ---- aviso de resultado de nodo (recompensa + subidas de nivel) ---- */
+
+.resultnodo {
+  position: relative;
+  background: linear-gradient(145deg, rgba(64, 176, 108, 0.18), var(--bg-panel));
+  border: 1px solid var(--exito);
+  border-radius: var(--radio);
+  padding: 12px 34px 12px 14px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+}
+.resultnodo p { margin: 2px 0; }
+.resultnodo__cerrar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--texto-tenue);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* ---- armadora de equipo: fondo con vida, no un panel plano ---- */
+
+.teambuilder {
+  background: linear-gradient(165deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--acento);
+  box-shadow: var(--resplandor-acento), var(--sombra-elevada);
+  border-radius: var(--radio-l);
+  padding: 18px 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.teambuilder::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 320px 200px at 50% -10%, rgba(217, 164, 65, 0.14), transparent 65%);
+  pointer-events: none;
+}
+
+.teambuilder > * { position: relative; z-index: 1; }
+
+.teambuilder__ayuda {
+  font-family: var(--fuente-narrativa);
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--texto-tenue);
+  margin-bottom: 14px;
+}
+
+.teambuilder__formacion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ---- espacios de la formación (vacíos o con carta elegida) ---- */
+
+.slotcard {
+  --rareza-color: var(--borde-fuerte);
+  position: relative;
+  width: clamp(66px, 24vw, 92px);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radio-s);
+  border: 2px solid var(--rareza-color);
+  background: var(--bg-abismo);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  font-family: inherit;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.slotcard--frente { width: clamp(74px, 27vw, 104px); }
+
+.slotcard--vacio {
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-style: dashed;
+  background: transparent;
+}
+.slotcard--vacio:active { transform: scale(0.96); }
+
+.slotcard__mas { font-size: 26px; color: var(--texto-tenue-2); line-height: 1; }
+
+.slotcard--rara { --rareza-color: var(--rareza-rara); }
+.slotcard--epica { --rareza-color: var(--rareza-epica); }
+.slotcard--legendaria { --rareza-color: var(--rareza-legendaria); }
+.slotcard--mitica { --rareza-color: var(--rareza-mitica-1); }
+
+.slotcard__img { width: 100%; flex: 1; object-fit: cover; display: block; }
+.slotcard__sinarte {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulos);
+  font-size: 24px;
+  color: var(--texto-tenue-2);
+}
+
+.slotcard__etiqueta {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: rgba(13, 11, 18, 0.75);
+  color: var(--acento-suave);
+  font-size: 7px;
+  padding: 1px 4px;
+  border-radius: 5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.slotcard--vacio .slotcard__etiqueta { position: static; background: none; color: var(--texto-tenue-2); }
+
+.slotcard__nombre {
+  font-size: 9px;
+  padding: 2px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(13, 11, 18, 0.55);
+}
+
+.slotcard__quitar {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--peligro);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ---- selector de cartas: grilla en vez de <select> ---- */
+
+.cardpicker {
+  background: var(--bg-abismo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.cardpicker__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--texto-tenue);
+  margin-bottom: 10px;
+}
+
+.cardpicker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pickcard {
+  --rareza-color: var(--rareza-comun);
+  border: 2px solid var(--rareza-color);
+  border-radius: var(--radio-s);
+  background: var(--bg-panel-alt);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: inherit;
+  font-family: inherit;
+}
+.pickcard:active { transform: scale(0.95); }
+.pickcard--rara { --rareza-color: var(--rareza-rara); }
+.pickcard--epica { --rareza-color: var(--rareza-epica); }
+.pickcard--legendaria { --rareza-color: var(--rareza-legendaria); }
+.pickcard--mitica { --rareza-color: var(--rareza-mitica-1); }
+
+.pickcard__img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+.pickcard__sinarte {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulos);
+  color: var(--texto-tenue);
+}
+.pickcard__nombre { font-size: 9.5px; padding: 3px 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.pickcard__rareza { font-size: 8px; color: var(--texto-tenue-2); text-transform: uppercase; }
+
+/* ---- selector de protagonista: botones tipo carta, no <select> ---- */
+
+.protopicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.protopick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--borde);
+  border-radius: 20px;
+  padding: 6px 12px 6px 6px;
+  font-size: 12px;
+  color: var(--texto-tenue);
+  cursor: pointer;
+  min-height: var(--tap-min);
+}
+
+.protopick--activo { border-color: var(--acento); color: var(--texto); box-shadow: var(--resplandor-acento); }
+
+.protopick__img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.protopick__icono { font-size: 16px; }
+
+.teambuilder__nombre {
+  display: flex;
+  gap: 8px;
+}
+.teambuilder__nombre input { flex: 1; }
+.teambuilder__nombre .btn { flex-shrink: 0; padding: 0 12px; }
+
+/* =======================================================================
+   GACHA / TIENDA
+   ======================================================================= */
+
+.gacha { text-align: center; }
+.gacha__moneda { font-family: var(--fuente-numeros); font-size: 22px; color: var(--acento-suave); margin-bottom: 4px; }
+.gacha #btn-tirar-gacha { width: 100%; margin-top: 8px; }
+
+.gacha__resultado {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: var(--radio);
+  border-left: 3px solid var(--acento);
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  text-align: center;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gachareveal__img { max-width: 220px; max-height: 220px; object-fit: contain; display: block; margin: 0 auto 8px; }
+
+/* ---- animación de revelación: carta boca abajo -> flip con brillo ---- */
+
+.gachareveal-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  margin-top: 14px;
+}
+
+.gachacard-back {
+  width: 180px;
+  height: 252px;
+  border-radius: var(--radio);
+  background: linear-gradient(150deg, var(--bg-panel-alt), var(--bg-abismo));
+  border: 2px solid var(--acento);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: gachaPulso 0.85s ease-in-out infinite alternate;
+}
+.gachacard-back__simbolo { font-size: 54px; color: var(--acento-suave); }
+
+@keyframes gachaPulso {
+  from { transform: scale(1); box-shadow: 0 0 16px rgba(217, 164, 65, 0.25); }
+  to   { transform: scale(1.06); box-shadow: 0 0 34px rgba(217, 164, 65, 0.55); }
+}
+
+.gachareveal {
+  position: relative;
+  width: 100%;
+  animation: gachaFlipIn 0.5s cubic-bezier(0.2, 0.85, 0.3, 1.2);
+}
+
+@keyframes gachaFlipIn {
+  0%   { transform: rotateY(90deg) scale(0.85); opacity: 0; }
+  55%  { transform: rotateY(-10deg) scale(1.03); opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); }
+}
+
+.gachareveal__burst {
+  position: absolute;
+  inset: -30px 10%;
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  animation: gachaBurst 0.75s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes gachaBurst {
+  0%   { opacity: 0.9; transform: scale(0.35); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+.gachareveal__burst--comun { background: radial-gradient(circle, rgba(141, 147, 166, 0.5), transparent 70%); }
+.gachareveal__burst--rara { background: radial-gradient(circle, rgba(79, 143, 224, 0.55), transparent 70%); }
+.gachareveal__burst--epica { background: radial-gradient(circle, rgba(166, 104, 232, 0.6), transparent 70%); }
+.gachareveal__burst--legendaria { background: radial-gradient(circle, rgba(224, 172, 47, 0.7), transparent 70%); }
+.gachareveal__burst--mitica { background: radial-gradient(circle, rgba(224, 71, 63, 0.75), transparent 70%); }
+
+.gachareveal--epico .gacha__resultado { box-shadow: 0 0 26px rgba(224, 172, 47, 0.4); }
+
+.gachareveal__chispa {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--acento-suave);
+  opacity: 0;
+  animation: gachaChispa 0.8s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes gachaChispa {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); }
+}
+
+.gachareveal__garantizada {
+  text-align: center;
+  font-family: var(--fuente-titulos);
+  color: var(--acento-suave);
+  margin-bottom: 8px;
+  animation: gachaGarantizadaGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes gachaGarantizadaGlow {
+  from { text-shadow: 0 0 6px rgba(217, 164, 65, 0.4); }
+  to   { text-shadow: 0 0 16px rgba(217, 164, 65, 0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gachacard-back, .gachareveal, .gachareveal__burst, .gachareveal__chispa, .gachareveal__garantizada {
+    animation: none !important;
+  }
+}
+
+/* =======================================================================
+   MAPA DE AVENTURA
+   ======================================================================= */
+
+.startrun .presetcard { max-width: none; }
+.startrun #btn-ir-a-equipos { width: 100%; margin-top: 6px; }
+
+.runmap__hp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 11px;
+  font-family: var(--fuente-numeros);
+}
+
+.runhp__item {
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  border-radius: 20px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+}
+
+.runhp__item--caida { border-color: var(--peligro); color: var(--peligro-suave); }
+
+.runmap__pisos {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 18px;
+  padding: 6px 0;
+}
+
+.runmap__piso {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.runnode {
+  --nodo-color: var(--rareza-comun);
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-abismo));
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--texto-tenue-2);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.runnode__icono { font-size: 20px; }
+.runnode__label { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.runnode--visitado { border-color: var(--nodo-color); opacity: 0.5; }
+.runnode--actual { border-color: var(--acento); box-shadow: var(--resplandor-acento); color: var(--texto); }
+.runnode--disponible { border-color: var(--nodo-color); color: var(--texto); cursor: pointer; }
+.runnode--disponible:active { transform: scale(0.95); }
+
+/* ---- evento / tienda / descanso ---- */
+
+.eventbox, .shopbox, .restbox {
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--acento);
+  box-shadow: var(--resplandor-acento), var(--sombra-elevada);
+  border-radius: var(--radio-l);
+  padding: 18px;
+}
+
+.eventbox h3, .shopbox h3, .restbox h3 { font-size: 18px; }
+
+.eventbox p {
+  font-family: var(--fuente-narrativa);
+  font-size: 16px;
+  color: var(--texto-tenue);
+  line-height: 1.5;
+}
+
+.eventbox__opciones { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.eventbox__opciones .btn { min-height: auto; padding: 12px 14px; text-align: left; white-space: normal; line-height: 1.4; }
+
+/* ---- variante visual novel (escena de historia con fondo/personaje) ---- */
+
+.eventbox--historia {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.eventbox__fondo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.eventbox__fondo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 11, 18, 0.55) 0%, rgba(13, 11, 18, 0.92) 100%);
+}
+
+.eventbox--historia .eventbox__contenido {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 18px;
+  min-height: 200px;
+}
+
+.eventbox__personaje {
+  max-height: 220px;
+  max-width: 40%;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+
+.eventbox__texto { flex: 1; min-width: 0; }
+
+.eventbox__etiqueta {
+  display: inline-block;
+  background: var(--acento);
+  color: var(--bg-abismo);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 480px) {
+  .eventbox--historia .eventbox__contenido { flex-direction: column; align-items: center; text-align: center; }
+  .eventbox__personaje { max-width: 55%; max-height: 160px; }
+}
+
+.shopbox__seccion { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--borde); }
+.shopbox__seccion:last-of-type { border-bottom: none; }
+
+.shopitem {
+  background: var(--bg-abismo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-s);
+  padding: 11px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  height: auto;
+}
+.shopitem .btn { width: 100%; margin-top: 6px; }
+
+/* =======================================================================
+   HISTORIAL
+   ======================================================================= */
+
+.historyentry {
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  border-left: 3px solid var(--texto-tenue);
+  border-radius: var(--radio);
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.historyentry--victoria { border-left-color: var(--exito); }
+.historyentry--derrota { border-left-color: var(--peligro); }
+
+.historyentry__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+  color: var(--texto-tenue);
+  font-size: 11px;
+  font-family: var(--fuente-numeros);
+}
+.historyentry__header strong { color: var(--texto); font-family: var(--fuente-titulos); font-size: 14px; }
+
+.historyentry__body p { margin: 3px 0; }
+
+/* =======================================================================
+   AMPLIACIÓN PARA PANTALLAS GRANDES (tablet / escritorio)
+   ======================================================================= */
+
+@media (min-width: 700px) {
+  .viewport { max-width: 900px; padding: 22px 24px 48px; }
+
+  .hubgrid { grid-template-columns: repeat(4, 1fr); }
+  .hubtile { min-height: 110px; }
+
+  .teampreview__carta { width: 64px; height: 84px; }
+
+  .collection__grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+
+  .protagonists__grid { grid-template-columns: repeat(2, 1fr); }
+
+  .presets { grid-template-columns: 1fr 1fr; }
+
+  .gacha { max-width: 480px; margin: 0 auto; }
+  .gacha #btn-tirar-gacha { width: auto; padding-left: 32px; padding-right: 32px; }
+
+  .eventbox, .shopbox, .restbox { max-width: 620px; }
+
+  .historyentry__header { flex-direction: row; justify-content: space-between; }
+}
+
+@media (min-width: 1000px) {
+  .viewport { max-width: 1100px; }
+  .collection__grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+}

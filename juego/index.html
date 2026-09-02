@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero-Manhwa</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <link rel="stylesheet" href="../shared/css/fonts.css" />
+  <link rel="stylesheet" href="../shared/css/base.css" />
+  <link rel="stylesheet" href="../shared/css/battle.css" />
+  <link rel="stylesheet" href="css/home.css" />
+</head>
+<body>
+  <div id="screen-backdrop" aria-hidden="true">
+    <div id="screen-backdrop-bg"></div>
+    <img id="screen-backdrop-personaje" alt="" />
+  </div>
+
+  <!-- ===== PANTALLA DE TÍTULO ===== -->
+  <section id="titlescreen" class="titlescreen">
+    <div class="titlescreen__emblema">⚔️</div>
+    <h1 class="titlescreen__logo">Hero-Manhwa</h1>
+    <p class="titlescreen__lema">— toda formación cae, la tuya decide cómo —</p>
+
+    <div class="titlescreen__panel" id="titlescreen-panel">
+      <p style="font-family: var(--fuente-narrativa); font-style: italic; color: var(--texto-tenue);">Cargando…</p>
+    </div>
+
+    <p class="titlescreen__pie">Versión offline · <a href="../admin/index.html">Panel de administración →</a></p>
+  </section>
+
+  <!-- ===== EXPERIENCIA DEL JUGADOR (oculta hasta entrar) ===== -->
+  <div id="game-shell" style="display:none">
+    <header class="game-shell__topbar">
+      <a class="game-shell__logo" href="#" id="link-volver-titulo">⚔️ Hero-Manhwa</a>
+      <a class="game-shell__link-admin" href="../admin/index.html">Admin →</a>
+    </header>
+
+    <main class="viewport">
+      <section id="view-hub" class="view view--activa"></section>
+      <section id="view-coleccion" class="view"></section>
+      <section id="view-protagonistas" class="view"></section>
+      <section id="view-tienda" class="view"></section>
+      <section id="view-historial" class="view"></section>
+      <section id="view-equipos" class="view"></section>
+      <section id="view-aventura" class="view"></section>
+      <section id="view-combate" class="view"></section>
+    </main>
+  </div>
+
+  <!-- ===== FIREBASE (nube) + CLOUDINARY (imágenes) ===== -->
+  <!-- SDK de Firebase vía CDN, sin build tools (versión "compat", API clásica) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="../shared/js/firebaseConfig.js"></script>
+  <script src="../shared/js/cloudinaryConfig.js"></script>
+  <script src="../shared/js/engine/firebaseClient.js"></script>
+
+  <!-- ===== DATOS (compartidos con el admin) ===== -->
+  <script src="../shared/js/data/classes.js"></script>
+  <script src="../shared/js/data/elements.js"></script>
+  <script src="../shared/js/data/statuses.js"></script>
+  <script src="../shared/js/data/rules-default.js"></script>
+  <script src="../shared/js/data/cardSchema.js"></script>
+  <script src="../shared/js/data/cards-comunes.js"></script>
+  <script src="../shared/js/data/cards-raras.js"></script>
+  <script src="../shared/js/data/cards-epicas.js"></script>
+  <script src="../shared/js/data/cards-legendarias.js"></script>
+  <script src="../shared/js/data/cards-miticas.js"></script>
+  <script src="../shared/js/data/dataIndex.js"></script>
+  <script src="../shared/js/data/protagonistSchema.js"></script>
+  <script src="../shared/js/data/protagonists.js"></script>
+  <script src="../shared/js/data/economyConfig.js"></script>
+  <script src="../shared/js/data/nodeTypes.js"></script>
+  <script src="../shared/js/data/runConfig.js"></script>
+  <script src="../shared/js/data/eventsPool.js"></script>
+  <script src="../shared/js/data/shopPool.js"></script>
+  <script src="../shared/js/data/levelingConfig.js"></script>
+  <script src="../shared/js/data/screensConfig.js"></script>
+  <script src="../shared/js/data/storyConfig.js"></script>
+
+  <!-- ===== ALMACENAMIENTO (compartido) ===== -->
+  <script src="../shared/js/storage.js"></script>
+  <script src="../shared/js/engine/imageUtils.js"></script>
+  <script src="../shared/js/engine/cloudinaryUpload.js"></script>
+  <script src="../shared/js/engine/playerStorage.js"></script>
+  <script src="../shared/js/engine/cardLevelEngine.js"></script>
+  <script src="../shared/js/engine/storyEngine.js"></script>
+  <script src="../shared/js/engine/protagonistCustomization.js"></script>
+  <script src="../shared/js/engine/evolutionEngine.js"></script>
+
+  <!-- ===== MOTOR DE COMBATE (compartido) ===== -->
+  <script src="../shared/js/engine/combatCardFactory.js"></script>
+  <script src="../shared/js/engine/formation.js"></script>
+  <script src="../shared/js/engine/turnOrder.js"></script>
+  <script src="../shared/js/engine/energy.js"></script>
+  <script src="../shared/js/engine/targeting.js"></script>
+  <script src="../shared/js/engine/damage.js"></script>
+  <script src="../shared/js/engine/statusEffects.js"></script>
+  <script src="../shared/js/engine/actions.js"></script>
+  <script src="../shared/js/engine/combat.js"></script>
+  <script src="../shared/js/engine/smartAI.js"></script>
+  <script src="../shared/js/engine/protagonistActions.js"></script>
+  <script src="../shared/js/engine/gacha.js"></script>
+  <script src="../shared/js/engine/mapGenerator.js"></script>
+
+  <!-- ===== INTERFAZ DE COMBATE (compartida) ===== -->
+  <script src="../shared/js/ui/battle/battlefieldUI.js"></script>
+  <script src="../shared/js/ui/battle/turnQueueUI.js"></script>
+  <script src="../shared/js/ui/battle/relicsBarUI.js"></script>
+  <script src="../shared/js/ui/battle/moveHistoryUI.js"></script>
+  <script src="../shared/js/ui/battle/combatController.js"></script>
+
+  <!-- runState.js usa startCombatFromTeams (arriba), por eso va después -->
+  <script src="../shared/js/engine/runState.js"></script>
+
+  <!-- ===== INTERFAZ DEL JUEGO (exclusiva de esta app) ===== -->
+  <script src="js/ui/screenHeaderUI.js"></script>
+  <script src="js/ui/collectionUI.js"></script>
+  <script src="js/ui/protagonistsUI.js"></script>
+  <script src="js/ui/teamPresetsUI.js"></script>
+  <script src="js/ui/gachaHomeUI.js"></script>
+  <script src="js/ui/mapUI.js"></script>
+  <script src="js/ui/historyUI.js"></script>
+  <script src="js/ui/hubUI.js"></script>
+
+  <script src="js/game-main.js"></script>
+</body>
+</html>

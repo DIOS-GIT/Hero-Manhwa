@@ -1,0 +1,240 @@
+/*
+  BASE.CSS (compartido)
+  ---------------------------------------------------------------------
+  Reset + componentes genéricos usados tanto por admin/ como por
+  juego/: botones, inputs, fieldsets, tipografía de párrafo. Cada app
+  además tiene su propio CSS (admin.css / home.css) para layouts
+  específicos — este archivo es la base común.
+  ---------------------------------------------------------------------
+*/
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--texto);
+  font-family: var(--fuente-ui);
+  font-size: 15px;
+  line-height: 1.55;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(217, 164, 65, 0.07), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(91, 143, 196, 0.06), transparent 55%),
+    radial-gradient(ellipse 1200px 800px at 50% 120%, rgba(166, 104, 232, 0.05), transparent 60%),
+    var(--bg-base);
+  background-attachment: fixed;
+}
+
+/* =======================================================================
+   FONDO/PERSONAJE POR PANTALLA (Admin: Pantallas)
+   -----------------------------------------------------------------------
+   Capa fija detrás de todo el contenido. applyScreenBackground() (en
+   game-main.js) cambia estas dos piezas cada vez que se entra a una
+   pantalla — si esa pantalla no tiene fondo/personaje configurado en
+   el admin, quedan vacíos y se ve el degradado de siempre (body).
+   ======================================================================= */
+
+#screen-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#screen-backdrop-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#screen-backdrop-bg.screen-backdrop-bg--activo { opacity: 1; }
+
+#screen-backdrop-personaje {
+  position: absolute;
+  bottom: 0;
+  max-height: 88vh;
+  max-width: 46vw;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#screen-backdrop-personaje.screen-backdrop-personaje--activo { opacity: 1; }
+#screen-backdrop-personaje.screen-backdrop-personaje--izquierda { left: 0; right: auto; }
+#screen-backdrop-personaje.screen-backdrop-personaje--derecha { right: 0; left: auto; }
+#screen-backdrop-personaje.screen-backdrop-personaje--centro { left: 50%; transform: translateX(-50%); }
+
+@media (max-width: 700px) {
+  #screen-backdrop-personaje { max-width: 62vw; max-height: 55vh; opacity: 0.55; }
+  #screen-backdrop-personaje.screen-backdrop-personaje--activo { opacity: 0.55; }
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.55em 0;
+  color: var(--texto);
+}
+
+h4 { font-size: 15px; color: var(--acento-suave); }
+
+p { margin: 0 0 0.6em 0; }
+
+a { color: var(--acento-suave); }
+
+::selection { background: rgba(217, 164, 65, 0.35); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--borde-fuerte); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--acento-quemado); }
+
+.empty-hint {
+  color: var(--texto-tenue-2);
+  font-style: italic;
+  font-family: var(--fuente-narrativa);
+  font-size: 16px;
+}
+
+.hint {
+  color: var(--acento-suave);
+  font-size: 13px;
+}
+
+/* ---- botones ---- */
+
+.btn {
+  background: linear-gradient(180deg, var(--bg-panel-hover), var(--bg-panel-alt));
+  border: 1px solid var(--borde-fuerte);
+  color: var(--texto);
+  padding: 10px 18px;
+  border-radius: var(--radio-s);
+  cursor: pointer;
+  font-family: var(--fuente-ui);
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+  border-color: var(--acento);
+  box-shadow: var(--resplandor-acento);
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
+
+.btn--secundario {
+  background: transparent;
+  border-color: var(--borde);
+}
+
+.btn--peligro {
+  border-color: var(--peligro);
+  color: var(--peligro-suave);
+}
+.btn--peligro:hover { box-shadow: 0 0 0 1px rgba(209, 72, 63, 0.4), 0 0 18px rgba(209, 72, 63, 0.15); }
+
+.btn--protagonista {
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.22), rgba(217, 164, 65, 0.08));
+  border-color: var(--acento);
+  color: var(--acento-suave);
+}
+
+.btn--icono { padding: 5px 9px; font-size: 12px; }
+
+/* ---- formularios ---- */
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--texto-tenue);
+  margin-bottom: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+input, select, textarea {
+  background: var(--bg-abismo);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  padding: 9px 11px;
+  border-radius: var(--radio-s);
+  font-size: 14px;
+  font-family: var(--fuente-ui);
+}
+
+input:focus, select:focus, textarea:focus, .btn:focus-visible {
+  outline: none;
+  border-color: var(--acento);
+  box-shadow: var(--resplandor-acento);
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+fieldset {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+legend {
+  padding: 0 8px;
+  color: var(--acento-suave);
+  font-family: var(--fuente-titulos);
+  font-size: 14px;
+}
+
+.mini-label { margin-bottom: 0; font-size: 11px; }
+
+/* ---- números tipo HUD ---- */
+
+.stat-num { font-family: var(--fuente-numeros); font-weight: 500; }
+
+/* =======================================================================
+   RESPONSIVO — reglas compartidas por admin y juego
+   =======================================================================
+   Nada de lo anterior cambia; esto solo ajusta comportamiento en
+   pantallas angostas (teléfono). Los inputs/selects nunca deben
+   desbordar su contenedor, sea cual sea el layout de la página.
+*/
+
+input, select, textarea, .btn {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+
+  body { font-size: 14.5px; }
+
+  .cardform__fila,
+  .repeatable-row,
+  .repeatable-row--habilidad {
+    grid-template-columns: 1fr !important;
+  }
+
+  .repeatable-row .btn--icono,
+  .repeatable-row--habilidad .btn--icono {
+    justify-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

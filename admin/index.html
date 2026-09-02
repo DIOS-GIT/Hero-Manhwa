@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hero-Manhwa — Admin</title>
+  <link rel="stylesheet" href="../shared/css/tokens.css" />
+  <link rel="stylesheet" href="../shared/css/fonts.css" />
+  <link rel="stylesheet" href="../shared/css/base.css" />
+  <link rel="stylesheet" href="../shared/css/battle.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <header class="admin-shell__topbar">
+    <div>
+      <h1>⚔️ Hero-Manhwa <span class="badge-modo">Admin</span></h1>
+      <p class="admin-shell__subtitulo">Diseño y balance — cartas, protagonistas y reglas del juego</p>
+    </div>
+    <a class="admin-shell__link-juego" href="../juego/index.html">Ir al juego →</a>
+  </header>
+
+  <nav class="tabs">
+    <button class="tabs__btn" data-view="cartas">Cartas</button>
+    <button class="tabs__btn" data-view="protagonistas">Protagonistas</button>
+    <button class="tabs__btn" data-view="reglas">Reglas globales</button>
+    <button class="tabs__btn" data-view="rutas">Rutas</button>
+    <button class="tabs__btn" data-view="niveles">Niveles</button>
+    <button class="tabs__btn" data-view="elementos">Elementos</button>
+    <button class="tabs__btn" data-view="tienda">Tienda</button>
+    <button class="tabs__btn" data-view="pantallas">Pantallas</button>
+    <button class="tabs__btn" data-view="historia">Historia</button>
+    <button class="tabs__btn" data-view="equipos">Equipos y combate</button>
+    <button class="tabs__btn" data-view="combate">Combate en curso</button>
+    <button class="tabs__btn" data-view="datos">Datos</button>
+  </nav>
+
+  <main class="viewport">
+    <section id="view-cartas" class="view"></section>
+    <section id="view-protagonistas" class="view"></section>
+    <section id="view-reglas" class="view"></section>
+    <section id="view-rutas" class="view"></section>
+    <section id="view-niveles" class="view"></section>
+    <section id="view-elementos" class="view"></section>
+    <section id="view-tienda" class="view"></section>
+    <section id="view-pantallas" class="view"></section>
+    <section id="view-historia" class="view"></section>
+    <section id="view-equipos" class="view"></section>
+    <section id="view-combate" class="view"></section>
+    <section id="view-datos" class="view"></section>
+  </main>
+
+  <!-- ===== FIREBASE (nube) + CLOUDINARY (imágenes) ===== -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="../shared/js/firebaseConfig.js"></script>
+  <script src="../shared/js/cloudinaryConfig.js"></script>
+  <script src="../shared/js/engine/firebaseClient.js"></script>
+
+  <!-- ===== DATOS (compartidos con el juego) ===== -->
+  <script src="../shared/js/data/classes.js"></script>
+  <script src="../shared/js/data/elements.js"></script>
+  <script src="../shared/js/data/statuses.js"></script>
+  <script src="../shared/js/data/rules-default.js"></script>
+  <script src="../shared/js/data/cardSchema.js"></script>
+  <script src="../shared/js/data/archetypesConfig.js"></script>
+  <script src="../shared/js/data/cards-comunes.js"></script>
+  <script src="../shared/js/data/cards-raras.js"></script>
+  <script src="../shared/js/data/cards-epicas.js"></script>
+  <script src="../shared/js/data/cards-legendarias.js"></script>
+  <script src="../shared/js/data/cards-miticas.js"></script>
+  <script src="../shared/js/data/dataIndex.js"></script>
+  <script src="../shared/js/data/protagonistSchema.js"></script>
+  <script src="../shared/js/data/protagonists.js"></script>
+  <script src="../shared/js/data/economyConfig.js"></script>
+  <script src="../shared/js/data/nodeTypes.js"></script>
+  <script src="../shared/js/data/runConfig.js"></script>
+  <script src="../shared/js/data/eventsPool.js"></script>
+  <script src="../shared/js/data/shopPool.js"></script>
+  <script src="../shared/js/data/levelingConfig.js"></script>
+  <script src="../shared/js/data/screensConfig.js"></script>
+  <script src="../shared/js/data/storyConfig.js"></script>
+
+  <!-- ===== ALMACENAMIENTO (compartido) ===== -->
+  <script src="../shared/js/storage.js"></script>
+  <script src="../shared/js/engine/imageUtils.js"></script>
+  <script src="../shared/js/engine/cloudinaryUpload.js"></script>
+  <script src="../shared/js/engine/archetypeStatGenerator.js"></script>
+
+  <!-- ===== MOTOR DE COMBATE (compartido) ===== -->
+  <script src="../shared/js/engine/combatCardFactory.js"></script>
+  <script src="../shared/js/engine/formation.js"></script>
+  <script src="../shared/js/engine/turnOrder.js"></script>
+  <script src="../shared/js/engine/energy.js"></script>
+  <script src="../shared/js/engine/targeting.js"></script>
+  <script src="../shared/js/engine/damage.js"></script>
+  <script src="../shared/js/engine/statusEffects.js"></script>
+  <script src="../shared/js/engine/actions.js"></script>
+  <script src="../shared/js/engine/combat.js"></script>
+  <script src="../shared/js/engine/smartAI.js"></script>
+  <script src="../shared/js/engine/protagonistActions.js"></script>
+
+  <!-- ===== INTERFAZ DE COMBATE (compartida) ===== -->
+  <script src="../shared/js/ui/battle/battlefieldUI.js"></script>
+  <script src="../shared/js/ui/battle/turnQueueUI.js"></script>
+  <script src="../shared/js/ui/battle/relicsBarUI.js"></script>
+  <script src="../shared/js/ui/battle/moveHistoryUI.js"></script>
+  <script src="../shared/js/ui/battle/combatController.js"></script>
+
+  <!-- ===== ADMIN (exclusivo de esta app) ===== -->
+  <script src="js/passivePresets.js"></script>
+  <script src="js/cardEditor.js"></script>
+  <script src="js/protagonistEditor.js"></script>
+  <script src="js/rulesEditor.js"></script>
+  <script src="js/routesEditor.js"></script>
+  <script src="js/levelingEditor.js"></script>
+  <script src="js/elementsEditor.js"></script>
+  <script src="js/shopEditor.js"></script>
+  <script src="js/screensEditor.js"></script>
+  <script src="js/historiaEditor.js"></script>
+  <script src="js/teamBuilder.js"></script>
+  <script src="js/dataPanel.js"></script>
+  <script src="js/admin-main.js"></script>
+</body>
+</html>

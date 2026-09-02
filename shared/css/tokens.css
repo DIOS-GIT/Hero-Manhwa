@@ -1,0 +1,64 @@
+/*
+  TOKENS.CSS
+  ---------------------------------------------------------------------
+  Fuente única de verdad del diseño visual. admin/ y juego/ importan
+  este archivo (y fonts.css) antes que sus propios CSS — así un cambio
+  de paleta o tipografía se hace UNA vez aquí, no en cada app.
+
+  Dirección de arte: fantasía oscura tipo Slay the Spire — piedra y
+  pergamino viejo bajo luz de antorcha, no "panel de admin" plano ni
+  el brillo genérico de anuncio de juego móvil. Los paneles tienen
+  textura y borde con calidez dorada; el fondo tiene profundidad
+  (viñeta), no es un solo tono liso.
+  ---------------------------------------------------------------------
+*/
+
+:root {
+  /* ---- superficie: profundidad en vez de un solo gris plano ---- */
+  --bg-abismo: #0d0b12;       /* fondo más profundo, esquinas del viewport */
+  --bg-base: #16131d;          /* fondo general */
+  --bg-panel: #1e1a28;          /* paneles/tarjetas */
+  --bg-panel-alt: #26202f;       /* paneles anidados, inputs */
+  --bg-panel-hover: #2d2637;
+
+  --borde: #3a3247;
+  --borde-fuerte: #4d4460;
+
+  --texto: #eae4f0;
+  --texto-tenue: #a79bb8;
+  --texto-tenue-2: #7d7191;
+
+  /* ---- acento cálido: luz de antorcha, no dorado de mall ---- */
+  --acento: #d9a441;
+  --acento-suave: #eec978;
+  --acento-quemado: #b5761f;
+
+  --peligro: #d1483f;
+  --peligro-suave: #e88079;
+  --exito: #4f9e6e;
+  --exito-suave: #7fc79a;
+  --info: #5b8fc4;
+
+  /* ---- rareza: convención reconocible, pero con más carácter que colores planos ---- */
+  --rareza-comun: #8d93a6;
+  --rareza-rara: #4f8fe0;
+  --rareza-epica: #a668e8;
+  --rareza-legendaria: #e0ac2f;
+  --rareza-mitica-1: #e0473f;
+  --rareza-mitica-2: #e88a2f;
+
+  /* ---- tipografía ---- */
+  --fuente-logo: "Cinzel Decorative", Georgia, serif;
+  --fuente-titulos: "Cinzel", Georgia, serif;
+  --fuente-narrativa: "Cormorant Garamond", Georgia, serif;
+  --fuente-ui: "Manrope", -apple-system, "Segoe UI", sans-serif;
+  --fuente-numeros: "JetBrains Mono", ui-monospace, monospace;
+
+  --radio-s: 6px;
+  --radio: 10px;
+  --radio-l: 16px;
+
+  --sombra-panel: 0 4px 18px rgba(0, 0, 0, 0.45);
+  --sombra-elevada: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --resplandor-acento: 0 0 0 1px rgba(217, 164, 65, 0.35), 0 0 18px rgba(217, 164, 65, 0.12);
+}
