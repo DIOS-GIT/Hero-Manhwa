@@ -14,7 +14,7 @@
  * -----------------------------------------------------------------------
  */
 
-const CLOUDINARY_CONFIG = {
-  cloudName: "TU_CLOUD_NAME",
-  uploadPreset: "TU_UPLOAD_PRESET_UNSIGNED",
+export const CLOUDINARY_CONFIG = {
+  cloudName: 'xvfr4mx3',
+  uploadPreset: 'card_game_preset'
 };
