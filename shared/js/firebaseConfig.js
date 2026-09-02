@@ -13,11 +13,12 @@
  * -----------------------------------------------------------------------
  */
 
-const FIREBASE_CONFIG = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
+export const firebaseConfig = {
+  apiKey: "AIzaSyBiKoFAa8qCUdvZhCn5t3V1-VCiLMdCCzU",
+  authDomain: "card-game-986f3.firebaseapp.com",
+  databaseURL: "https://card-game-986f3-default-rtdb.firebaseio.com",
+  projectId: "card-game-986f3",
+  storageBucket: "card-game-986f3.firebasestorage.app",
+  messagingSenderId: "773716535114",
+  appId: "1:773716535114:web:796ac9d2f8ed52414a83b3"
 };
