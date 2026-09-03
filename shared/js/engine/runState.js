@@ -215,7 +215,7 @@ function resolveEventConsequence(consecuencia) {
   if (consecuencia.tipo === "hp") {
     objetivos.forEach((id) => {
       const tpl = GameData.cartas.find((c) => c.id === id);
-      const cantidad = consecuencia.esPortentaje ? Math.round(tpl.stats.hp * consecuencia.cantidad) : consecuencia.cantidad;
+      const cantidad = consecuencia.esPorcentaje ? Math.round(tpl.stats.hp * consecuencia.cantidad) : consecuencia.cantidad;
       activeRun.hpActual[id] = Math.max(0, Math.min(tpl.stats.hp, (activeRun.hpActual[id] || 0) + cantidad));
       if (activeRun.hpActual[id] === 0 && !activeRun.cartasCaidasEnRun.includes(id)) {
         activeRun.cartasCaidasEnRun.push(id);
