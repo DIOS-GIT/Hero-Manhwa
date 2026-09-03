@@ -526,3 +526,61 @@
   .teambuilder__acciones { flex-wrap: wrap; }
   .teambuilder__acciones label { max-width: none; width: 100%; }
 }
+
+/* =======================================================================
+   LOGIN DE ADMIN
+   ======================================================================= */
+
+.admin-login {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.admin-login__box {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-l);
+  padding: 24px;
+  box-shadow: var(--sombra-elevada);
+}
+
+.admin-login__box h2 {
+  font-family: var(--fuente-titulos);
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.admin-login__subtitulo {
+  color: var(--texto-tenue);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.admin-login__box label {
+  text-align: left;
+}
+
+.admin-login__box input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.admin-login__error {
+  background: rgba(209, 72, 63, 0.15);
+  border: 1px solid var(--peligro);
+  color: var(--peligro-suave);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: var(--radio-s);
+  margin-bottom: 12px;
+}
+
+.admin-login__box .btn {
+  width: 100%;
+  margin-bottom: 8px;
+}
