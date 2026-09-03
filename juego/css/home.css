@@ -1245,3 +1245,80 @@
   .viewport { max-width: 1100px; }
   .collection__grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 }
+
+/* =======================================================================
+   LOGIN / REGISTRO
+   ======================================================================= */
+
+.loginscreen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.loginbox {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-l);
+  padding: 24px;
+  box-shadow: var(--sombra-elevada);
+  text-align: center;
+}
+
+.loginbox__titulo {
+  font-family: var(--fuente-titulos);
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.loginbox__subtitulo {
+  color: var(--texto-tenue);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.loginbox label {
+  text-align: left;
+}
+
+.loginbox input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.loginbox__error {
+  background: rgba(209, 72, 63, 0.15);
+  border: 1px solid var(--peligro);
+  color: var(--peligro-suave);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: var(--radio-s);
+  margin-bottom: 12px;
+}
+
+.loginbox .btn {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.loginbox__registro {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--texto-tenue);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--acento-suave);
+  font-family: var(--fuente-ui);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
