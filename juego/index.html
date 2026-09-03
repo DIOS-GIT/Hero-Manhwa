@@ -26,7 +26,51 @@
       <p style="font-family: var(--fuente-narrativa); font-style: italic; color: var(--texto-tenue);">Cargando…</p>
     </div>
 
-    <p class="titlescreen__pie">Versión offline · <a href="../admin/index.html">Panel de administración →</a></p>
+    <p class="titlescreen__pie"><a href="../admin/index.html">Panel de administración →</a></p>
+  </section>
+
+  <!-- ===== PANTALLA DE LOGIN ===== -->
+  <section id="loginscreen" class="loginscreen" style="display:none">
+    <div class="loginbox">
+      <h2 class="loginbox__titulo">Iniciar sesión</h2>
+      <p class="loginbox__subtitulo">Accede a tu cuenta para continuar tu aventura</p>
+
+      <label>Correo electrónico
+        <input type="email" id="input-login-email" placeholder="tucorreo@ejemplo.com" />
+      </label>
+
+      <label>Contraseña
+        <input type="password" id="input-login-password" placeholder="••••••••" />
+      </label>
+
+      <div id="login-error" class="loginbox__error" style="display:none"></div>
+
+      <button class="btn btn--titulo" id="btn-login">Entrar</button>
+      <button class="btn btn--secundario" id="btn-volver-titulo">← Volver</button>
+
+      <p class="loginbox__registro">¿No tienes cuenta? <button class="btn-link" id="btn-ir-registro">Regístrate aquí</button></p>
+    </div>
+  </section>
+
+  <!-- ===== PANTALLA DE REGISTRO ===== -->
+  <section id="registerscreen" class="loginscreen" style="display:none">
+    <div class="loginbox">
+      <h2 class="loginbox__titulo">Crear cuenta</h2>
+      <p class="loginbox__subtitulo">Empieza tu propia aventura con tu equipo</p>
+
+      <label>Correo electrónico
+        <input type="email" id="input-register-email" placeholder="tucorreo@ejemplo.com" />
+      </label>
+
+      <label>Contraseña (mínimo 6 caracteres)
+        <input type="password" id="input-register-password" placeholder="••••••••" />
+      </label>
+
+      <div id="register-error" class="loginbox__error" style="display:none"></div>
+
+      <button class="btn btn--titulo" id="btn-register">Crear cuenta</button>
+      <button class="btn btn--secundario" id="btn-volver-login">← Volver</button>
+    </div>
   </section>
 
   <!-- ===== EXPERIENCIA DEL JUGADOR (oculta hasta entrar) ===== -->
