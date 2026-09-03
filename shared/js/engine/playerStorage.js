@@ -7,6 +7,12 @@
  * (js/storage.js), que es el diseño del juego (cartas/reglas que
  * edita el admin).
  *
+ * AHORA SOPORTA CUENTAS:
+ * - Si el jugador inició sesión, sus datos se guardan en Firestore
+ *   (players/{uid}) y también en localStorage como caché local.
+ * - Si NO inició sesión (modo local), sus datos se guardan solo en
+ *   localStorage.
+ *
  * PlayerData = {
  *   moneda: number,
  *   coleccion: [cardId, ...],       // cartas que el jugador ya tiene
@@ -51,35 +57,64 @@ function aplicarPlayerData(parsed) {
 
 /**
  * Carga el progreso del jugador, en este orden de preferencia:
- *   1. Firestore (players/{uid}, uid anónimo) si Firebase está
- *      configurado — así el progreso no se pierde si cambia de
- *      navegador o borra datos locales.
- *   2. localStorage de este navegador.
+ *   1. Firestore (players/{uid}) si hay sesión iniciada.
+ *   2. localStorage (modo local o caché).
  *   3. Progreso nuevo (valores de fábrica).
- * Es async por el paso 1 (red); el resto del juego sigue leyendo el
+ * Es async por el paso 1 (red) — el resto del juego sigue leyendo el
  * objeto PlayerData en memoria de forma síncrona, como siempre.
  */
 async function initPlayerData() {
   await ensureFirebaseReady();
 
-  const nube = await fetchPlayerDataFromCloud();
-  if (nube) {
-    aplicarPlayerData(nube);
-    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(PlayerData)); // cache local
+  // Si hay sesión iniciada, priorizar Firestore
+  if (currentUser && firebaseEnabled) {
+    const nube = await fetchPlayerDataFromCloud();
+    if (nube) {
+      aplicarPlayerData(nube);
+      localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(PlayerData)); // caché local
+      return PlayerData;
+    }
+    // Si no hay datos en la nube pero sí en localStorage (migración)
+    const savedLocal = localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (savedLocal) {
+      try {
+        aplicarPlayerData(JSON.parse(savedLocal));
+        syncPlayerDataToCloud(PlayerData); // subir a la nube
+        return PlayerData;
+      } catch (err) {
+        console.error("No se pudo leer el guardado local, se reinician.", err);
+      }
+    }
+    // Si no hay nada, crear datos nuevos y subirlos
+    PlayerData = {
+      moneda: ECONOMY_CONFIG.monedaInicial,
+      coleccion: [],
+      cartasCaidas: [],
+      presets: [],
+      ultimoPresetId: null,
+      historial: [],
+      progresoCartas: {},
+      progresoHistoria: { capituloIndex: 0, escenaIndex: 0 },
+      personalizacionProtagonistas: {},
+      fragmentosCartas: {},
+      yaTuvoPrimeraTirada: false,
+    };
+    syncPlayerDataToCloud(PlayerData);
     return PlayerData;
   }
 
+  // Modo local (sin sesión): usar localStorage
   const saved = localStorage.getItem(PLAYER_STORAGE_KEY);
   if (saved) {
     try {
       aplicarPlayerData(JSON.parse(saved));
-      savePlayerData(); // si hay Firebase disponible, siembra la nube con tu progreso local
       return PlayerData;
     } catch (err) {
       console.error("No se pudo leer los datos del jugador, se reinician.", err);
     }
   }
 
+  // Progreso nuevo
   PlayerData = {
     moneda: ECONOMY_CONFIG.monedaInicial,
     coleccion: [],
@@ -99,7 +134,9 @@ async function initPlayerData() {
 
 function savePlayerData() {
   localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(PlayerData));
-  syncPlayerDataToCloud(PlayerData);
+  if (currentUser && firebaseEnabled) {
+    syncPlayerDataToCloud(PlayerData);
+  }
 }
 
 function ownsCard(cardId) {
