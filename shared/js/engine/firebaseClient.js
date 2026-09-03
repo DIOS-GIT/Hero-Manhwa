@@ -4,17 +4,7 @@
  * Capa mínima sobre Firebase. No cambia cómo el resto del juego lee o
  * escribe datos (sigue siendo GameData / PlayerData en memoria) — solo
  * decide DE DÓNDE se cargan al inicio y A DÓNDE se guardan además de
- * localStorage: storage.js y engine/playerStorage.js llaman a
- * ensureFirebaseReady() antes de leer, y a syncGameDataToCloud() /
- * syncPlayerDataToCloud() después de cada guardado.
- *
- * AHORA SOPORTA:
- * - Registro/login de jugadores (usuario + contraseña)
- * - Registro/login de admins (email + contraseña + rol)
- * - Modo local sin Firebase (si no hay conexión o no está configurado)
- *
- * Requiere que el HTML haya cargado antes los <script> del SDK de
- * Firebase (compat, sin build tools) y firebaseConfig.js.
+ * localStorage.
  * -----------------------------------------------------------------------
  */
 
@@ -26,15 +16,19 @@ let _firebaseReadyPromise = null;
 // Datos del usuario actual (jugador o admin)
 let currentUser = null; // { uid, email, role: "jugador" | "admin_principal" | "admin_secundario" }
 
-function isFirebaseConfigured() {
-  return typeof FIREBASE_CONFIG !== "undefined" && FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("TU_");
+// ✅ CORRECCIÓN: detecta cuál configuración está cargada
+function getFirebaseConfig() {
+  if (typeof firebaseConfig !== "undefined") return firebaseConfig;
+  if (typeof firebaseAdminConfig !== "undefined") return firebaseAdminConfig;
+  if (typeof FIREBASE_CONFIG !== "undefined") return FIREBASE_CONFIG;
+  return null;
 }
 
-/**
- * Conecta una sola vez (llamadas posteriores devuelven la misma
- * promesa). Si Firebase no está configurado o falla la conexión, el
- * juego sigue funcionando en modo 100% local sin romperse.
- */
+function isFirebaseConfigured() {
+  const config = getFirebaseConfig();
+  return config && config.apiKey && !config.apiKey.startsWith("TU_");
+}
+
 function ensureFirebaseReady() {
   if (_firebaseReadyPromise) return _firebaseReadyPromise;
 
@@ -44,14 +38,14 @@ function ensureFirebaseReady() {
       return;
     }
     if (!isFirebaseConfigured()) {
-      console.warn("[Firebase] Sin configurar todavía (shared/js/firebaseConfig.js) — el juego funciona 100% local hasta que completes esos datos. Ver DEPLOY.md.");
+      console.warn("[Firebase] Sin configurar todavía — el juego funciona 100% local hasta que completes esos datos.");
       return;
     }
     try {
-      firebase.initializeApp(FIREBASE_CONFIG);
+      firebase.initializeApp(getFirebaseConfig());
       firestoreDb = firebase.firestore();
       firebaseEnabled = true;
-      console.log("[Firebase] Conectado. Esperando login de usuario...");
+      console.log("[Firebase] Conectado.");
     } catch (err) {
       console.error("[Firebase] No se pudo conectar, se sigue en modo local.", err);
       firebaseEnabled = false;
@@ -62,15 +56,9 @@ function ensureFirebaseReady() {
 }
 
 /* =======================================================================
-   LOGIN / REGISTRO DE USUARIOS (jugadores normales)
+   LOGIN / REGISTRO DE USUARIOS
    ======================================================================= */
 
-/**
- * Registra un jugador nuevo con usuario y contraseña.
- * @param {string} email - correo del jugador
- * @param {string} password - contraseña (mínimo 6 caracteres)
- * @returns {Promise<{ok: boolean, motivo?: string}>}
- */
 async function registerPlayer(email, password) {
   await ensureFirebaseReady();
   if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
@@ -80,7 +68,6 @@ async function registerPlayer(email, password) {
     firebaseUid = credencial.user.uid;
     currentUser = { uid: firebaseUid, email, role: "jugador" };
 
-    // Crear documento del jugador en Firestore
     await firestoreDb.collection("players").doc(firebaseUid).set({
       email,
       moneda: 300,
@@ -103,10 +90,6 @@ async function registerPlayer(email, password) {
   }
 }
 
-/**
- * Inicia sesión de un jugador con email y contraseña.
- * @returns {Promise<{ok: boolean, motivo?: string}>}
- */
 async function loginPlayer(email, password) {
   await ensureFirebaseReady();
   if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
@@ -121,15 +104,6 @@ async function loginPlayer(email, password) {
   }
 }
 
-/* =======================================================================
-   LOGIN / REGISTRO DE ADMINS (con roles)
-   ======================================================================= */
-
-/**
- * Inicia sesión de un admin (email + contraseña).
- * Busca su rol en la colección "admins" de Firestore.
- * @returns {Promise<{ok: boolean, motivo?: string, role?: string}>}
- */
 async function loginAdmin(email, password) {
   await ensureFirebaseReady();
   if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
@@ -138,7 +112,6 @@ async function loginAdmin(email, password) {
     const credencial = await firebase.auth().signInWithEmailAndPassword(email, password);
     firebaseUid = credencial.user.uid;
 
-    // Buscar rol en colección "admins"
     const doc = await firestoreDb.collection("admins").doc(firebaseUid).get();
     if (!doc.exists) {
       await firebase.auth().signOut();
@@ -146,7 +119,7 @@ async function loginAdmin(email, password) {
     }
 
     const data = doc.data();
-    const role = data.role; // "admin_principal" | "admin_secundario"
+    const role = data.role;
     currentUser = { uid: firebaseUid, email, role };
     return { ok: true, role };
   } catch (err) {
@@ -154,13 +127,6 @@ async function loginAdmin(email, password) {
   }
 }
 
-/**
- * Registra un admin nuevo (solo puede llamarlo el admin principal).
- * @param {string} email - email del nuevo admin
- * @param {string} password - contraseña
- * @param {"admin_principal"|"admin_secundario"} role - rol del nuevo admin
- * @returns {Promise<{ok: boolean, motivo?: string}>}
- */
 async function registerAdmin(email, password, role) {
   await ensureFirebaseReady();
   if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
@@ -185,10 +151,6 @@ async function registerAdmin(email, password, role) {
   }
 }
 
-/* =======================================================================
-   CERRAR SESIÓN
-   ======================================================================= */
-
 async function logout() {
   if (firebaseEnabled && firebase.auth().currentUser) {
     await firebase.auth().signOut();
@@ -197,17 +159,12 @@ async function logout() {
   currentUser = null;
 }
 
-/* =======================================================================
-   SINCRONIZACIÓN (se mantiene igual que antes)
-   ======================================================================= */
-
-/** Sube el documento único de datos de diseño del juego (cartas/reglas/protagonistas/rutas). */
 async function syncGameDataToCloud(data) {
   if (!firebaseEnabled) return;
   try {
     await firestoreDb.collection("gamedata").doc("main").set(data);
   } catch (err) {
-    console.error("[Firebase] No se pudo guardar gamedata en la nube (queda guardado localmente).", err);
+    console.error("[Firebase] No se pudo guardar gamedata en la nube.", err);
   }
 }
 
@@ -217,18 +174,17 @@ async function fetchGameDataFromCloud() {
     const snap = await firestoreDb.collection("gamedata").doc("main").get();
     return snap.exists ? snap.data() : null;
   } catch (err) {
-    console.error("[Firebase] No se pudo leer gamedata de la nube, se usa el guardado local.", err);
+    console.error("[Firebase] No se pudo leer gamedata de la nube.", err);
     return null;
   }
 }
 
-/** Sube el documento de progreso del jugador actual (players/{uid}). */
 async function syncPlayerDataToCloud(data) {
   if (!firebaseEnabled || !firebaseUid) return;
   try {
     await firestoreDb.collection("players").doc(firebaseUid).set(data);
   } catch (err) {
-    console.error("[Firebase] No se pudo guardar tu progreso en la nube (queda guardado localmente).", err);
+    console.error("[Firebase] No se pudo guardar tu progreso en la nube.", err);
   }
 }
 
@@ -238,14 +194,10 @@ async function fetchPlayerDataFromCloud() {
     const snap = await firestoreDb.collection("players").doc(firebaseUid).get();
     return snap.exists ? snap.data() : null;
   } catch (err) {
-    console.error("[Firebase] No se pudo leer tu progreso de la nube, se usa el guardado local.", err);
+    console.error("[Firebase] No se pudo leer tu progreso de la nube.", err);
     return null;
   }
 }
-
-/* =======================================================================
-   UTILIDADES
-   ======================================================================= */
 
 function traducirErrorFirebase(code) {
   const errores = {
@@ -261,22 +213,18 @@ function traducirErrorFirebase(code) {
   return errores[code] || "Error desconocido al autenticar.";
 }
 
-/** Devuelve el usuario actual (jugador o admin), o null si no hay sesión. */
 function getCurrentUser() {
   return currentUser;
 }
 
-/** Devuelve true si el usuario actual es admin (principal o secundario). */
 function isAdmin() {
   return currentUser && (currentUser.role === "admin_principal" || currentUser.role === "admin_secundario");
 }
 
-/** Devuelve true si el usuario actual es admin principal. */
 function isAdminPrincipal() {
   return currentUser && currentUser.role === "admin_principal";
 }
 
-/** Devuelve true si el usuario actual es un jugador normal. */
 function isPlayer() {
   return currentUser && currentUser.role === "jugador";
 }
