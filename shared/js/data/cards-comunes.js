@@ -77,7 +77,7 @@ const CARDS_COMUNES = [
       {
         nombre: "Retaguardia",
         posicionRequerida: "retaguardia",
-        efecto: { stat: "curacion", modificador: 0.1 },
+        efecto: { stat: "atk", modificador: 0.1 },
       },
     ],
     habilidades: [
