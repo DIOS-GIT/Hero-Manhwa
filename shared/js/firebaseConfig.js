@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------------
  */
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBiKoFAa8qCUdvZhCn5t3V1-VCiLMdCCzU",
   authDomain: "card-game-986f3.firebaseapp.com",
   databaseURL: "https://card-game-986f3-default-rtdb.firebaseio.com",
