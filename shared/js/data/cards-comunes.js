@@ -1,17 +1,3 @@
-/**
- * CARDS-COMUNES.JS
- * -----------------------------------------------------------------------
- * Cartas de rareza COMÚN. Este archivo trae 3 cartas de EJEMPLO ya
- * cargadas (un tanque, un asesino y un soporte) para que puedas probar
- * el motor de combate desde el primer momento sin tener que crear
- * cartas a mano.
- *
- * Puedes borrarlas, editarlas o agregar las tuyas — todo desde el
- * admin. Si prefieres editar este archivo directamente, cada carta
- * sigue exactamente la forma descrita en js/data/cardSchema.js.
- * -----------------------------------------------------------------------
- */
-
 const CARDS_COMUNES = [
   {
     id: "card_tanque_01",
@@ -19,7 +5,7 @@ const CARDS_COMUNES = [
     rareza: "comun",
     clase: "tanque",
     elemento: "tierra",
-    imagen: "guardian_piedra.png",
+    imagen: "",
     stats: { hp: 180, atk: 12, def: 22, velocidad: 6 },
     pasivas: [
       {
@@ -45,7 +31,7 @@ const CARDS_COMUNES = [
     rareza: "comun",
     clase: "asesino",
     elemento: "oscuridad",
-    imagen: "sombra_veloz.png",
+    imagen: "",
     stats: { hp: 85, atk: 26, def: 8, velocidad: 18 },
     pasivas: [
       {
@@ -71,7 +57,7 @@ const CARDS_COMUNES = [
     rareza: "comun",
     clase: "soporte",
     elemento: "luz",
-    imagen: "curandera_alba.png",
+    imagen: "",
     stats: { hp: 95, atk: 8, def: 10, velocidad: 12 },
     pasivas: [
       {
