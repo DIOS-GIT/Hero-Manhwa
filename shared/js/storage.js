@@ -36,19 +36,24 @@ let GameData = {
   historia: null,
 };
 
+// Clon seguro compatible con cualquier navegador. Reemplaza a structuredClone()
+function safeClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 function aplicarGameData(parsed) {
   GameData.cartas = parsed.cartas || [];
-  GameData.reglas = parsed.reglas || structuredClone(DEFAULT_RULES);
-  GameData.protagonistas = parsed.protagonistas && parsed.protagonistas.length > 0 ? parsed.protagonistas : structuredClone(PROTAGONISTS_DEFAULT);
-  GameData.rutas = parsed.rutas || structuredClone(RUN_CONFIG_DEFAULT);
+  GameData.reglas = parsed.reglas || safeClone(DEFAULT_RULES);
+  GameData.protagonistas = parsed.protagonistas && parsed.protagonistas.length > 0 ? parsed.protagonistas : safeClone(PROTAGONISTS_DEFAULT);
+  GameData.rutas = parsed.rutas || safeClone(RUN_CONFIG_DEFAULT);
   // Por si el guardado es de antes de que existieran las plantillas de mapa:
   if (!GameData.rutas.plantillas) GameData.rutas.plantillas = [];
   if (GameData.rutas.usarPlantillas === undefined) GameData.rutas.usarPlantillas = false;
-  GameData.niveles = parsed.niveles || structuredClone(LEVELING_CONFIG_DEFAULT);
-  GameData.elementos = parsed.elementos || structuredClone(ELEMENTS_CONFIG_DEFAULT);
-  GameData.tienda = parsed.tienda || structuredClone(SHOP_CONFIG_DEFAULT);
-  GameData.pantallas = parsed.pantallas || structuredClone(SCREENS_CONFIG_DEFAULT);
-  GameData.historia = parsed.historia || structuredClone(STORY_CONFIG_DEFAULT);
+  GameData.niveles = parsed.niveles || safeClone(LEVELING_CONFIG_DEFAULT);
+  GameData.elementos = parsed.elementos || safeClone(ELEMENTS_CONFIG_DEFAULT);
+  GameData.tienda = parsed.tienda || safeClone(SHOP_CONFIG_DEFAULT);
+  GameData.pantallas = parsed.pantallas || safeClone(SCREENS_CONFIG_DEFAULT);
+  GameData.historia = parsed.historia || safeClone(STORY_CONFIG_DEFAULT);
   // Por si se agregan pantallas nuevas más adelante y el guardado viejo no las tiene:
   SCREENS_LIST.forEach((s) => {
     if (!GameData.pantallas[s.id]) GameData.pantallas[s.id] = crearPantallaVacia();
@@ -88,14 +93,14 @@ async function initGameData() {
   }
 
   GameData.cartas = getAllBaseCards();
-  GameData.reglas = structuredClone(DEFAULT_RULES);
-  GameData.protagonistas = structuredClone(PROTAGONISTS_DEFAULT);
-  GameData.rutas = structuredClone(RUN_CONFIG_DEFAULT);
-  GameData.niveles = structuredClone(LEVELING_CONFIG_DEFAULT);
-  GameData.elementos = structuredClone(ELEMENTS_CONFIG_DEFAULT);
-  GameData.tienda = structuredClone(SHOP_CONFIG_DEFAULT);
-  GameData.pantallas = structuredClone(SCREENS_CONFIG_DEFAULT);
-  GameData.historia = structuredClone(STORY_CONFIG_DEFAULT);
+  GameData.reglas = safeClone(DEFAULT_RULES);
+  GameData.protagonistas = safeClone(PROTAGONISTS_DEFAULT);
+  GameData.rutas = safeClone(RUN_CONFIG_DEFAULT);
+  GameData.niveles = safeClone(LEVELING_CONFIG_DEFAULT);
+  GameData.elementos = safeClone(ELEMENTS_CONFIG_DEFAULT);
+  GameData.tienda = safeClone(SHOP_CONFIG_DEFAULT);
+  GameData.pantallas = safeClone(SCREENS_CONFIG_DEFAULT);
+  GameData.historia = safeClone(STORY_CONFIG_DEFAULT);
   saveGameData();
   return GameData;
 }
@@ -152,7 +157,7 @@ function importGameDataFromFile(file) {
  * js/data/rules-default.js, sin tocar las cartas.
  */
 function resetRulesToDefault() {
-  GameData.reglas = structuredClone(DEFAULT_RULES);
+  GameData.reglas = safeClone(DEFAULT_RULES);
   saveGameData();
 }
 
@@ -161,7 +166,7 @@ function resetRulesToDefault() {
  * valores de fábrica de js/data/runConfig.js, sin tocar cartas/reglas.
  */
 function resetRoutesToDefault() {
-  GameData.rutas = structuredClone(RUN_CONFIG_DEFAULT);
+  GameData.rutas = safeClone(RUN_CONFIG_DEFAULT);
   saveGameData();
 }
 
@@ -170,7 +175,7 @@ function resetRoutesToDefault() {
  * fábrica de js/data/levelingConfig.js, sin tocar cartas/reglas/rutas.
  */
 function resetLevelingToDefault() {
-  GameData.niveles = structuredClone(LEVELING_CONFIG_DEFAULT);
+  GameData.niveles = safeClone(LEVELING_CONFIG_DEFAULT);
   saveGameData();
 }
 
@@ -179,7 +184,7 @@ function resetLevelingToDefault() {
  * fábrica de js/data/elements.js, sin tocar cartas/reglas/rutas/niveles.
  */
 function resetElementsToDefault() {
-  GameData.elementos = structuredClone(ELEMENTS_CONFIG_DEFAULT);
+  GameData.elementos = safeClone(ELEMENTS_CONFIG_DEFAULT);
   saveGameData();
 }
 
@@ -188,7 +193,7 @@ function resetElementsToDefault() {
  * fábrica de js/data/shopPool.js, sin tocar el resto de GameData.
  */
 function resetShopToDefault() {
-  GameData.tienda = structuredClone(SHOP_CONFIG_DEFAULT);
+  GameData.tienda = safeClone(SHOP_CONFIG_DEFAULT);
   saveGameData();
 }
 
@@ -198,7 +203,7 @@ function resetShopToDefault() {
  * resto de GameData.
  */
 function resetScreensToDefault() {
-  GameData.pantallas = structuredClone(SCREENS_CONFIG_DEFAULT);
+  GameData.pantallas = safeClone(SCREENS_CONFIG_DEFAULT);
   saveGameData();
 }
 
@@ -209,6 +214,6 @@ function resetScreensToDefault() {
  * contenido nuevo (los nodos de Evento vuelven a ser aleatorios).
  */
 function resetStoryToDefault() {
-  GameData.historia = structuredClone(STORY_CONFIG_DEFAULT);
+  GameData.historia = safeClone(STORY_CONFIG_DEFAULT);
   saveGameData();
 }
