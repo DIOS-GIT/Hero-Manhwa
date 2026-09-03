@@ -19,35 +19,59 @@
     <a class="admin-shell__link-juego" href="../juego/index.html">Ir al juego →</a>
   </header>
 
-  <nav class="tabs">
-    <button class="tabs__btn" data-view="cartas">Cartas</button>
-    <button class="tabs__btn" data-view="protagonistas">Protagonistas</button>
-    <button class="tabs__btn" data-view="reglas">Reglas globales</button>
-    <button class="tabs__btn" data-view="rutas">Rutas</button>
-    <button class="tabs__btn" data-view="niveles">Niveles</button>
-    <button class="tabs__btn" data-view="elementos">Elementos</button>
-    <button class="tabs__btn" data-view="tienda">Tienda</button>
-    <button class="tabs__btn" data-view="pantallas">Pantallas</button>
-    <button class="tabs__btn" data-view="historia">Historia</button>
-    <button class="tabs__btn" data-view="equipos">Equipos y combate</button>
-    <button class="tabs__btn" data-view="combate">Combate en curso</button>
-    <button class="tabs__btn" data-view="datos">Datos</button>
-  </nav>
+  <!-- ===== LOGIN DE ADMIN ===== -->
+  <section id="admin-login" class="admin-login">
+    <div class="admin-login__box">
+      <h2>Acceso de administrador</h2>
+      <p class="admin-login__subtitulo">Inicia sesión para gestionar el juego</p>
 
-  <main class="viewport">
-    <section id="view-cartas" class="view"></section>
-    <section id="view-protagonistas" class="view"></section>
-    <section id="view-reglas" class="view"></section>
-    <section id="view-rutas" class="view"></section>
-    <section id="view-niveles" class="view"></section>
-    <section id="view-elementos" class="view"></section>
-    <section id="view-tienda" class="view"></section>
-    <section id="view-pantallas" class="view"></section>
-    <section id="view-historia" class="view"></section>
-    <section id="view-equipos" class="view"></section>
-    <section id="view-combate" class="view"></section>
-    <section id="view-datos" class="view"></section>
-  </main>
+      <label>Correo electrónico
+        <input type="email" id="input-admin-email" placeholder="admin@ejemplo.com" />
+      </label>
+
+      <label>Contraseña
+        <input type="password" id="input-admin-password" placeholder="••••••••" />
+      </label>
+
+      <div id="admin-login-error" class="admin-login__error" style="display:none"></div>
+
+      <button class="btn btn--titulo" id="btn-admin-login">Entrar</button>
+      <button class="btn btn--secundario" id="btn-admin-volver-juego">← Ir al juego</button>
+    </div>
+  </section>
+
+  <!-- ===== ADMIN (visible solo tras login) ===== -->
+  <div id="admin-shell" style="display:none">
+    <nav class="tabs">
+      <button class="tabs__btn" data-view="cartas">Cartas</button>
+      <button class="tabs__btn" data-view="protagonistas">Protagonistas</button>
+      <button class="tabs__btn" data-view="reglas">Reglas globales</button>
+      <button class="tabs__btn" data-view="rutas">Rutas</button>
+      <button class="tabs__btn" data-view="niveles">Niveles</button>
+      <button class="tabs__btn" data-view="elementos">Elementos</button>
+      <button class="tabs__btn" data-view="tienda">Tienda</button>
+      <button class="tabs__btn" data-view="pantallas">Pantallas</button>
+      <button class="tabs__btn" data-view="historia">Historia</button>
+      <button class="tabs__btn" data-view="equipos">Equipos y combate</button>
+      <button class="tabs__btn" data-view="combate">Combate en curso</button>
+      <button class="tabs__btn" data-view="datos">Datos</button>
+    </nav>
+
+    <main class="viewport">
+      <section id="view-cartas" class="view"></section>
+      <section id="view-protagonistas" class="view"></section>
+      <section id="view-reglas" class="view"></section>
+      <section id="view-rutas" class="view"></section>
+      <section id="view-niveles" class="view"></section>
+      <section id="view-elementos" class="view"></section>
+      <section id="view-tienda" class="view"></section>
+      <section id="view-pantallas" class="view"></section>
+      <section id="view-historia" class="view"></section>
+      <section id="view-equipos" class="view"></section>
+      <section id="view-combate" class="view"></section>
+      <section id="view-datos" class="view"></section>
+    </main>
+  </div>
 
   <!-- ===== FIREBASE (nube) + CLOUDINARY (imágenes) ===== -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
