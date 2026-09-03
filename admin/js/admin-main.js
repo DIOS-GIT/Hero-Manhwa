@@ -69,11 +69,14 @@ function renderAdminLogin() {
       return;
     }
 
+    // 🔥 IMPORTANTE: conectar Firebase ANTES de intentar login
+    await ensureFirebaseReady();
+
     const resultado = await loginAdmin(email, password);
     if (resultado.ok) {
       document.getElementById("admin-login").style.display = "none";
       document.getElementById("admin-shell").style.display = "block";
-      alert(`Bienvenido ${email}. Rol: ${resultado.role}`);
+      initAdminApp();
     } else {
       errorBox.textContent = resultado.motivo;
       errorBox.style.display = "block";
@@ -86,37 +89,8 @@ function renderAdminLogin() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // 🔥 Conectar Firebase ANTES de cargar datos
+  await ensureFirebaseReady();
   await initGameData();
   renderAdminLogin();
-
-  // Si ya hay sesión de admin activa (por ejemplo, recargó la página)
-  const user = getCurrentUser();
-  if (user && isAdmin()) {
-    document.getElementById("admin-login").style.display = "none";
-    document.getElementById("admin-shell").style.display = "block";
-    initAdminApp();
-  } else {
-    // Esperar a que el admin inicie sesión
-    const btnLogin = document.getElementById("btn-admin-login");
-    btnLogin.addEventListener("click", async () => {
-      const email = document.getElementById("input-admin-email").value.trim();
-      const password = document.getElementById("input-admin-password").value;
-
-      if (!email || !password) {
-        document.getElementById("admin-login-error").textContent = "Completa todos los campos.";
-        document.getElementById("admin-login-error").style.display = "block";
-        return;
-      }
-
-      const resultado = await loginAdmin(email, password);
-      if (resultado.ok) {
-        document.getElementById("admin-login").style.display = "none";
-        document.getElementById("admin-shell").style.display = "block";
-        initAdminApp();
-      } else {
-        document.getElementById("admin-login-error").textContent = resultado.motivo;
-        document.getElementById("admin-login-error").style.display = "block";
-      }
-    });
-  }
 });
