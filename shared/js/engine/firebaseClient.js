@@ -2,9 +2,8 @@
  * FIREBASECLIENT.JS
  * -----------------------------------------------------------------------
  * Capa mínima sobre Firebase. No cambia cómo el resto del juego lee o
- * escribe datos (sigue siendo GameData / PlayerData en memoria) — solo
- * decide DE DÓNDE se cargan al inicio y A DÓNDE se guardan además de
- * localStorage.
+ * escribe datos — solo decide DE DÓNDE se cargan al inicio y A DÓNDE se
+ * guardan además de localStorage.
  * -----------------------------------------------------------------------
  */
 
@@ -13,10 +12,10 @@ let firebaseUid = null;
 let firestoreDb = null;
 let _firebaseReadyPromise = null;
 
-// Datos del usuario actual (jugador o admin)
-let currentUser = null; // { uid, email, role: "jugador" | "admin_principal" | "admin_secundario" }
+// Datos del usuario actual
+let currentUser = null;
 
-// ✅ CORRECCIÓN: detecta cuál configuración está cargada
+// Detecta cuál configuración está cargada
 function getFirebaseConfig() {
   if (typeof firebaseConfig !== "undefined") return firebaseConfig;
   if (typeof firebaseAdminConfig !== "undefined") return firebaseAdminConfig;
@@ -38,7 +37,7 @@ function ensureFirebaseReady() {
       return;
     }
     if (!isFirebaseConfigured()) {
-      console.warn("[Firebase] Sin configurar todavía — el juego funciona 100% local hasta que completes esos datos.");
+      console.warn("[Firebase] Sin configurar todavía — el juego funciona 100% local.");
       return;
     }
     try {
@@ -55,9 +54,51 @@ function ensureFirebaseReady() {
   return _firebaseReadyPromise;
 }
 
-/* =======================================================================
-   LOGIN / REGISTRO DE USUARIOS
-   ======================================================================= */
+async function loginAdmin(email, password) {
+  await ensureFirebaseReady();
+  if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
+
+  try {
+    const credencial = await firebase.auth().signInWithEmailAndPassword(email, password);
+    firebaseUid = credencial.user.uid;
+
+    // 🔥 IMPORTANTE: Intenta leer el documento de admin
+    const doc = await firestoreDb.collection("admins").doc(firebaseUid).get();
+    
+    if (!doc.exists) {
+      await firebase.auth().signOut();
+      return { ok: false, motivo: "Este correo no tiene permisos de admin en Firestore." };
+    }
+
+    const data = doc.data();
+    if (!data.role) {
+      await firebase.auth().signOut();
+      return { ok: false, motivo: "El documento de admin no tiene campo 'role'." };
+    }
+
+    const role = data.role;
+    currentUser = { uid: firebaseUid, email, role };
+    return { ok: true, role };
+  } catch (err) {
+    // 🔥 Detecta cualquier error y lo traduce
+    const mensaje = traducirErrorFirebase(err.code) || `Error: ${err.message || "desconocido"}`;
+    return { ok: false, motivo: mensaje };
+  }
+}
+
+async function loginPlayer(email, password) {
+  await ensureFirebaseReady();
+  if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
+
+  try {
+    const credencial = await firebase.auth().signInWithEmailAndPassword(email, password);
+    firebaseUid = credencial.user.uid;
+    currentUser = { uid: firebaseUid, email, role: "jugador" };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, motivo: traducirErrorFirebase(err.code) || `Error: ${err.message || "desconocido"}` };
+  }
+}
 
 async function registerPlayer(email, password) {
   await ensureFirebaseReady();
@@ -86,44 +127,7 @@ async function registerPlayer(email, password) {
 
     return { ok: true };
   } catch (err) {
-    return { ok: false, motivo: traducirErrorFirebase(err.code) };
-  }
-}
-
-async function loginPlayer(email, password) {
-  await ensureFirebaseReady();
-  if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
-
-  try {
-    const credencial = await firebase.auth().signInWithEmailAndPassword(email, password);
-    firebaseUid = credencial.user.uid;
-    currentUser = { uid: firebaseUid, email, role: "jugador" };
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, motivo: traducirErrorFirebase(err.code) };
-  }
-}
-
-async function loginAdmin(email, password) {
-  await ensureFirebaseReady();
-  if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
-
-  try {
-    const credencial = await firebase.auth().signInWithEmailAndPassword(email, password);
-    firebaseUid = credencial.user.uid;
-
-    const doc = await firestoreDb.collection("admins").doc(firebaseUid).get();
-    if (!doc.exists) {
-      await firebase.auth().signOut();
-      return { ok: false, motivo: "Este usuario no tiene permisos de admin." };
-    }
-
-    const data = doc.data();
-    const role = data.role;
-    currentUser = { uid: firebaseUid, email, role };
-    return { ok: true, role };
-  } catch (err) {
-    return { ok: false, motivo: traducirErrorFirebase(err.code) };
+    return { ok: false, motivo: traducirErrorFirebase(err.code) || `Error: ${err.message || "desconocido"}` };
   }
 }
 
@@ -147,7 +151,7 @@ async function registerAdmin(email, password, role) {
 
     return { ok: true };
   } catch (err) {
-    return { ok: false, motivo: traducirErrorFirebase(err.code) };
+    return { ok: false, motivo: traducirErrorFirebase(err.code) || `Error: ${err.message || "desconocido"}` };
   }
 }
 
@@ -209,8 +213,10 @@ function traducirErrorFirebase(code) {
     "auth/invalid-credential": "Credenciales inválidas. Revisa email y contraseña.",
     "auth/too-many-requests": "Demasiados intentos. Espera un momento y prueba de nuevo.",
     "auth/network-request-failed": "Error de conexión. Revisa tu internet.",
+    "permission-denied": "No tienes permisos para leer los datos de admin en Firestore.",
+    "not-found": "El documento de admin no existe en Firestore."
   };
-  return errores[code] || "Error desconocido al autenticar.";
+  return errores[code] || null;
 }
 
 function getCurrentUser() {
