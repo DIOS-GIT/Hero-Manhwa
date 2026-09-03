@@ -104,7 +104,7 @@ function renderStartRunScreen() {
             </div>
             ${protagonista ? `<p class="hint">⭐ ${protagonista.nombre}</p>` : ""}
             ${algunaCaida ? '<p class="hint">⚠️ Este equipo tiene alguna carta caída — revívela primero en Colección.</p>' : ""}
-            <button class="btn" data-iniciar-run="${p.id}" ${algunaCaida ? "disabled" : ""}>Iniciar run con este equipo</button>
+            <button class="btn" data-run-id="${p.id}" ${algunaCaida ? "disabled" : ""}>Iniciar run con este equipo</button>
           </div>
         `;
         })
@@ -115,9 +115,9 @@ function renderStartRunScreen() {
 }
 
 function attachStartRunEvents(container) {
-  container.querySelectorAll("[data-iniciar-run]").forEach((btn) => {
+  container.querySelectorAll("[data-run-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const preset = PlayerData.presets.find((p) => p.id === btn.dataset.iniciarRun);
+      const preset = PlayerData.presets.find((p) => p.id === btn.dataset.runId);
       startNewRun(preset);
       ultimoResultadoNodo = null;
       renderMapView();
