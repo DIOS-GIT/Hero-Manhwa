@@ -50,7 +50,7 @@ function renderHubView() {
     btn.addEventListener("click", () => showView(btn.dataset.hubNav));
   });
 
-  document.getElementById("btn-iniciar-aventura").addEventListener("click", () => showView("aventura"));
+  container.querySelector("#btn-iniciar-aventura").addEventListener("click", () => showView("aventura"));
 }
 
 function renderHubHeader() {
