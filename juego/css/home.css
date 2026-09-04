@@ -1322,3 +1322,16 @@
   padding: 0;
   text-decoration: underline;
 }
+/* =======================================================================
+   CERRAR SESIÓN EN HUB
+   ======================================================================= */
+
+.hubfooter {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.hubfooter .btn {
+  width: 100%;
+  max-width: 320px;
+}
