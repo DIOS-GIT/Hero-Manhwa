@@ -9,7 +9,7 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate"];
+const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil"];
 
 /**
  * Aplica el fondo y el personaje ilustrado configurados en el admin
@@ -50,6 +50,7 @@ function showView(nombre) {
   if (nombre === "equipos") renderPresetsView();
   if (nombre === "aventura") renderMapView();
   if (nombre === "combate") renderCombatScreen();
+  if (nombre === "perfil") renderProfileView();
 }
 
 /* =======================================================================
