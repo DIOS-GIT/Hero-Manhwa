@@ -44,6 +44,10 @@ function renderHubView() {
     <button type="button" class="btn btn--aventura" id="btn-iniciar-aventura">
       ⚔️ ${hayRunActiva ? "Continuar aventura" : "Iniciar Aventura"}
     </button>
+
+    <div class="hubfooter">
+      <button type="button" class="btn btn--secundario" id="btn-cerrar-sesion-hub">Cerrar sesión</button>
+    </div>
   `;
 
   container.querySelectorAll("[data-hub-nav]").forEach((btn) => {
@@ -51,6 +55,27 @@ function renderHubView() {
   });
 
   container.querySelector("#btn-iniciar-aventura").addEventListener("click", () => showView("aventura"));
+
+  container.querySelector("#btn-cerrar-sesion-hub").addEventListener("click", async () => {
+    await logout();
+    PlayerData = {
+      moneda: ECONOMY_CONFIG.monedaInicial,
+      coleccion: [],
+      cartasCaidas: [],
+      presets: [],
+      ultimoPresetId: null,
+      historial: [],
+      progresoCartas: {},
+      progresoHistoria: { capituloIndex: 0, escenaIndex: 0 },
+      personalizacionProtagonistas: {},
+      fragmentosCartas: {},
+      yaTuvoPrimeraTirada: false,
+    };
+    clearActiveRun();
+    document.getElementById("game-shell").style.display = "none";
+    document.getElementById("titlescreen").style.display = "flex";
+    renderTitleScreenPanel();
+  });
 }
 
 function renderHubHeader() {
