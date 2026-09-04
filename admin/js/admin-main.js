@@ -3,13 +3,13 @@
  * -----------------------------------------------------------------------
  * Punto de entrada del admin (separado del juego — ver game-main.js en
  * juego/js/). Inicializa GameData y controla el cambio de pestañas.
- * AHORA SOPORTA LOGIN DE ADMINS con roles:
- * - admin_principal: acceso total
- * - admin_secundario: acceso limitado (solo crear, no borrar ni modificar)
+ * AHORA SOPORTA:
+ * - Login de admins con roles
+ * - Pestaña "Jugadores" para ver/modificar cuentas
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_ADMIN = ["cartas", "protagonistas", "reglas", "rutas", "niveles", "elementos", "tienda", "pantallas", "historia", "equipos", "combate", "datos"];
+const VISTAS_ADMIN = ["cartas", "protagonistas", "reglas", "rutas", "niveles", "elementos", "tienda", "pantallas", "historia", "equipos", "combate", "datos", "jugadores"];
 
 function showView(nombre) {
   VISTAS_ADMIN.forEach((v) => {
@@ -34,6 +34,7 @@ function refreshView(nombre) {
   if (nombre === "equipos") renderTeamBuilderView();
   if (nombre === "combate") renderCombatScreen();
   if (nombre === "datos") renderDataPanelView();
+  if (nombre === "jugadores") renderPlayersAdminView();
 }
 
 function refreshAllAdminViews() {
@@ -69,9 +70,6 @@ function renderAdminLogin() {
       return;
     }
 
-    // 🔥 IMPORTANTE: conectar Firebase ANTES de intentar login
-    await ensureFirebaseReady();
-
     const resultado = await loginAdmin(email, password);
     if (resultado.ok) {
       document.getElementById("admin-login").style.display = "none";
@@ -89,7 +87,6 @@ function renderAdminLogin() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 🔥 Conectar Firebase ANTES de cargar datos
   await ensureFirebaseReady();
   await initGameData();
   renderAdminLogin();
