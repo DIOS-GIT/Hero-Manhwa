@@ -1353,3 +1353,56 @@
   border-color: var(--peligro);
   color: var(--peligro-suave);
 }
+
+/* =======================================================================
+   PERFIL
+   ======================================================================= */
+
+.profile {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 20px;
+}
+
+.profile__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--acento), var(--acento-quemado));
+  color: var(--bg-abismo);
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  font-family: var(--fuente-titulos);
+}
+
+.profile h3 {
+  margin: 0 0 4px;
+}
+
+.profile__campos {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.profile__campos label {
+  margin-bottom: 8px;
+}
+
+.profile__campos input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.profile__cerrar {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.profile__cerrar .btn {
+  width: 100%;
+}
