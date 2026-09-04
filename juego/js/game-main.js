@@ -5,9 +5,7 @@
  *   1) La pantalla de título: resumen de progreso o bienvenida.
  *   2) El sistema de login/registro de jugadores.
  *   3) Dentro del juego, showView(nombre) alterna entre todas las
- *      pantallas: hub, colección, protagonistas, tienda, historial,
- *      equipos (parte del flujo de aventura), aventura (mapa de la
- *      run) y combate.
+ *      pantallas.
  * -----------------------------------------------------------------------
  */
 
@@ -15,8 +13,7 @@ const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial"
 
 /**
  * Aplica el fondo y el personaje ilustrado configurados en el admin
- * (pestaña "Pantallas") para la pantalla `nombre`. Si esa pantalla no
- * tiene nada configurado, se ocultan y queda el degradado por defecto.
+ * (pestaña "Pantallas") para la pantalla `nombre`.
  */
 function applyScreenBackground(nombre) {
   const cfg = GameData.pantallas && GameData.pantallas[nombre];
@@ -63,13 +60,9 @@ function renderTitleScreenPanel() {
   const panel = document.getElementById("titlescreen-panel");
 
   if (currentUser) {
-    // Usuario ya logueado
-    const esJugador = isPlayer();
-    const esAdmin = isAdmin();
-
     panel.innerHTML = `
       <div class="titlescreen__stat"><span>Usuario</span><strong>${currentUser.email}</strong></div>
-      <div class="titlescreen__stat"><span>Rol</span><strong>${esAdmin ? "Administrador" : "Jugador"}</strong></div>
+      <div class="titlescreen__stat"><span>Rol</span><strong>${isAdmin() ? "Administrador" : "Jugador"}</strong></div>
       <div class="titlescreen__stat"><span>Moneda</span><strong>🪙 ${PlayerData.moneda}</strong></div>
       <div class="titlescreen__stat"><span>Colección</span><strong>${PlayerData.coleccion.length} / ${GameData.cartas.length}</strong></div>
       <div class="titlescreen__stat"><span>Runs jugadas</span><strong>${PlayerData.historial.length}</strong></div>
@@ -99,7 +92,6 @@ function renderTitleScreenPanel() {
       renderTitleScreenPanel();
     });
   } else {
-    // Sin sesión
     panel.innerHTML = `
       <p style="font-family: var(--fuente-narrativa); font-style: italic; font-size: 16px; color: var(--texto-tenue); margin-bottom: 18px;">
         Crea tu cuenta o inicia sesión para guardar tu progreso y vivir tu propia aventura.
@@ -208,6 +200,28 @@ function enterGame() {
   document.getElementById("registerscreen").style.display = "none";
   document.getElementById("game-shell").style.display = "block";
   showView("hub");
+
+  // Botón de cerrar sesión en la barra superior
+  document.getElementById("btn-logout-topbar").addEventListener("click", async () => {
+    await logout();
+    PlayerData = {
+      moneda: ECONOMY_CONFIG.monedaInicial,
+      coleccion: [],
+      cartasCaidas: [],
+      presets: [],
+      ultimoPresetId: null,
+      historial: [],
+      progresoCartas: {},
+      progresoHistoria: { capituloIndex: 0, escenaIndex: 0 },
+      personalizacionProtagonistas: {},
+      fragmentosCartas: {},
+      yaTuvoPrimeraTirada: false,
+    };
+    clearActiveRun();
+    document.getElementById("game-shell").style.display = "none";
+    document.getElementById("titlescreen").style.display = "flex";
+    renderTitleScreenPanel();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
