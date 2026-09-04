@@ -1335,3 +1335,21 @@
   width: 100%;
   max-width: 320px;
 }
+
+.game-shell__logout {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  border: 1px solid var(--borde);
+  background: var(--bg-panel);
+  padding: 5px 10px;
+  border-radius: 20px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.game-shell__logout:hover {
+  border-color: var(--peligro);
+  color: var(--peligro-suave);
+}
