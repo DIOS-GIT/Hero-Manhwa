@@ -74,6 +74,7 @@ function renderTitleScreenPanel() {
 
     document.getElementById("btn-entrar").addEventListener("click", enterGame);
     document.getElementById("btn-cerrar-sesion").addEventListener("click", async () => {
+      if (!confirm("¿Seguro que quieres cerrar sesión?")) return;
       await logout();
       PlayerData = {
         moneda: ECONOMY_CONFIG.monedaInicial,
@@ -203,6 +204,7 @@ function enterGame() {
 
   // Botón de cerrar sesión en la barra superior
   document.getElementById("btn-logout-topbar").addEventListener("click", async () => {
+    if (!confirm("¿Seguro que quieres cerrar sesión?")) return;
     await logout();
     PlayerData = {
       moneda: ECONOMY_CONFIG.monedaInicial,
