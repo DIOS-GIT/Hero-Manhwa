@@ -39,6 +39,10 @@ function renderHubView() {
         <span class="hubtile__icono">📜</span>
         <span class="hubtile__label">Historial</span>
       </button>
+      <button type="button" class="hubtile" data-hub-nav="perfil">
+        <span class="hubtile__icono">👤</span>
+        <span class="hubtile__label">Perfil</span>
+      </button>
     </div>
 
     <button type="button" class="btn btn--aventura" id="btn-iniciar-aventura">
@@ -102,4 +106,69 @@ function renderTeamPreviewCard(preset) {
       ${protagonista ? `<div class="teampreview__protagonista">⭐ ${protagonista.nombre}</div>` : ""}
     </div>
   `;
+}
+
+/* =======================================================================
+   PERFIL
+   ======================================================================= */
+
+function renderProfileView() {
+  const container = document.getElementById("view-perfil");
+  const nombre = PlayerData.nombre || currentUser?.email || "Jugador";
+
+  container.innerHTML = `
+    ${renderScreenHeader("Perfil", "hub")}
+    <div class="profile">
+      <div class="profile__avatar">${nombre[0].toUpperCase()}</div>
+      <h3>${nombre}</h3>
+      <p class="hint">${currentUser?.email || "Sin cuenta"}</p>
+
+      <div class="profile__campos">
+        <label>Nombre / Apodo
+          <input type="text" id="input-nombre-perfil" value="${nombre}" maxlength="20" />
+        </label>
+        <button class="btn" id="btn-guardar-perfil">Guardar nombre</button>
+      </div>
+
+      <div class="profile__cerrar">
+        <button class="btn btn--peligro" id="btn-cerrar-sesion-perfil">Cerrar sesión</button>
+      </div>
+    </div>
+  `;
+
+  attachScreenHeaderEvents(container);
+
+  document.getElementById("btn-guardar-perfil").addEventListener("click", () => {
+    const nuevoNombre = document.getElementById("input-nombre-perfil").value.trim();
+    if (!nuevoNombre) {
+      alert("Escribe un nombre válido.");
+      return;
+    }
+    PlayerData.nombre = nuevoNombre;
+    savePlayerData();
+    renderProfileView();
+    alert("Nombre guardado.");
+  });
+
+  document.getElementById("btn-cerrar-sesion-perfil").addEventListener("click", async () => {
+    if (!confirm("¿Seguro que quieres cerrar sesión?")) return;
+    await logout();
+    PlayerData = {
+      moneda: ECONOMY_CONFIG.monedaInicial,
+      coleccion: [],
+      cartasCaidas: [],
+      presets: [],
+      ultimoPresetId: null,
+      historial: [],
+      progresoCartas: {},
+      progresoHistoria: { capituloIndex: 0, escenaIndex: 0 },
+      personalizacionProtagonistas: {},
+      fragmentosCartas: {},
+      yaTuvoPrimeraTirada: false,
+    };
+    clearActiveRun();
+    document.getElementById("game-shell").style.display = "none";
+    document.getElementById("titlescreen").style.display = "flex";
+    renderTitleScreenPanel();
+  });
 }
