@@ -55,6 +55,20 @@ function renderHubView() {
   });
 
   container.querySelector("#btn-iniciar-aventura").addEventListener("click", () => showView("aventura"));
+
+  const btnCancelarAventura = container.querySelector("#btn-cancelar-aventura");
+  if (btnCancelarAventura) {
+    btnCancelarAventura.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const confirmado = confirm(
+        "¿Cancelar esta aventura? Perderás el progreso de esta run (nodo alcanzado y cualquier objeto ganado en el camino) " +
+        "y NO recibirás ninguna recompensa. Las cartas y el nivel que ya tenías antes de empezar no se pierden."
+      );
+      if (!confirmado) return;
+      clearActiveRun();
+      renderHubView();
+    });
+  }
 }
 
 function renderHubHeader() {
@@ -79,6 +93,7 @@ function renderRunEnProgresoBanner() {
         <strong>Tienes una aventura en progreso</strong>
         <p>Llegaste al nodo ${nodos}. Toca "Continuar aventura" para seguir.</p>
       </div>
+      <button type="button" class="runbanner__cancelar" id="btn-cancelar-aventura" title="Cancelar aventura">Cancelar</button>
     </div>
   `;
 }
@@ -112,22 +127,53 @@ function renderTeamPreviewCard(preset) {
    PERFIL
    ======================================================================= */
 
+const COLORES_AVATAR = ["#d9a441", "#e0473f", "#4f8fe0", "#4fae6a", "#a463e0", "#e08fc4"];
+
 function renderProfileView() {
   const container = document.getElementById("view-perfil");
-  const nombre = PlayerData.nombre || currentUser?.email || "Jugador";
+  const nombre = PlayerData.nombre || "Jugador";
+  const colorAvatar = PlayerData.avatarColor || "#d9a441";
+  const fechaCuenta = PlayerData.creadoEn
+    ? new Date(PlayerData.creadoEn).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })
+    : null;
 
   container.innerHTML = `
     ${renderScreenHeader("Perfil", "hub")}
     <div class="profile">
-      <div class="profile__avatar">${nombre[0].toUpperCase()}</div>
-      <h3>${nombre}</h3>
-      <p class="hint">${currentUser?.email || "Sin cuenta"}</p>
+      <div class="profile__avatar" id="profile-avatar" style="background:${colorAvatar}">${nombre[0].toUpperCase()}</div>
+
+      <div class="profile__colores" id="profile-colores">
+        ${COLORES_AVATAR.map(
+          (c) => `<button type="button" class="profile__colorbtn ${c === colorAvatar ? "profile__colorbtn--activo" : ""}" data-color="${c}" style="background:${c}"></button>`
+        ).join("")}
+      </div>
 
       <div class="profile__campos">
-        <label>Nombre / Apodo
-          <input type="text" id="input-nombre-perfil" value="${nombre}" maxlength="20" />
-        </label>
-        <button class="btn" id="btn-guardar-perfil">Guardar nombre</button>
+        <fieldset>
+          <legend>Cuenta</legend>
+          <label>Correo
+            <input type="text" value="${currentUser?.email || "Sin cuenta"}" disabled />
+          </label>
+          ${fechaCuenta ? `<p class="hint">Jugando desde el ${fechaCuenta}</p>` : ""}
+        </fieldset>
+
+        <fieldset>
+          <legend>Apodo público</legend>
+          <label>Apodo (3 a 20 caracteres, único)
+            <input type="text" id="input-nombre-perfil" value="${nombre}" maxlength="20" />
+          </label>
+          <div id="perfil-apodo-error" class="loginbox__error" style="display:none"></div>
+          <button class="btn" id="btn-guardar-perfil">Guardar apodo</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Contraseña</legend>
+          <label>Nueva contraseña
+            <input type="password" id="input-nueva-password" placeholder="Al menos 6 caracteres" />
+          </label>
+          <div id="perfil-password-error" class="loginbox__error" style="display:none"></div>
+          <button class="btn btn--secundario" id="btn-cambiar-password">Cambiar contraseña</button>
+        </fieldset>
       </div>
 
       <div class="profile__cerrar">
@@ -138,16 +184,66 @@ function renderProfileView() {
 
   attachScreenHeaderEvents(container);
 
-  document.getElementById("btn-guardar-perfil").addEventListener("click", () => {
+  document.getElementById("profile-colores").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".profile__colorbtn");
+    if (!btn) return;
+    PlayerData.avatarColor = btn.dataset.color;
+    await savePlayerData();
+    renderProfileView();
+  });
+
+  document.getElementById("btn-guardar-perfil").addEventListener("click", async () => {
+    const errorBox = document.getElementById("perfil-apodo-error");
     const nuevoNombre = document.getElementById("input-nombre-perfil").value.trim();
+    errorBox.style.display = "none";
+
     if (!nuevoNombre) {
-      alert("Escribe un nombre válido.");
+      errorBox.textContent = "Escribe un apodo válido.";
+      errorBox.style.display = "block";
       return;
     }
+    if (nuevoNombre.toLowerCase() === (PlayerData.nombreLower || "")) {
+      return; // no cambió nada
+    }
+
+    const btnGuardar = document.getElementById("btn-guardar-perfil");
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = "Verificando…";
+    const resultado = await claimNickname(nuevoNombre);
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = "Guardar apodo";
+
+    if (!resultado.ok) {
+      errorBox.textContent = resultado.motivo;
+      errorBox.style.display = "block";
+      return;
+    }
+
     PlayerData.nombre = nuevoNombre;
-    savePlayerData();
+    PlayerData.nombreLower = nuevoNombre.toLowerCase();
+    await savePlayerData();
     renderProfileView();
-    alert("Nombre guardado.");
+  });
+
+  document.getElementById("btn-cambiar-password").addEventListener("click", async () => {
+    const errorBox = document.getElementById("perfil-password-error");
+    const nuevaPassword = document.getElementById("input-nueva-password").value;
+    errorBox.style.display = "none";
+
+    const btnPassword = document.getElementById("btn-cambiar-password");
+    btnPassword.disabled = true;
+    btnPassword.textContent = "Cambiando…";
+    const resultado = await changeOwnPassword(nuevaPassword);
+    btnPassword.disabled = false;
+    btnPassword.textContent = "Cambiar contraseña";
+
+    if (!resultado.ok) {
+      errorBox.textContent = resultado.motivo;
+      errorBox.style.display = "block";
+      return;
+    }
+    document.getElementById("input-nueva-password").value = "";
+    alert("Contraseña actualizada.");
   });
 
   document.getElementById("btn-cerrar-sesion-perfil").addEventListener("click", async () => {
