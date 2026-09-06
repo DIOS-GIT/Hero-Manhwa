@@ -67,4 +67,26 @@ const ECONOMY_CONFIG = {
   descanso: {
     porcentajeCuracion: 0.4, // 40% del HP máx, fijo, decidido en el diseño
   },
+
+  cofres: {
+    // Élite: probabilidad de soltar cofre al ganar (el Jefe siempre suelta uno, sin tirada).
+    probabilidadDropElite: 0.4,
+    // La rareza del cofre depende de qué tan lejos vas en el mapa (nodosAlcanzados).
+    // "hastaNodo": el último nodo de profundidad que todavía cae en este tramo.
+    rarezaPorProfundidad: [
+      { hastaNodo: 3, rareza: "comun" },
+      { hastaNodo: 6, rareza: "rara" },
+      { hastaNodo: 9, rareza: "epica" },
+      { hastaNodo: 999, rareza: "legendaria" },
+    ],
+  },
+
+  rachaDiaria: {
+    monedaBase: 20,
+    monedaPorDiaDeRacha: 3, // cada día de moneda ganada = monedaBase + racha * este valor
+    // cada N días de racha consecutiva se gana además un cofre; la rareza
+    // sube con cada tramo de N días completado (semana 1, 2, 3...), tope legendaria
+    diasPorHito: 7,
+    rarezaPorSemana: ["comun", "rara", "epica", "legendaria"],
+  },
 };
