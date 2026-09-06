@@ -12,13 +12,15 @@
  *       {
  *         texto: "lo que ve el jugador en el botón",
  *         consecuencia: {
- *           tipo: "moneda" | "hp" | "buffCarta" | "debuffCarta" | "objeto" | "nada",
+ *           tipo: "moneda" | "hp" | "buffCarta" | "debuffCarta" | "objeto" | "cofre" | "nada",
  *           // para "moneda": cantidad (positiva o negativa)
  *           // para "hp": cantidad (positiva=cura, negativa=daño), aplica a
  *           //            una carta al azar del equipo salvo objetivo:"todas"
  *           // para "buffCarta"/"debuffCarta": stat + modificador (0.1 = +10%),
  *           //            y si es permanente (dura el resto de la run) u objeto
  *           // para "objeto": nombre del objeto que se agrega al inventario de la run
+ *           // para "cofre": rareza (opcional — si se omite, se calcula sola según
+ *           //            qué tan lejos vas en el mapa, ver economyConfig.js:cofres)
  *           cantidad: 0,
  *           stat: null,
  *           modificador: 0,
@@ -80,6 +82,21 @@ const EVENTS_POOL = [
       },
       {
         texto: "No arriesgarse",
+        consecuencia: { tipo: "nada" },
+      },
+    ],
+  },
+  {
+    id: "evento_cofre_escondido",
+    titulo: "Cofre escondido",
+    texto: "Detrás de unas rocas encuentras un cofre a medio enterrar. Parece que nadie lo ha tocado en años.",
+    opciones: [
+      {
+        texto: "Abrir con cuidado (te lo llevas sin abrir, para revisarlo luego)",
+        consecuencia: { tipo: "cofre" },
+      },
+      {
+        texto: "Dejarlo — podría ser una trampa",
         consecuencia: { tipo: "nada" },
       },
     ],
