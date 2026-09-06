@@ -139,6 +139,12 @@ function renderLoginScreen() {
 
     const resultado = await loginPlayer(email, password);
     if (resultado.ok) {
+      // 🔥 IMPORTANTE: al cargar la página (antes de iniciar sesión) Firestore
+      // niega la lectura de gamedata/main porque todavía no hay usuario
+      // autenticado, así que el juego se queda con la copia vieja cacheada
+      // en localStorage. Ahora que el login ya está confirmado, volvemos a
+      // pedir GameData para traer las cartas/reglas reales y actualizadas.
+      await initGameData();
       await initPlayerData();
       document.getElementById("loginscreen").style.display = "none";
       if (!PlayerData.nombre) {
@@ -181,6 +187,9 @@ function renderRegisterScreen() {
 
     const resultado = await registerPlayer(email, password);
     if (resultado.ok) {
+      // Mismo motivo que en el login: recién ahora hay sesión, así que
+      // podemos leer gamedata/main de verdad en vez de la copia vieja local.
+      await initGameData();
       await initPlayerData();
       document.getElementById("registerscreen").style.display = "none";
       if (!PlayerData.nombre) {
