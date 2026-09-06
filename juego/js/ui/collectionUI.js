@@ -111,8 +111,10 @@ function renderCollectionCard(carta) {
   if (!tiene) {
     return `
       <div class="collectioncard collectioncard--bloqueada">
-        <div class="collectioncard__silueta">?</div>
-        <div class="collectioncard__nombre">???</div>
+        <div class="collectioncard__arte">
+          <span class="collectioncard__silueta">?</span>
+        </div>
+        <p class="collectioncard__nombreoculto">??? · ${carta.rareza}</p>
       </div>
     `;
   }
@@ -129,16 +131,24 @@ function renderCollectionCard(carta) {
 
   return `
     <div class="collectioncard collectioncard--${carta.rareza} ${caida ? "collectioncard--caida" : ""}" data-abrir-detalle="${carta.id}">
-      ${carta.esFMC ? '<span class="collectioncard__fmc" title="Carta FMC — centro de estrategia">FMC</span>' : ""}
-      ${carta.imagen ? `<img class="collectioncard__img" src="${carta.imagen}" alt="${carta.nombre}" />` : ""}
-      <div class="collectioncard__nivel">Nv. ${nivel}${nivel >= nivelMax ? " (máx)" : ` / ${nivelMax}`}</div>
-      <div class="collectioncard__nombre">${carta.nombre}</div>
-      <div class="collectioncard__meta">${carta.rareza} · ${carta.clase}</div>
-      <div class="collectioncard__xpbar" title="${nivel >= nivelMax ? "Nivel máximo" : `${xp} / ${xpSiguiente} XP`}">
-        <div class="collectioncard__xpbar-fill" style="width:${pctXp}%"></div>
+      <div class="collectioncard__arte">
+        <span class="collectioncard__chiprareza">${carta.rareza}</span>
+        <span class="collectioncard__nivel">Nv.${nivel}${nivel >= nivelMax ? " máx" : ""}</span>
+        ${carta.esFMC ? '<span class="collectioncard__fmc" title="Carta FMC — centro de estrategia">FMC</span>' : ""}
+        ${carta.imagen ? `<img class="collectioncard__img" src="${carta.imagen}" alt="${carta.nombre}" />` : `<span class="collectioncard__sinarte">${carta.nombre[0]}</span>`}
       </div>
-      <div class="collectioncard__stats">
-        HP ${cartaNivelada.stats.hp} · ATQ ${cartaNivelada.stats.atk} · DEF ${cartaNivelada.stats.def} · VEL ${cartaNivelada.stats.velocidad}
+      <div class="collectioncard__cuerpo">
+        <div class="collectioncard__nombre">${carta.nombre}</div>
+        <div class="collectioncard__meta">${carta.clase}${carta.elemento ? ` · ${carta.elemento}` : ""}</div>
+        <div class="collectioncard__xpbar" title="${nivel >= nivelMax ? "Nivel máximo" : `${xp} / ${xpSiguiente} XP`}">
+          <div class="collectioncard__xpbar-fill" style="width:${pctXp}%"></div>
+        </div>
+        <div class="collectioncard__stats">
+          <span>❤️ ${cartaNivelada.stats.hp}</span>
+          <span>⚔️ ${cartaNivelada.stats.atk}</span>
+          <span>🛡️ ${cartaNivelada.stats.def}</span>
+          <span>💨 ${cartaNivelada.stats.velocidad}</span>
+        </div>
       </div>
       ${
         caida
@@ -192,12 +202,16 @@ function renderCardDetailModal(cardId) {
 
         ${
           carta.pasivas.length > 0
-            ? `<h4>Pasivas</h4><ul class="carddetail__lista">${carta.pasivas.map((p) => `<li>${p.nombre}</li>`).join("")}</ul>`
+            ? `<h4>Pasivas</h4><ul class="carddetail__lista carddetail__lista--efectos">${carta.pasivas
+                .map((p) => `<li><strong>${p.nombre}</strong><span>${describirPasiva(p)}</span></li>`)
+                .join("")}</ul>`
             : ""
         }
         ${
           carta.habilidades.length > 0
-            ? `<h4>Habilidades</h4><ul class="carddetail__lista">${carta.habilidades.map((h) => `<li>${h.nombre}</li>`).join("")}</ul>`
+            ? `<h4>Habilidades</h4><ul class="carddetail__lista carddetail__lista--efectos">${carta.habilidades
+                .map((h) => `<li><strong>${h.nombre}</strong><span>${describirHabilidad(h)}</span></li>`)
+                .join("")}</ul>`
             : ""
         }
       </div>
