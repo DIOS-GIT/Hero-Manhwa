@@ -12,7 +12,6 @@ const TIPOS_NODO_COMBATE = ["combate", "elite", "jefe"];
 const TIPOS_NODO_CON_PESO = ["combate", "elite", "evento", "tienda", "descanso"];
 const TIPOS_NODO_ARRASTRABLES = ["combate", "elite", "evento", "tienda", "descanso"]; // el jefe se agrega solo, no se arrastra
 
-let _nextPlantillaId = 1;
 let plantillaEditorState = { plantillaId: null, pisoFocoIndex: 0 };
 
 function renderRoutesEditorView() {
@@ -260,7 +259,7 @@ function attachTemplateEditorEvents() {
 
   const btnNuevaPlantilla = container.querySelector("#btn-nueva-plantilla");
   if (btnNuevaPlantilla) btnNuevaPlantilla.addEventListener("click", () => {
-    const nueva = { id: "plantilla_" + _nextPlantillaId++, nombre: "Nueva plantilla", pisos: [["combate"]] };
+    const nueva = { id: generateUniqueId("plantilla"), nombre: "Nueva plantilla", pisos: [["combate"]] };
     r.plantillas.push(nueva);
     saveGameData();
     plantillaEditorState = { plantillaId: nueva.id, pisoFocoIndex: 0 };
