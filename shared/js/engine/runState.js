@@ -61,12 +61,34 @@ function startNewRun(preset) {
     if (tpl) hpActual[id] = tpl.stats.hp;
   });
 
+  const buffsPermanentes = {};
+  preset.cartaIds.forEach((id) => { buffsPermanentes[id] = []; });
+
+  // Objetos comprados en la Tienda del hub antes de iniciar (PlayerData.objetosActivos):
+  // se aplican una sola vez a todo el equipo inicial y luego se consumen.
+  (PlayerData.objetosActivos || []).forEach((objetoId) => {
+    const objeto = (GameData.tienda.objetos || []).find((o) => o.id === objetoId && o.disponibleAlIniciar);
+    if (!objeto) return;
+    preset.cartaIds.forEach((id) => {
+      const tpl = GameData.cartas.find((c) => c.id === id);
+      if (!tpl) return;
+      if (objeto.efecto.tipo === "hp") {
+        const curacion = objeto.efecto.esPorcentaje ? tpl.stats.hp * objeto.efecto.cantidad : objeto.efecto.cantidad;
+        hpActual[id] = Math.min(tpl.stats.hp, hpActual[id] + curacion);
+      } else if (objeto.efecto.tipo === "buffCarta") {
+        buffsPermanentes[id].push({ stat: objeto.efecto.stat, modificador: objeto.efecto.modificador });
+      }
+    });
+  });
+  PlayerData.objetosActivos = [];
+  savePlayerData();
+
   activeRun = {
     mapa: generateRunMap(),
     equipoCartaIds: preset.cartaIds.slice(),
     protagonistaId: preset.protagonistaId || null,
     hpActual,
-    buffsPermanentes: {},
+    buffsPermanentes,
     relicsObtenidos: [],
     cartasCaidasEnRun: [],
     estadisticas: {
