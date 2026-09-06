@@ -48,11 +48,12 @@
   --rareza-mitica-2: #e88a2f;
 
   /* ---- tipografía ---- */
-  --fuente-logo: "Cinzel Decorative", Georgia, serif;
-  --fuente-titulos: "Cinzel", Georgia, serif;
-  --fuente-narrativa: "Cormorant Garamond", Georgia, serif;
-  --fuente-ui: "Manrope", -apple-system, "Segoe UI", sans-serif;
-  --fuente-numeros: "JetBrains Mono", ui-monospace, monospace;
+  --fuente-emoji-fallback: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji";
+  --fuente-logo: "Cinzel Decorative", Georgia, serif, var(--fuente-emoji-fallback);
+  --fuente-titulos: "Cinzel", Georgia, serif, var(--fuente-emoji-fallback);
+  --fuente-narrativa: "Cormorant Garamond", Georgia, serif, var(--fuente-emoji-fallback);
+  --fuente-ui: "Manrope", -apple-system, "Segoe UI", sans-serif, var(--fuente-emoji-fallback);
+  --fuente-numeros: "JetBrains Mono", ui-monospace, monospace, var(--fuente-emoji-fallback);
 
   --radio-s: 6px;
   --radio: 10px;
