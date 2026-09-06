@@ -42,6 +42,12 @@ let PlayerData = {
   avatarColor: null, // color de fondo del avatar circular en el perfil (hex), null = usa el color por defecto
   creadoEn: null, // ISO string, se fija una sola vez al crear la cuenta
   objetosActivos: [], // ids de objetos comprados en la tienda para la próxima run — ver engine/runState.js
+  cofres: [], // array de rarezas sin abrir, ej ["comun","comun","rara"] — ver engine/chestEngine.js
+  rachaActual: 0, // días consecutivos entrando al juego — ver engine/dailyStreak.js
+  ultimoLoginFecha: null, // "YYYY-MM-DD" del último día que se contó para la racha
+  logrosCompletados: [], // ids de logros ya reclamados — ver data/achievementsPool.js
+  victoriasTotales: 0, // combates ganados en runs (para el ranking) — se incrementa en engine/runState.js
+  gachaTiradasTotales: 0, // tiradas de gacha hechas en total (para logros) — ver engine/gacha.js
 };
 
 function aplicarPlayerData(parsed) {
@@ -62,6 +68,12 @@ function aplicarPlayerData(parsed) {
     avatarColor: parsed.avatarColor || null,
     creadoEn: parsed.creadoEn || null,
     objetosActivos: parsed.objetosActivos || [],
+    cofres: parsed.cofres || [],
+    rachaActual: parsed.rachaActual || 0,
+    ultimoLoginFecha: parsed.ultimoLoginFecha || null,
+    logrosCompletados: parsed.logrosCompletados || [],
+    victoriasTotales: parsed.victoriasTotales || 0,
+    gachaTiradasTotales: parsed.gachaTiradasTotales || 0,
   };
 }
 
@@ -161,6 +173,7 @@ function addCardToCollection(cardId) {
   if (!ownsCard(cardId)) {
     PlayerData.coleccion.push(cardId);
     savePlayerData();
+    syncLeaderboardEntry();
   }
 }
 
@@ -174,6 +187,18 @@ function spendCoins(cantidad) {
   PlayerData.moneda -= cantidad;
   savePlayerData();
   return true;
+}
+
+/** Agrega un cofre sin abrir al inventario del jugador. */
+function addChest(rareza) {
+  PlayerData.cofres.push(rareza);
+  savePlayerData();
+}
+
+/** Quita un cofre del inventario por posición (se llama justo antes/después de abrirlo). */
+function removeChestAt(index) {
+  PlayerData.cofres.splice(index, 1);
+  savePlayerData();
 }
 
 function markCardAsCaida(cardId) {
