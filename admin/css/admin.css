@@ -268,6 +268,19 @@
   width: 100%;
 }
 
+.repeatable-row__descripcion {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+}
+
+.repeatable-row__preview {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--texto-tenue);
+}
+
 .cardform__acciones, .rulesform__acciones {
   display: flex;
   gap: 10px;
@@ -583,4 +596,53 @@
 .admin-login__box .btn {
   width: 100%;
   margin-bottom: 8px;
+}
+
+/* ===== Colección de un jugador (pestaña Jugadores) ===== */
+.playercards {
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 12px;
+  background: var(--bg-abismo);
+}
+
+.playercards__grupo + .playercards__grupo {
+  margin-top: 14px;
+}
+
+.playercards__rareza {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: var(--texto-tenue);
+}
+
+.playercards__rareza--rara { color: var(--info); }
+.playercards__rareza--epica { color: #a463e0; }
+.playercards__rareza--legendaria { color: var(--acento-suave); }
+.playercards__rareza--mitica { color: #e0473f; }
+
+.playercards__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.playercards__item:hover {
+  background: var(--bg-panel-hover);
+}
+
+.playercards__item input {
+  accent-color: var(--acento);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
