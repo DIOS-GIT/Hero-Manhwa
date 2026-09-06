@@ -49,6 +49,12 @@ function renderShopForm(objeto) {
         <input type="number" name="costo" value="${objeto.costo}" min="0" />
       </label>
 
+      <label class="checkbox-label">
+        <input type="checkbox" name="disponibleAlIniciar" ${objeto.disponibleAlIniciar ? "checked" : ""} />
+        También se puede comprar antes de iniciar la run (en la Tienda del hub, con moneda persistente)
+      </label>
+      <p class="hint">Si lo marcas: al iniciar la run, el efecto se aplica automáticamente a TODO el equipo (no a una sola carta elegida).</p>
+
       <fieldset>
         <legend>Efecto</legend>
         <label>Tipo de efecto
@@ -101,6 +107,7 @@ function attachShopEditorEvents(container) {
       descripcion: "",
       costo: 50,
       efecto: { tipo: "hp", cantidad: 0.25, esPorcentaje: true, stat: "atk", modificador: 0.1 },
+      disponibleAlIniciar: false,
     };
     renderShopEditorView();
   });
@@ -123,6 +130,7 @@ function attachShopEditorEvents(container) {
     b.nombre = form.elements["nombre"].value;
     b.descripcion = form.elements["descripcion"].value;
     b.costo = Number(form.elements["costo"].value) || 0;
+    b.disponibleAlIniciar = form.elements["disponibleAlIniciar"].checked;
     b.efecto.tipo = form.elements["tipo"].value;
 
     if (b.efecto.tipo === "hp") {
