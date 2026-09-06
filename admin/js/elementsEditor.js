@@ -8,8 +8,6 @@
  * -----------------------------------------------------------------------
  */
 
-let _nextElementId = 1;
-
 function renderElementsEditorView() {
   const container = document.getElementById("view-elementos");
   const cfg = GameData.elementos;
@@ -48,7 +46,7 @@ function renderElementsEditorView() {
   document.getElementById("btn-agregar-elemento").addEventListener("click", () => {
     const label = prompt("Nombre del elemento nuevo (ej. \"Veneno\"):");
     if (!label || !label.trim()) return;
-    cfg.lista.push({ id: "elemento_" + _nextElementId++, label: label.trim(), color: "#9aa3ad" });
+    cfg.lista.push({ id: generateUniqueId("elemento"), label: label.trim(), color: "#9aa3ad" });
     saveGameData();
     renderElementsEditorView();
   });
