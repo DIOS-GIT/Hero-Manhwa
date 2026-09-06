@@ -324,6 +324,7 @@
 }
 
 .hubtile {
+  position: relative;
   min-height: 96px;
   background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
   border: 1px solid var(--borde);
@@ -343,6 +344,23 @@
 
 .hubtile__icono { font-size: 28px; }
 .hubtile__label { font-family: var(--fuente-ui); font-weight: 700; font-size: 13px; }
+
+.hubtile__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--peligro);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
 
 .btn--aventura {
   width: 100%;
@@ -1655,3 +1673,168 @@
 .startitem__texto { flex: 1 1 auto; min-width: 0; }
 .startitem__texto strong { display: block; font-size: 13px; margin-bottom: 2px; }
 .startitem__texto p { margin: 0; font-size: 11.5px; color: var(--texto-tenue); }
+
+/* ===== Pantalla de Cofres ===== */
+.chestlist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chestcard {
+  --rareza-color: var(--rareza-comun);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--rareza-color);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  box-shadow: 0 0 12px -4px var(--rareza-color) inset;
+}
+
+.chestcard--comun { --rareza-color: var(--rareza-comun); }
+.chestcard--rara { --rareza-color: var(--rareza-rara); }
+.chestcard--epica { --rareza-color: var(--rareza-epica); }
+.chestcard--legendaria { --rareza-color: var(--rareza-legendaria); }
+.chestcard--mitica { --rareza-color: var(--rareza-mitica-1); }
+
+.chestcard__icono { font-size: 30px; flex-shrink: 0; }
+.chestcard__info { flex: 1 1 auto; display: flex; flex-direction: column; }
+.chestcard__info strong { font-size: 13.5px; text-transform: capitalize; }
+.chestcard__info span { font-size: 11.5px; color: var(--texto-tenue); }
+
+.chestsview-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+}
+
+.chestbox {
+  font-size: 64px;
+  filter: drop-shadow(0 0 16px rgba(217, 164, 65, 0.4));
+}
+
+.chestbox--temblando {
+  animation: chest-shake 0.15s infinite;
+}
+
+@keyframes chest-shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+
+/* ===== Banner de racha diaria (pantalla de título) ===== */
+.rachabanner {
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.16), rgba(217, 164, 65, 0.04));
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.rachabanner strong { display: block; font-size: 13.5px; margin-bottom: 2px; }
+.rachabanner p { margin: 0; font-size: 12px; color: var(--texto-tenue); }
+
+/* ===== Pantalla de Logros ===== */
+.achievements__grupo { margin-bottom: 18px; }
+.achievements__grupo h3 { font-size: 13px; color: var(--acento-suave); margin-bottom: 8px; }
+
+.achievement {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.achievement--completo { border-color: var(--acento); }
+.achievement--reclamado { opacity: 0.55; }
+
+.achievement__texto { flex: 1 1 auto; min-width: 0; }
+.achievement__texto strong { font-size: 13px; display: block; }
+.achievement__texto p { margin: 2px 0 6px; font-size: 11.5px; color: var(--texto-tenue); }
+
+.achievement__barra {
+  height: 5px;
+  background: var(--bg-abismo);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+.achievement__barra-fill { height: 100%; background: var(--acento); }
+.achievement__progreso { font-size: 10px; color: var(--texto-tenue-2); font-family: var(--fuente-numeros); }
+
+.achievement__recompensa {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--texto-tenue);
+}
+
+.achievement__estado {
+  font-size: 10px;
+  color: var(--exito-suave);
+  font-weight: 700;
+}
+
+.btn--reclamar-logro {
+  font-size: 11px;
+  padding: 5px 10px;
+  min-height: auto;
+}
+
+/* ===== Pantalla de Ranking ===== */
+.leaderboard__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.leaderboard__tab {
+  flex: 1 1 auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  border-radius: 20px;
+  padding: 8px 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--texto-tenue);
+  cursor: pointer;
+}
+.leaderboard__tab--activo {
+  border-color: var(--acento);
+  color: var(--acento-suave);
+  background: rgba(217, 164, 65, 0.08);
+}
+
+.leaderboardlist { display: flex; flex-direction: column; gap: 4px; }
+
+.leaderboardrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radio-s);
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+}
+.leaderboardrow--yo { border-color: var(--acento); background: rgba(217, 164, 65, 0.08); }
+
+.leaderboardrow__pos {
+  width: 22px;
+  text-align: center;
+  font-family: var(--fuente-numeros);
+  font-size: 12px;
+  color: var(--texto-tenue-2);
+  flex-shrink: 0;
+}
+.leaderboardrow__nombre { flex: 1 1 auto; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.leaderboardrow__valor { font-size: 12px; font-family: var(--fuente-numeros); color: var(--texto-tenue); flex-shrink: 0; }
