@@ -71,6 +71,22 @@
     </div>
   </section>
 
+  <!-- ===== PANTALLA DE APODO (obligatoria la primera vez, antes de entrar) ===== -->
+  <section id="nicknamescreen" class="loginscreen" style="display:none">
+    <div class="loginbox">
+      <h2 class="loginbox__titulo">Elige tu apodo</h2>
+      <p class="loginbox__subtitulo">Así te van a ver otros jugadores. Tiene que ser único — nadie más puede tener el mismo (mayúsculas y minúsculas cuentan igual).</p>
+
+      <label>Apodo (3 a 20 caracteres)
+        <input type="text" id="input-nickname" placeholder="Ej: SombraVeloz" maxlength="20" />
+      </label>
+
+      <div id="nickname-error" class="loginbox__error" style="display:none"></div>
+
+      <button class="btn btn--titulo" id="btn-confirmar-nickname">Confirmar y entrar</button>
+    </div>
+  </section>
+
   <!-- ===== EXPERIENCIA DEL JUGADOR (oculta hasta entrar) ===== -->
   <div id="game-shell" style="display:none">
     <header class="game-shell__topbar">
@@ -99,12 +115,14 @@
   <script src="../shared/js/firebaseConfig.js"></script>
   <script src="../shared/js/cloudinaryConfig.js"></script>
   <script src="../shared/js/engine/firebaseClient.js"></script>
+  <script src="../shared/js/engine/effectDescriptions.js"></script>
 
   <!-- ===== DATOS (compartidos con el admin) ===== -->
   <script src="../shared/js/data/classes.js"></script>
   <script src="../shared/js/data/elements.js"></script>
   <script src="../shared/js/data/statuses.js"></script>
   <script src="../shared/js/data/rules-default.js"></script>
+  <script src="../shared/js/engine/idUtils.js"></script>
   <script src="../shared/js/data/cardSchema.js"></script>
   <script src="../shared/js/data/cards-comunes.js"></script>
   <script src="../shared/js/data/cards-raras.js"></script>
