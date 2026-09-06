@@ -38,6 +38,8 @@ function renderGachaHomeView() {
       <div class="gachareveal-stage">
         ${renderGachaStage()}
       </div>
+
+      ${renderStartItemsSection()}
     </div>
   `;
 
@@ -55,6 +57,64 @@ function renderGachaHomeView() {
       renderGachaHomeView();
     }, GACHA_REVEAL_DELAY_MS);
   });
+
+  container.querySelectorAll(".startitem__comprar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const objeto = GameData.tienda.objetos.find((o) => o.id === btn.dataset.id);
+      if (!objeto) return;
+      if (PlayerData.moneda < objeto.costo) {
+        alert("No tienes suficiente moneda.");
+        return;
+      }
+      if ((PlayerData.objetosActivos || []).includes(objeto.id)) return;
+      PlayerData.moneda -= objeto.costo;
+      PlayerData.objetosActivos = [...(PlayerData.objetosActivos || []), objeto.id];
+      savePlayerData();
+      renderGachaHomeView();
+    });
+  });
+
+  container.querySelectorAll(".startitem__quitar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      PlayerData.moneda += Number(btn.dataset.costo) || 0;
+      PlayerData.objetosActivos = (PlayerData.objetosActivos || []).filter((id) => id !== btn.dataset.id);
+      savePlayerData();
+      renderGachaHomeView();
+    });
+  });
+}
+
+/** Objetos comprables desde el hub para arrancar la próxima run con ellos ya activos (ver runState.js:startNewRun). */
+function renderStartItemsSection() {
+  const objetos = (GameData.tienda.objetos || []).filter((o) => o.disponibleAlIniciar);
+  if (objetos.length === 0) return "";
+
+  const activos = PlayerData.objetosActivos || [];
+
+  return `
+    <div class="startitems">
+      <h3>Objetos para tu próxima run</h3>
+      <p class="hint">Los compras ahora con tu moneda y quedan activos — se aplican solos a todo tu equipo apenas toques "Iniciar Aventura".</p>
+      ${objetos
+        .map((o) => {
+          const comprado = activos.includes(o.id);
+          return `
+          <div class="startitem ${comprado ? "startitem--activo" : ""}">
+            <div class="startitem__texto">
+              <strong>${o.nombre}</strong>
+              <p>${o.descripcion}</p>
+            </div>
+            ${
+              comprado
+                ? `<button type="button" class="btn btn--secundario startitem__quitar" data-id="${o.id}" data-costo="${o.costo}">Activo — quitar</button>`
+                : `<button type="button" class="btn startitem__comprar" data-id="${o.id}" ${PlayerData.moneda < o.costo ? "disabled" : ""}>Comprar (🪙 ${o.costo})</button>`
+            }
+          </div>
+        `;
+        })
+        .join("")}
+    </div>
+  `;
 }
 
 function renderGachaStage() {
