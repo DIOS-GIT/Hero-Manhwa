@@ -9,7 +9,8 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil"];
+const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking"];
+let ultimoResultadoRacha = null; // ver dailyStreak.js — se muestra una vez en la pantalla de título
 
 /**
  * Aplica el fondo y el personaje ilustrado configurados en el admin
@@ -51,6 +52,9 @@ function showView(nombre) {
   if (nombre === "aventura") renderMapView();
   if (nombre === "combate") renderCombatScreen();
   if (nombre === "perfil") renderProfileView();
+  if (nombre === "cofres") renderChestsView();
+  if (nombre === "logros") renderAchievementsView();
+  if (nombre === "ranking") renderLeaderboardView();
 }
 
 /* =======================================================================
@@ -61,7 +65,18 @@ function renderTitleScreenPanel() {
   const panel = document.getElementById("titlescreen-panel");
 
   if (currentUser) {
+    const banner =
+      ultimoResultadoRacha && !ultimoResultadoRacha.yaContadoHoy
+        ? `
+      <div class="rachabanner">
+        <strong>🔥 Racha: día ${ultimoResultadoRacha.racha}</strong>
+        <p>+${ultimoResultadoRacha.monedaGanada} de moneda por entrar hoy${ultimoResultadoRacha.cofreGanado ? ` — ¡y un cofre ${ultimoResultadoRacha.cofreGanado} de regalo!` : ""}</p>
+      </div>
+    `
+        : "";
+
     panel.innerHTML = `
+      ${banner}
       <div class="titlescreen__stat"><span>Apodo</span><strong>${PlayerData.nombre || "(sin apodo)"}</strong></div>
       <div class="titlescreen__stat"><span>Correo</span><strong>${currentUser.email}</strong></div>
       <div class="titlescreen__stat"><span>Rol</span><strong>${isAdmin() ? "Administrador" : "Jugador"}</strong></div>
@@ -73,6 +88,7 @@ function renderTitleScreenPanel() {
         <button class="btn btn--secundario" id="btn-cerrar-sesion">Cerrar sesión</button>
       </div>
     `;
+    ultimoResultadoRacha = null; // se muestra una sola vez
 
     document.getElementById("btn-entrar").addEventListener("click", enterGame);
     document.getElementById("btn-cerrar-sesion").addEventListener("click", async () => {
@@ -146,6 +162,7 @@ function renderLoginScreen() {
       // pedir GameData para traer las cartas/reglas reales y actualizadas.
       await initGameData();
       await initPlayerData();
+      ultimoResultadoRacha = applyDailyStreak();
       document.getElementById("loginscreen").style.display = "none";
       if (!PlayerData.nombre) {
         showNicknameScreen();
@@ -191,6 +208,7 @@ function renderRegisterScreen() {
       // podemos leer gamedata/main de verdad en vez de la copia vieja local.
       await initGameData();
       await initPlayerData();
+      ultimoResultadoRacha = applyDailyStreak();
       document.getElementById("registerscreen").style.display = "none";
       if (!PlayerData.nombre) {
         showNicknameScreen();
