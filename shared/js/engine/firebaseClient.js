@@ -131,6 +131,61 @@ async function registerPlayer(email, password) {
   }
 }
 
+/**
+ * Reserva un apodo único para el jugador actual (case-insensitive).
+ * Usa una transacción sobre nicknames/{apodoEnMinuscula} para que dos
+ * jugadores no puedan quedarse con el mismo apodo aunque lo intenten
+ * al mismo tiempo. En modo local (sin Firebase) no hay forma de
+ * verificar unicidad contra otros jugadores, así que se acepta tal cual.
+ * @returns {Promise<{ok: boolean, motivo?: string}>}
+ */
+async function claimNickname(nombreOriginal) {
+  const nombre = (nombreOriginal || "").trim();
+  const nombreLower = nombre.toLowerCase();
+
+  if (nombre.length < 3 || nombre.length > 20) {
+    return { ok: false, motivo: "El apodo debe tener entre 3 y 20 caracteres." };
+  }
+
+  if (!firebaseEnabled || !currentUser) {
+    return { ok: true }; // modo local: no se puede validar unicidad global
+  }
+
+  const ref = firestoreDb.collection("nicknames").doc(nombreLower);
+  try {
+    await firestoreDb.runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (doc.exists && doc.data().uid !== currentUser.uid) {
+        throw new Error("APODO_OCUPADO");
+      }
+      tx.set(ref, { uid: currentUser.uid, nombre, actualizadoEn: new Date().toISOString() });
+    });
+    return { ok: true };
+  } catch (err) {
+    if (err.message === "APODO_OCUPADO") {
+      return { ok: false, motivo: "Ese apodo ya está en uso. Elige otro." };
+    }
+    console.error("No se pudo reservar el apodo:", err);
+    return { ok: false, motivo: "No se pudo verificar el apodo, intenta de nuevo." };
+  }
+}
+
+/** Cambia la contraseña del usuario actualmente logueado (jugador o admin). */
+async function changeOwnPassword(nuevaPassword) {
+  if (!firebaseEnabled || !firebase.auth().currentUser) {
+    return { ok: false, motivo: "No hay sesión activa." };
+  }
+  if (!nuevaPassword || nuevaPassword.length < 6) {
+    return { ok: false, motivo: "La contraseña debe tener al menos 6 caracteres." };
+  }
+  try {
+    await firebase.auth().currentUser.updatePassword(nuevaPassword);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, motivo: traducirErrorFirebase(err.code) || `Error: ${err.message || "desconocido"}` };
+  }
+}
+
 async function registerAdmin(email, password, role) {
   await ensureFirebaseReady();
   if (!firebaseEnabled) return { ok: false, motivo: "Firebase no está configurado." };
@@ -214,7 +269,8 @@ function traducirErrorFirebase(code) {
     "auth/too-many-requests": "Demasiados intentos. Espera un momento y prueba de nuevo.",
     "auth/network-request-failed": "Error de conexión. Revisa tu internet.",
     "permission-denied": "No tienes permisos para leer los datos de admin en Firestore.",
-    "not-found": "El documento de admin no existe en Firestore."
+    "not-found": "El documento de admin no existe en Firestore.",
+    "auth/requires-recent-login": "Por seguridad, cierra sesión y vuelve a entrar antes de cambiar la contraseña."
   };
   return errores[code] || null;
 }
