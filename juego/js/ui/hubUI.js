@@ -43,6 +43,20 @@ function renderHubView() {
         <span class="hubtile__icono">👤</span>
         <span class="hubtile__label">Perfil</span>
       </button>
+      <button type="button" class="hubtile" data-hub-nav="cofres">
+        <span class="hubtile__icono">🎁</span>
+        <span class="hubtile__label">Cofres</span>
+        ${(PlayerData.cofres || []).length > 0 ? `<span class="hubtile__badge">${PlayerData.cofres.length}</span>` : ""}
+      </button>
+      <button type="button" class="hubtile" data-hub-nav="logros">
+        <span class="hubtile__icono">🏆</span>
+        <span class="hubtile__label">Logros</span>
+        ${countClaimableAchievements() > 0 ? `<span class="hubtile__badge">${countClaimableAchievements()}</span>` : ""}
+      </button>
+      <button type="button" class="hubtile" data-hub-nav="ranking">
+        <span class="hubtile__icono">📊</span>
+        <span class="hubtile__label">Ranking</span>
+      </button>
     </div>
 
     <button type="button" class="btn btn--aventura" id="btn-iniciar-aventura">
