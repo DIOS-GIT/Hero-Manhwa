@@ -527,3 +527,13 @@
   .formrow { gap: 14px; }
   .teamarea { gap: 10px; }
 }
+
+.elementobono {
+  background: linear-gradient(90deg, rgba(217, 164, 65, 0.16), transparent);
+  border: 1px solid var(--acento-quemado);
+  border-radius: var(--radio-s);
+  padding: 6px 10px;
+  font-size: 11px;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
