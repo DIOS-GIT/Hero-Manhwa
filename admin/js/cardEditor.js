@@ -194,6 +194,8 @@ function renderPasivaRow(pasiva, index) {
       <select data-field="stat">${statOptions}</select>
       <input type="number" data-field="modificador" step="0.01" placeholder="ej: 0.15 = +15%" value="${pasiva.efecto?.modificador ?? ""}" />
       <button type="button" class="btn btn--icono btn--quitar-pasiva">✕</button>
+      <input type="text" class="repeatable-row__descripcion" data-field="descripcion" placeholder="Descripción para el jugador (opcional — si la dejas vacía se genera sola)" value="${pasiva.descripcion || ""}" />
+      <p class="repeatable-row__preview" data-preview-pasiva>${describirPasiva(pasiva)}</p>
     </div>
   `;
 }
@@ -221,6 +223,8 @@ function renderHabilidadRow(habilidad, index) {
       <label class="mini-label">Estado que aplica<select data-field="estadoQueAplica">${estadoOptions}</select></label>
       <label class="mini-label">Enfriamiento (turnos)<input type="number" data-field="cooldownTurnos" min="0" value="${habilidad.cooldownTurnos ?? 0}" /></label>
       <button type="button" class="btn btn--icono btn--quitar-habilidad">✕</button>
+      <input type="text" class="repeatable-row__descripcion" data-field="descripcion" placeholder="Descripción para el jugador (opcional — si la dejas vacía se genera sola)" value="${habilidad.descripcion || ""}" />
+      <p class="repeatable-row__preview" data-preview-habilidad>${describirHabilidad(habilidad)}</p>
     </div>
   `;
 }
@@ -263,6 +267,35 @@ function renderEvolutionFieldset(carta) {
 
 function attachCardEditorEvents() {
   const container = document.getElementById("view-cartas");
+
+  container.addEventListener("input", (e) => {
+    const row = e.target.closest(".repeatable-row");
+    if (!row) return;
+    const previewPasiva = row.querySelector("[data-preview-pasiva]");
+    const previewHabilidad = row.querySelector("[data-preview-habilidad]");
+    if (previewPasiva) {
+      previewPasiva.textContent = describirPasiva({
+        descripcion: row.querySelector('[data-field="descripcion"]').value.trim() || null,
+        posicionRequerida: row.querySelector('[data-field="posicionRequerida"]').value,
+        efecto: {
+          stat: row.querySelector('[data-field="stat"]').value,
+          modificador: Number(row.querySelector('[data-field="modificador"]').value) || 0,
+        },
+      });
+    }
+    if (previewHabilidad) {
+      previewHabilidad.textContent = describirHabilidad({
+        descripcion: row.querySelector('[data-field="descripcion"]').value.trim() || null,
+        estadoQueAplica: row.querySelector('[data-field="estadoQueAplica"]').value || null,
+        cooldownTurnos: Number(row.querySelector('[data-field="cooldownTurnos"]').value) || 0,
+        costoEnergia: Number(row.querySelector('[data-field="costoEnergia"]').value) || 0,
+        efecto: {
+          tipo: row.querySelector('[data-field="tipoEfecto"]').value,
+          multiplicador: Number(row.querySelector('[data-field="multiplicador"]').value) || 1,
+        },
+      });
+    }
+  });
 
   const btnNueva = container.querySelector("#btn-nueva-carta");
   if (btnNueva) btnNueva.addEventListener("click", () => {
@@ -461,6 +494,7 @@ function syncFormToBorrador() {
         stat: row.querySelector('[data-field="stat"]').value,
         modificador: Number(row.querySelector('[data-field="modificador"]').value) || 0,
       },
+      descripcion: row.querySelector('[data-field="descripcion"]').value.trim() || null,
     };
   });
 
@@ -476,6 +510,7 @@ function syncFormToBorrador() {
       },
       estadoQueAplica: estado || null,
       cooldownTurnos: Number(row.querySelector('[data-field="cooldownTurnos"]').value) || 0,
+      descripcion: row.querySelector('[data-field="descripcion"]').value.trim() || null,
     };
   });
 
