@@ -160,14 +160,27 @@ function enterCombatNode(nodo, onNodeResolved) {
       const recompensa = Math.floor(Math.random() * (rango.max - rango.min + 1)) + rango.min;
       addCoins(recompensa);
 
+      PlayerData.victoriasTotales = (PlayerData.victoriasTotales || 0) + 1;
+      savePlayerData();
+      syncLeaderboardEntry();
+
+      let cofreGanado = null;
+      const rarezaCofre = getChestRarezaPorProfundidad(activeRun.estadisticas.nodosAlcanzados);
+      if (nodo.tipo === "jefe") {
+        cofreGanado = rarezaCofre;
+      } else if (nodo.tipo === "elite" && Math.random() < ECONOMY_CONFIG.cofres.probabilidadDropElite) {
+        cofreGanado = rarezaCofre;
+      }
+      if (cofreGanado) addChest(cofreGanado);
+
       const subidasNivel = grantXpToCards(cardIdsVivas, GameData.niveles.xpPorVictoria);
 
       if (nodo.tipo === "jefe") {
         finishRun("victoria");
-        onNodeResolved({ finalizada: true, recompensa, subidasNivel });
+        onNodeResolved({ finalizada: true, recompensa, subidasNivel, cofreGanado });
         return;
       }
-      onNodeResolved({ finalizada: false, recompensa, subidasNivel });
+      onNodeResolved({ finalizada: false, recompensa, subidasNivel, cofreGanado });
     },
   });
 }
@@ -224,6 +237,12 @@ function resolveEventConsequence(consecuencia) {
   if (consecuencia.tipo === "moneda") {
     addCoins(consecuencia.cantidad);
     return { mensaje: `${consecuencia.cantidad >= 0 ? "Ganaste" : "Perdiste"} ${Math.abs(consecuencia.cantidad)} de moneda.` };
+  }
+
+  if (consecuencia.tipo === "cofre") {
+    const rareza = consecuencia.rareza || getChestRarezaPorProfundidad(activeRun.estadisticas.nodosAlcanzados);
+    addChest(rareza);
+    return { mensaje: `¡Encontraste un cofre ${rareza}! Ábrelo desde "Cofres" en el hub.` };
   }
 
   const cardIdsVivas = getRunAliveCardIds();
