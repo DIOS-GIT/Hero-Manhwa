@@ -1,648 +1,334 @@
-/*
-  ADMIN.CSS
-  ---------------------------------------------------------------------
-  Estilos exclusivos del panel de administración. Se apoya en
-  shared/css/tokens.css + fonts.css + base.css, cargados antes que
-  este archivo en admin/index.html.
-
-  Nota de dirección: el admin es una herramienta de trabajo, no la
-  vitrina del juego — por eso usa la misma paleta y tipografía que el
-  juego (para no sentirse como una app distinta), pero con layouts más
-  densos y funcionales (listas, formularios), sin la ceremonia visual
-  del lado del jugador.
-  ---------------------------------------------------------------------
-*/
-
-.admin-shell__topbar {
-  padding: 18px 28px 14px;
-  border-bottom: 1px solid var(--borde);
-  background: linear-gradient(180deg, rgba(217, 164, 65, 0.05), transparent);
-}
-
-.admin-shell__topbar h1 {
-  font-family: var(--fuente-titulos);
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 2px;
-}
-
-.admin-shell__topbar .badge-modo {
-  font-family: var(--fuente-ui);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  background: var(--bg-panel-alt);
-  border: 1px solid var(--borde-fuerte);
-  color: var(--texto-tenue);
-  padding: 3px 9px;
-  border-radius: 20px;
-}
-
-.admin-shell__subtitulo {
-  margin: 0;
-  color: var(--texto-tenue);
-  font-size: 13px;
-}
-
-.admin-shell__link-juego {
-  font-size: 12.5px;
-  color: var(--acento-suave);
-  text-decoration: none;
-  border: 1px solid var(--borde);
-  padding: 5px 11px;
-  border-radius: 20px;
-}
-.admin-shell__link-juego:hover { border-color: var(--acento); }
-
-.tabs {
-  display: flex;
-  gap: 2px;
-  padding: 0 28px;
-  border-bottom: 1px solid var(--borde);
-  background: var(--bg-panel);
-  overflow-x: auto;
-}
-
-.tabs__btn {
-  background: none;
-  border: none;
-  color: var(--texto-tenue);
-  padding: 13px 16px;
-  cursor: pointer;
-  font-size: 13.5px;
-  font-family: var(--fuente-ui);
-  font-weight: 600;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-}
-
-.tabs__btn:hover { color: var(--texto); }
-
-.tabs__btn--activo {
-  color: var(--acento-suave);
-  border-bottom-color: var(--acento);
-}
-
-.viewport {
-  padding: 26px 28px 60px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.view { display: none; }
-.view--activa { display: block; }
-
-/* ---- layout compartido: lista + formulario ---- */
-
-.admin-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-.admin-layout__lista {
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 14px;
-  position: sticky;
-  top: 12px;
-  box-shadow: var(--sombra-panel);
-}
-
-.admin-layout__lista .btn {
-  width: 100%;
-  margin-bottom: 12px;
-}
-
-.cardlist__grupo { margin-bottom: 14px; }
-
-.cardlist__rareza {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  margin-bottom: 6px;
-  padding-left: 2px;
-  font-family: var(--fuente-ui);
-}
-
-.cardlist__rareza--comun { color: var(--rareza-comun); }
-.cardlist__rareza--rara { color: var(--rareza-rara); }
-.cardlist__rareza--epica { color: var(--rareza-epica); }
-.cardlist__rareza--legendaria { color: var(--rareza-legendaria); }
-.cardlist__rareza--mitica { color: var(--rareza-mitica-1); }
-
-.cardlist__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 10px;
-  border-radius: var(--radio-s);
-  cursor: pointer;
-  font-size: 13.5px;
-}
-
-.cardlist__thumb {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid var(--borde-fuerte);
-  flex-shrink: 0;
-}
-
-.cardlist__nombregrupo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.image-preview {
-  margin: -6px 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.image-preview img {
-  width: 90px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: var(--radio-s);
-  border: 1px solid var(--borde-fuerte);
-  box-shadow: var(--sombra-panel);
-}
-
-.cardlist__item:hover { background: var(--bg-panel-hover); }
-.cardlist__item--activo { border-left: 3px solid var(--acento); background: var(--bg-panel-hover); }
-
-.cardlist__clase {
-  color: var(--texto-tenue);
-  font-size: 12px;
-}
-
-.admin-layout__form {
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 22px;
-  box-shadow: var(--sombra-panel);
-}
-
-.cardform__fila {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-.cardform__stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-.cardform__stats legend { grid-column: 1 / -1; }
-
-.cardform__stats legend {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-#btn-random-stats { min-height: auto; padding: 4px 10px; font-size: 12px; }
-
-.balance-warnings { grid-column: 1 / -1; }
-.balance-warnings__item {
-  color: var(--peligro);
-  font-size: 12px;
-  margin: 4px 0 0;
-}
-
-.cardform__evolucion #campos-evolucion {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.repeatable-row {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.repeatable-row--habilidad {
-  grid-template-columns: 1.3fr repeat(6, 1fr) auto;
-}
-
-.repeatable-row--variante {
-  grid-template-columns: 1.2fr 1.4fr 1fr 0.8fr 1fr 0.8fr 0.7fr auto;
-}
-
-/* .storyopcion tiene una cantidad de campos VARIABLE según el tipo de
-   consecuencia elegido, así que usa flex-wrap en vez del grid de
-   columnas fijas de .repeatable-row (que asume siempre la misma
-   cantidad de campos por fila). */
-.repeatable-row.storyopcion {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 8px 10px;
-}
-.storyopcion > input[type="text"] { flex: 1 1 160px; align-self: center; }
-.storyopcion .mini-label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; flex: 1 1 130px; }
-.storyopcion .checkbox-label { flex: 1 1 160px; align-self: center; }
-.storyopcion .btn--icono { flex: 0 0 auto; align-self: center; }
-
-.repeatable-row input, .repeatable-row select {
-  width: 100%;
-}
-
-.repeatable-row__descripcion {
-  grid-column: 1 / -1;
-  font-size: 12.5px;
-}
-
-.repeatable-row__preview {
-  grid-column: 1 / -1;
-  margin: 0 0 4px;
-  font-size: 11.5px;
-  font-style: italic;
-  color: var(--texto-tenue);
-}
-
-.cardform__acciones, .rulesform__acciones {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.checkbox-label { display: flex; align-items: center; gap: 6px; flex-direction: row; }
-.checkbox-label input[type="checkbox"] { width: auto; }
-
-.shopform__efecto { grid-column: 1 / -1; }
-
-/* ---- Pantallas (fondos + personajes) ---- */
-
-.screenfieldset {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-}
-
-.screenfieldset__campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.screenfieldset__preview {
-  width: 100%;
-  max-height: 140px;
-  object-fit: cover;
-  border-radius: var(--radio-s);
-  border: 1px solid var(--borde);
-  background: var(--bg-abismo);
-}
-.screenfieldset__preview--personaje { object-fit: contain; background: var(--bg-abismo); }
-
-.rulesform fieldset {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px 16px;
-}
-.rulesform legend { grid-column: 1 / -1; }
-
-.routesform__rarezas {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding-top: 6px;
-  border-top: 1px solid var(--borde);
-  margin-top: 6px;
-}
-.routesform__rarezas .mini-label { width: 100%; margin-bottom: 4px; }
-
-/* ---- Plantillas de mapa (arrastrar y soltar) ---- */
-
-.templatesection {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--borde);
-}
-
-.templatesection__layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 20px;
-  margin-top: 12px;
-}
-
-.templatesection__lista { display: flex; flex-direction: column; gap: 10px; }
-
-.templatepaleta { margin: 12px 0 16px; }
-.templatepaleta__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-
-.templatechip {
-  --chip-color: var(--acento);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: color-mix(in srgb, var(--chip-color) 18%, var(--bg-panel-alt));
-  border: 1px solid var(--chip-color);
-  border-radius: 16px;
-  padding: 5px 10px;
-  font-size: 12.5px;
-  cursor: grab;
-  user-select: none;
-}
-.templatechip:active { cursor: grabbing; }
-
-.templatechip--puesto { cursor: default; padding-right: 4px; }
-.templatechip__quitar {
-  border: none;
-  background: none;
-  color: var(--texto-tenue);
-  cursor: pointer;
-  font-size: 11px;
-  padding: 0 2px;
-  min-height: 0;
-}
-
-.templatepisos { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-
-.templatefloor {
-  border: 2px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 10px 12px;
-  cursor: pointer;
-}
-.templatefloor--foco { border-color: var(--acento); box-shadow: var(--resplandor-acento); }
-
-.templatefloor__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12.5px;
-  color: var(--texto-tenue);
-  margin-bottom: 8px;
-}
-.templatefloor__botones { display: flex; gap: 4px; }
-.templatefloor__botones .btn { min-height: 26px; padding: 2px 8px; font-size: 12px; }
-
-.templatefloor__dropzone {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 34px;
-}
-.templatefloor__vacio { font-size: 12px; color: var(--texto-tenue-2); font-style: italic; }
-
-.templatepisos__jefe {
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--rareza-legendaria);
-  padding: 8px;
-  border: 1px dashed var(--rareza-legendaria);
-  border-radius: var(--radio);
-  margin-bottom: 14px;
-}
-
-@media (max-width: 700px) {
-  .templatesection__layout { grid-template-columns: 1fr; }
-}
-
-/* ---- Elementos ---- */
-
-#lista-elementos {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.elementrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-panel-alt);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-s);
-  padding: 8px 10px;
-}
-.elementrow input[type="color"] { width: 34px; height: 34px; padding: 0; border: none; background: none; flex-shrink: 0; }
-.elementrow input[type="text"] { flex: 1; min-width: 90px; }
-.elementrow__fuerte { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--texto-tenue); white-space: nowrap; }
-.elementrow__fuerte select { min-width: 120px; }
-
-/* ---- Team builder ---- */
-
-.teambuilder {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.teambuilder__columna {
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 16px;
-  box-shadow: var(--sombra-panel);
-}
-
-.teamslot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  background: var(--bg-panel-alt);
-  border-radius: var(--radio-s);
-  margin-bottom: 6px;
-  font-size: 13.5px;
-}
-
-.teamslot__pos {
-  font-size: 10.5px;
-  color: var(--acento-suave);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-width: 90px;
-  font-family: var(--fuente-ui);
-  font-weight: 700;
-}
-
-.teampicker__select { width: 100%; margin-top: 8px; }
-
-.teambuilder__acciones {
-  margin-top: 20px;
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-}
-.teambuilder__acciones label { flex: 1; max-width: 320px; }
-
-/* ---- Data panel ---- */
-
-.datapanel {
-  display: grid;
-  gap: 16px;
-  max-width: 560px;
-}
-
-.datapanel__bloque {
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 18px;
-  box-shadow: var(--sombra-panel);
-}
-
-.datapanel__bloque--peligro { border-color: var(--peligro); }
-
-.datapanel__bloque p {
-  color: var(--texto-tenue);
-  font-size: 13.5px;
-}
-
-/* =======================================================================
-   RESPONSIVO — el admin es una herramienta de escritorio, pero no debe
-   romperse si se abre desde el teléfono.
-   ======================================================================= */
-
-@media (max-width: 900px) {
-  .admin-layout { grid-template-columns: 1fr; }
-  .admin-layout__lista { position: static; }
-
-  .teambuilder { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 640px) {
-  .admin-shell__topbar { flex-wrap: wrap; gap: 10px; padding: 14px 16px 10px; }
-  .viewport { padding: 16px 14px 48px; }
-
-  .cardform__stats { grid-template-columns: repeat(2, 1fr); }
-
-  .teambuilder__acciones { flex-wrap: wrap; }
-  .teambuilder__acciones label { max-width: none; width: 100%; }
-}
-
-/* =======================================================================
-   LOGIN DE ADMIN
-   ======================================================================= */
-
-.admin-login {
-  min-height: calc(100vh - 120px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.admin-login__box {
-  width: 100%;
-  max-width: 380px;
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-alt));
-  border: 1px solid var(--borde);
-  border-radius: var(--radio-l);
-  padding: 24px;
-  box-shadow: var(--sombra-elevada);
-}
-
-.admin-login__box h2 {
-  font-family: var(--fuente-titulos);
-  font-size: 22px;
-  margin-bottom: 4px;
-}
-
-.admin-login__subtitulo {
-  color: var(--texto-tenue);
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
-.admin-login__box label {
-  text-align: left;
-}
-
-.admin-login__box input {
-  width: 100%;
-  margin-bottom: 12px;
-}
-
-.admin-login__error {
-  background: rgba(209, 72, 63, 0.15);
-  border: 1px solid var(--peligro);
-  color: var(--peligro-suave);
-  font-size: 13px;
-  padding: 8px 12px;
-  border-radius: var(--radio-s);
-  margin-bottom: 12px;
-}
-
-.admin-login__box .btn {
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-/* ===== Colección de un jugador (pestaña Jugadores) ===== */
-.playercards {
-  max-height: 340px;
-  overflow-y: auto;
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 12px;
-  background: var(--bg-abismo);
-}
-
-.playercards__grupo + .playercards__grupo {
-  margin-top: 14px;
-}
-
-.playercards__rareza {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700;
-  margin: 0 0 6px 0;
-  color: var(--texto-tenue);
-}
-
-.playercards__rareza--rara { color: var(--info); }
-.playercards__rareza--epica { color: #a463e0; }
-.playercards__rareza--legendaria { color: var(--acento-suave); }
-.playercards__rareza--mitica { color: #e0473f; }
-
-.playercards__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 4px;
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.playercards__item:hover {
-  background: var(--bg-panel-hover);
-}
-
-.playercards__item input {
-  accent-color: var(--acento);
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
+/**
+ * COMBATCONTROLLER.JS
+ * -----------------------------------------------------------------------
+ * Todas las cartas se ven a la vez en su formación (ver battlefieldUI.js).
+ * Tocar TU carta con el turno abre/cierra sus acciones (dentro de la
+ * misma carta, como una hoja pegada a ella). Tocar cualquier otra carta
+ * sin selección activa no hace nada.
+ * -----------------------------------------------------------------------
+ */
+
+let activeCombat = null;
+let seleccionModo = null; // null | "saltar_linea" | "habilidad" | "formacion"
+let habilidadSeleccionada = null;
+let formacionPrimeraSeleccion = null;
+
+// Si la carta con el turno del jugador está tocada, tocarla
+// abre/cierra sus acciones (en vez de un panel siempre visible).
+let accionesAbiertas = false;
+
+let combatFinishCallback = null;
+
+function startCombatFromTeams(equipoJugadorCards, equipoEnemigoCards, opciones = {}) {
+  activeCombat = createCombat(equipoJugadorCards, equipoEnemigoCards, opciones);
+  combatFinishCallback = opciones.onFinish || null;
+  resetInteractionState();
+  showView("combate");
+  renderCombatScreen();
+}
+
+function resetInteractionState() {
+  seleccionModo = null;
+  habilidadSeleccionada = null;
+  formacionPrimeraSeleccion = null;
+  accionesAbiertas = false;
+}
+
+function renderCombatScreen() {
+  const container = document.getElementById("view-combate");
+  if (!activeCombat) {
+    container.innerHTML = `<p class="empty-hint">No hay ningún combate de prueba activo todavía. Ve a "Equipos y combate" para armar uno.</p>`;
+    return;
+  }
+
+  const cs = activeCombat;
+  const actor = cs.actorActual;
+  const esTurnoJugador = actor && actor.team === "jugador" && actor.alive && !cs.finalizado;
+
+  let seleccionables = [];
+  if (seleccionModo === "saltar_linea" && actor) {
+    seleccionables = getValidNormalAttackTargets(cs, actor, true).map((c) => c.instanceId);
+  } else if (seleccionModo === "habilidad" && actor && habilidadSeleccionada) {
+    seleccionables = getValidAbilityTargets(cs, actor, habilidadSeleccionada).map((c) => c.instanceId);
+  } else if (seleccionModo === "formacion" && actor) {
+    seleccionables = getTeamBySlot(cs, actor.team).map((c) => c.instanceId);
+  }
+
+  let panelExtraHtml = "";
+  if (cs.finalizado) {
+    panelExtraHtml = `
+      <div class="actionpanel actionpanel--final">
+        <p class="resultado resultado--${cs.resultado}">
+          ${cs.resultado === "victoria" ? "¡Victoria del equipo jugador!" : "El equipo jugador fue derrotado."}
+        </p>
+        <button class="btn" id="btn-cerrar-combate">${combatFinishCallback ? "Continuar" : "Volver a Equipos y combate"}</button>
+      </div>
+    `;
+  } else if (!actor) {
+    panelExtraHtml = `<div class="actionpanel"><p>Calculando siguiente turno…</p></div>`;
+  } else if (!esTurnoJugador) {
+    panelExtraHtml = `
+      <div class="actionpanel">
+        <p>Turno de <strong>${actor.nombre}</strong> (equipo enemigo).</p>
+        <button class="btn" id="btn-continuar-ia">Continuar</button>
+      </div>
+    `;
+  } else if (seleccionModo) {
+    panelExtraHtml = renderSelectionHint();
+  } else if (accionesAbiertas) {
+    panelExtraHtml = renderPlayerActionSheet(cs, actor);
+  } else {
+    panelExtraHtml = `<p class="hint hint--tap">Toca a <strong>${actor.nombre}</strong> para ver sus acciones.</p>`;
+  }
+
+  container.innerHTML = `
+    ${renderRelicsBar()}
+    <div class="combatscreen">
+      <div class="combatscreen__main">
+        ${
+          cs.bonoElemento
+            ? `<div class="elementobono">🔗 Sinergia de ${cs.bonoElemento.elemento}: +${Math.round(cs.bonoElemento.bonoPct * 100)}% ATQ/DEF/VEL a esas cartas</div>`
+            : ""
+        }
+        ${!cs.finalizado ? `
+          <div class="combatscreen__topbar">
+            <button type="button" class="btn btn--peligro btn--abandonar" id="btn-abandonar-combate">Abandonar combate</button>
+          </div>
+        ` : ""}
+        ${renderTurnQueue(cs)}
+        ${renderBattlefield(cs, seleccionables)}
+        ${panelExtraHtml}
+      </div>
+      ${renderMoveHistorySidebar(cs)}
+    </div>
+  `;
+
+  attachRelicsBarEvents(container, renderCombatScreen);
+  attachCombatScreenEvents();
+  scrollMoveHistoryToBottom();
+}
+
+function renderSelectionHint() {
+  const mensaje =
+    seleccionModo === "saltar_linea"
+      ? "Elige un objetivo en la retaguardia enemiga (resaltado)."
+      : seleccionModo === "habilidad"
+      ? `Elige objetivo para ${habilidadSeleccionada.nombre} (resaltado).`
+      : `Elige dos cartas de tu equipo (resaltadas) para intercambiar posición. ${formacionPrimeraSeleccion ? "Ya elegiste la primera, elige la segunda." : ""}`;
+  return `
+    <div class="actionpanel">
+      <p class="hint">${mensaje}</p>
+      <button class="btn btn--secundario" id="btn-cancelar-seleccion">Cancelar</button>
+    </div>
+  `;
+}
+
+/** Hoja de acciones que se abre al tocar tu carta con el turno. */
+function renderPlayerActionSheet(cs, actor) {
+  const energia = getTeamEnergy(cs, actor.team);
+  const costoSaltar = cs.reglas.energia.costoSaltarPrimeraLinea;
+
+  const protagonistaHtml = cs.protagonista
+    ? `<button class="btn btn--protagonista" id="btn-activa-protagonista" ${cs.protagonistaUsado ? "disabled" : ""}>
+        ⭐ ${cs.protagonista.activaUnica.nombre} (${cs.protagonista.nombre})${cs.protagonistaUsado ? " — usada" : ""}
+      </button>`
+    : "";
+
+  const habilidadesHtml = (actor.habilidades || [])
+    .map((h) => {
+      const enCooldown = (actor.cooldowns[h.nombre] || 0) > 0;
+      const sinEnergia = h.costoEnergia > energia;
+      const deshabilitada = enCooldown || sinEnergia;
+      let motivo = "";
+      if (enCooldown) motivo = ` (enfriamiento: ${actor.cooldowns[h.nombre]})`;
+      else if (sinEnergia) motivo = " (energía insuficiente)";
+      return `
+        <button class="btn btn--habilidad" data-habilidad="${h.nombre}" ${deshabilitada ? "disabled" : ""}>
+          ${h.nombre} — ${h.costoEnergia}⚡${motivo}
+        </button>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="actionsheet">
+      <div class="actionsheet__header">
+        <span>Acciones de ${actor.nombre} · Energía: ${energia}</span>
+        <button type="button" class="actionsheet__cerrar" id="btn-cerrar-acciones">✕</button>
+      </div>
+      ${protagonistaHtml}
+      <div class="actionpanel__grupo">
+        <button class="btn" id="btn-atacar">Atacar (primera línea rival)</button>
+        <button class="btn" id="btn-saltar-linea" ${energia < costoSaltar ? "disabled" : ""}>
+          Atacar retaguardia (${costoSaltar}⚡)
+        </button>
+        <button class="btn" id="btn-defender">Defender</button>
+        <button class="btn" id="btn-cambiar-formacion">Cambiar formación</button>
+      </div>
+      <div class="actionpanel__grupo actionpanel__grupo--habilidades">${habilidadesHtml}</div>
+    </div>
+  `;
+}
+
+function attachCombatScreenEvents() {
+  const container = document.getElementById("view-combate");
+
+  const btnAtacar = container.querySelector("#btn-atacar");
+  if (btnAtacar) btnAtacar.addEventListener("click", () => {
+    actionAttack(activeCombat, activeCombat.actorActual, {});
+    afterPlayerAction();
+  });
+
+  const btnSaltar = container.querySelector("#btn-saltar-linea");
+  if (btnSaltar) btnSaltar.addEventListener("click", () => {
+    seleccionModo = "saltar_linea";
+    renderCombatScreen();
+  });
+
+  const btnDefender = container.querySelector("#btn-defender");
+  if (btnDefender) btnDefender.addEventListener("click", () => {
+    actionDefend(activeCombat, activeCombat.actorActual);
+    afterPlayerAction();
+  });
+
+  const btnCambiarFormacion = container.querySelector("#btn-cambiar-formacion");
+  if (btnCambiarFormacion) btnCambiarFormacion.addEventListener("click", () => {
+    seleccionModo = "formacion";
+    formacionPrimeraSeleccion = null;
+    renderCombatScreen();
+  });
+
+  const btnCancelar = container.querySelector("#btn-cancelar-seleccion");
+  if (btnCancelar) btnCancelar.addEventListener("click", () => {
+    seleccionModo = null;
+    habilidadSeleccionada = null;
+    formacionPrimeraSeleccion = null;
+    renderCombatScreen();
+  });
+
+  const btnCerrarAcciones = container.querySelector("#btn-cerrar-acciones");
+  if (btnCerrarAcciones) btnCerrarAcciones.addEventListener("click", () => {
+    accionesAbiertas = false;
+    renderCombatScreen();
+  });
+
+  container.querySelectorAll(".btn--habilidad").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const nombre = btn.dataset.habilidad;
+      const habilidad = activeCombat.actorActual.habilidades.find((h) => h.nombre === nombre);
+      if (habilidad.tipoObjetivo === "uno_mismo" || habilidad.tipoObjetivo === "area") {
+        actionUseAbility(activeCombat, activeCombat.actorActual, nombre, null);
+        afterPlayerAction();
+      } else {
+        seleccionModo = "habilidad";
+        habilidadSeleccionada = habilidad;
+        renderCombatScreen();
+      }
+    });
+  });
+
+  // Cualquier carta de la formación es tocable.
+  container.querySelectorAll("[data-instance-id]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const esSeleccionable = el.classList.contains("formcard--selectable");
+      if (seleccionModo && !esSeleccionable) return; // en selección, solo cuentan los objetivos válidos
+      handleCardTap(el.dataset.instanceId);
+    });
+  });
+
+  const btnContinuarIA = container.querySelector("#btn-continuar-ia");
+  if (btnContinuarIA) btnContinuarIA.addEventListener("click", () => {
+    runEnemyAITurn(activeCombat, activeCombat.actorActual);
+    if (!activeCombat.finalizado) advanceTurn(activeCombat);
+    accionesAbiertas = false;
+    renderCombatScreen();
+  });
+
+  const btnActivaProtagonista = container.querySelector("#btn-activa-protagonista");
+  if (btnActivaProtagonista) btnActivaProtagonista.addEventListener("click", () => {
+    actionUseProtagonistActive(activeCombat);
+    renderCombatScreen();
+  });
+
+  const btnAbandonar = container.querySelector("#btn-abandonar-combate");
+  if (btnAbandonar) btnAbandonar.addEventListener("click", () => {
+    if (!confirm("¿Seguro que quieres abandonar este combate? Se cuenta como derrota y no recibirás ninguna recompensa.")) return;
+    activeCombat.finalizado = true;
+    activeCombat.resultado = "derrota";
+    activeCombat.abandonado = true;
+    resetInteractionState();
+    renderCombatScreen();
+  });
+
+  const btnCerrar = container.querySelector("#btn-cerrar-combate");
+  if (btnCerrar) btnCerrar.addEventListener("click", () => {
+    const resultadoCombate = activeCombat;
+    const callback = combatFinishCallback;
+    activeCombat = null;
+    combatFinishCallback = null;
+    if (callback) {
+      callback(resultadoCombate);
+    } else {
+      showView("equipos");
+    }
+  });
+}
+
+/**
+ * Tocar una carta hace UNA de dos cosas, en este orden de prioridad:
+ *   1. Si hay una selección de objetivo en curso y esta carta es
+ *      válida como objetivo -> se usa como objetivo.
+ *   2. Si es TU carta y le toca actuar ahora -> abre/cierra sus
+ *      acciones. Cualquier otra carta no hace nada (ya se ve entera
+ *      en la formación, no hace falta "agrandarla").
+ */
+function handleCardTap(instanceId) {
+  const cs = activeCombat;
+  const carta = cs.cards.find((c) => c.instanceId === instanceId);
+  if (!carta) return;
+
+  if (seleccionModo) {
+    handleTargetSelection(instanceId);
+    return;
+  }
+
+  const esLaDelTurno = cs.actorActual && cs.actorActual.instanceId === instanceId && carta.team === "jugador" && carta.alive;
+  if (!esLaDelTurno) return;
+
+  accionesAbiertas = !accionesAbiertas;
+  renderCombatScreen();
+}
+
+function handleTargetSelection(instanceId) {
+  if (seleccionModo === "saltar_linea") {
+    actionAttack(activeCombat, activeCombat.actorActual, {
+      saltarPrimeraLinea: true,
+      objetivoElegidoId: instanceId,
+    });
+    seleccionModo = null;
+    afterPlayerAction();
+  } else if (seleccionModo === "habilidad") {
+    actionUseAbility(activeCombat, activeCombat.actorActual, habilidadSeleccionada.nombre, instanceId);
+    seleccionModo = null;
+    habilidadSeleccionada = null;
+    afterPlayerAction();
+  } else if (seleccionModo === "formacion") {
+    if (!formacionPrimeraSeleccion) {
+      formacionPrimeraSeleccion = instanceId;
+      renderCombatScreen();
+    } else {
+      actionChangeFormation(activeCombat, activeCombat.actorActual.team, formacionPrimeraSeleccion, instanceId);
+      seleccionModo = null;
+      formacionPrimeraSeleccion = null;
+      renderCombatScreen();
+    }
+  }
+}
+
+function afterPlayerAction() {
+  accionesAbiertas = false;
+  if (!activeCombat.finalizado) {
+    advanceTurn(activeCombat);
+  }
+  renderCombatScreen();
 }
