@@ -39,6 +39,7 @@ function createCombat(equipoJugadorTemplates, equipoEnemigoTemplates, opciones =
   const cards = [];
   const hpInicial = opciones.hpInicial || {};
   const buffsPermanentes = opciones.buffsPermanentes || {};
+  const bonoElemento = calcularBonoElemento(equipoJugadorTemplates);
 
   equipoJugadorTemplates.forEach((tpl, i) => {
     const card = createCombatCard(tpl, "jugador", i + 1);
@@ -47,6 +48,11 @@ function createCombat(equipoJugadorTemplates, equipoEnemigoTemplates, opciones =
         card.statsBase[buff.stat] *= 1 + buff.modificador;
       }
     });
+    if (bonoElemento && tpl.elemento === bonoElemento.elemento) {
+      STATS_QUE_AFECTA_BONO_ELEMENTO.forEach((stat) => {
+        card.statsBase[stat] *= 1 + bonoElemento.bonoPct;
+      });
+    }
     if (hpInicial[tpl.id] !== undefined) {
       card.hp = Math.max(0, Math.min(card.hpMax, hpInicial[tpl.id]));
     }
@@ -61,6 +67,7 @@ function createCombat(equipoJugadorTemplates, equipoEnemigoTemplates, opciones =
   const combatState = {
     cards,
     reglas: structuredClone(GameData.reglas),
+    bonoElemento, // para mostrarlo en la UI de combate — ver battlefieldUI.js
     energia: { jugador: 0, enemigo: 0 },
     danoHechoPorJugador: 0, // usado por engine/runState.js para el historial
     protagonista: opciones.protagonista || null,
