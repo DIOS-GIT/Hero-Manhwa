@@ -53,11 +53,9 @@
 
 const RAREZAS = ["comun", "rara", "epica", "legendaria", "mitica"];
 
-let _nextCardId = 1;
-
 function createEmptyCard() {
   const card = {
-    id: "card_" + _nextCardId++,
+    id: generateUniqueId("card"),
     nombre: "Nueva carta",
     rareza: "comun",
     clase: "dps",
