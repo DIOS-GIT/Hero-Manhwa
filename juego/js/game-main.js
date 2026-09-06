@@ -62,7 +62,8 @@ function renderTitleScreenPanel() {
 
   if (currentUser) {
     panel.innerHTML = `
-      <div class="titlescreen__stat"><span>Usuario</span><strong>${currentUser.email}</strong></div>
+      <div class="titlescreen__stat"><span>Apodo</span><strong>${PlayerData.nombre || "(sin apodo)"}</strong></div>
+      <div class="titlescreen__stat"><span>Correo</span><strong>${currentUser.email}</strong></div>
       <div class="titlescreen__stat"><span>Rol</span><strong>${isAdmin() ? "Administrador" : "Jugador"}</strong></div>
       <div class="titlescreen__stat"><span>Moneda</span><strong>🪙 ${PlayerData.moneda}</strong></div>
       <div class="titlescreen__stat"><span>Colección</span><strong>${PlayerData.coleccion.length} / ${GameData.cartas.length}</strong></div>
@@ -139,9 +140,13 @@ function renderLoginScreen() {
     const resultado = await loginPlayer(email, password);
     if (resultado.ok) {
       await initPlayerData();
-      renderTitleScreenPanel();
       document.getElementById("loginscreen").style.display = "none";
-      document.getElementById("titlescreen").style.display = "flex";
+      if (!PlayerData.nombre) {
+        showNicknameScreen();
+      } else {
+        renderTitleScreenPanel();
+        document.getElementById("titlescreen").style.display = "flex";
+      }
     } else {
       errorBox.textContent = resultado.motivo;
       errorBox.style.display = "block";
@@ -177,9 +182,13 @@ function renderRegisterScreen() {
     const resultado = await registerPlayer(email, password);
     if (resultado.ok) {
       await initPlayerData();
-      renderTitleScreenPanel();
       document.getElementById("registerscreen").style.display = "none";
-      document.getElementById("titlescreen").style.display = "flex";
+      if (!PlayerData.nombre) {
+        showNicknameScreen();
+      } else {
+        renderTitleScreenPanel();
+        document.getElementById("titlescreen").style.display = "flex";
+      }
     } else {
       errorBox.textContent = resultado.motivo;
       errorBox.style.display = "block";
@@ -190,6 +199,56 @@ function renderRegisterScreen() {
     document.getElementById("registerscreen").style.display = "none";
     document.getElementById("loginscreen").style.display = "flex";
   });
+}
+
+/* =======================================================================
+   PANTALLA DE APODO (obligatoria si el jugador todavía no eligió uno)
+   ======================================================================= */
+
+function showNicknameScreen() {
+  document.getElementById("titlescreen").style.display = "none";
+  document.getElementById("loginscreen").style.display = "none";
+  document.getElementById("registerscreen").style.display = "none";
+  document.getElementById("nicknamescreen").style.display = "flex";
+
+  const input = document.getElementById("input-nickname");
+  const btnViejo = document.getElementById("btn-confirmar-nickname");
+  const btn = btnViejo.cloneNode(true);
+  btnViejo.replaceWith(btn);
+  const errorBox = document.getElementById("nickname-error");
+  input.value = "";
+  errorBox.style.display = "none";
+
+  const handler = async () => {
+    const nombre = input.value.trim();
+    if (!nombre) {
+      errorBox.textContent = "Escribe un apodo.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Verificando…";
+    const resultado = await claimNickname(nombre);
+    btn.disabled = false;
+    btn.textContent = "Confirmar y entrar";
+
+    if (!resultado.ok) {
+      errorBox.textContent = resultado.motivo;
+      errorBox.style.display = "block";
+      return;
+    }
+
+    PlayerData.nombre = nombre;
+    PlayerData.nombreLower = nombre.toLowerCase();
+    await savePlayerData();
+
+    document.getElementById("nicknamescreen").style.display = "none";
+    renderTitleScreenPanel();
+    document.getElementById("titlescreen").style.display = "flex";
+  };
+
+  btn.addEventListener("click", handler);
 }
 
 /* =======================================================================
