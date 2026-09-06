@@ -27,9 +27,9 @@ async function renderPlayersAdminView() {
           ${jugadores.map((j) => `
             <div class="cardlist__item" data-jugador-id="${j.id}">
               <span class="cardlist__nombregrupo">
-                ${j.nombre ? `<strong>${j.nombre}</strong>` : `<strong>${j.email}</strong>`}
+                ${j.nombre ? `<strong>${j.nombre}</strong>` : `<strong>${j.email || "(sin datos)"}</strong>`}
               </span>
-              <span class="cardlist__clase">🪙 ${j.moneda}</span>
+              <span class="cardlist__clase">🪙 ${j.moneda ?? 0}</span>
             </div>
           `).join("") || '<p class="empty-hint">No hay jugadores registrados.</p>'}
         </div>
@@ -56,6 +56,35 @@ async function fetchAllPlayers() {
 }
 
 function renderPlayerForm(jugador) {
+  const coleccionActual = new Set(jugador.coleccion || []);
+  const cartasPorRareza = {};
+  (GameData.cartas || []).forEach((c) => {
+    if (!cartasPorRareza[c.rareza]) cartasPorRareza[c.rareza] = [];
+    cartasPorRareza[c.rareza].push(c);
+  });
+  const ordenRarezas = ["comun", "rara", "epica", "legendaria", "mitica"];
+
+  const listaCartasHtml = ordenRarezas
+    .filter((r) => cartasPorRareza[r] && cartasPorRareza[r].length)
+    .map(
+      (r) => `
+      <div class="playercards__grupo">
+        <p class="playercards__rareza playercards__rareza--${r}">${r}</p>
+        ${cartasPorRareza[r]
+          .map(
+            (c) => `
+          <label class="playercards__item">
+            <input type="checkbox" name="carta-${c.id}" value="${c.id}" ${coleccionActual.has(c.id) ? "checked" : ""} />
+            ${c.nombre}
+          </label>
+        `
+          )
+          .join("")}
+      </div>
+    `
+    )
+    .join("");
+
   return `
     <form id="form-jugador" class="cardform">
       <h3>${jugador.nombre || jugador.email}</h3>
@@ -66,12 +95,14 @@ function renderPlayerForm(jugador) {
       </label>
 
       <label>Moneda
-        <input type="number" name="moneda" value="${jugador.moneda}" min="0" />
+        <input type="number" name="moneda" value="${jugador.moneda ?? 0}" min="0" />
       </label>
 
       <fieldset>
-        <legend>Colección (IDs de cartas separados por coma)</legend>
-        <textarea name="coleccion" rows="3">${(jugador.coleccion || []).join(", ")}</textarea>
+        <legend>Colección — marca las cartas que debería tener este jugador</legend>
+        <div class="playercards">
+          ${listaCartasHtml || '<p class="empty-hint">No hay cartas cargadas todavía en Cartas.</p>'}
+        </div>
       </fieldset>
 
       <fieldset>
@@ -108,21 +139,47 @@ function attachPlayersAdminEvents(container) {
     const jugador = playersAdminState.borrador;
     jugador.nombre = form.elements["nombre"].value.trim();
     jugador.moneda = Number(form.elements["moneda"].value) || 0;
-    jugador.coleccion = form.elements["coleccion"].value.split(",").map((s) => s.trim()).filter(Boolean);
+    jugador.coleccion = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map((el) => el.value);
 
-    await firestoreDb.collection("players").doc(jugador.id).set(jugador);
-    alert("Datos del jugador guardados.");
-    renderPlayersAdminView();
+    const btnGuardar = form.querySelector('button[type="submit"]');
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = "Guardando…";
+
+    try {
+      await firestoreDb.collection("players").doc(jugador.id).set(jugador, { merge: true });
+      alert("Datos del jugador guardados.");
+      renderPlayersAdminView();
+    } catch (err) {
+      console.error("No se pudo guardar el jugador:", err);
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = "Guardar cambios";
+      if (err.code === "permission-denied") {
+        alert(
+          "Firestore rechazó el guardado por permisos. Las reglas de Firestore tienen que dejar que un admin " +
+          "escriba en players/{uid} de otro usuario, no solo el dueño. Revisa DEPLOY.md, sección de reglas."
+        );
+      } else {
+        alert("No se pudo guardar: " + (err.message || "error desconocido"));
+      }
+    }
   });
 
   const btnBorrar = container.querySelector("#btn-borrar-jugador");
   if (btnBorrar) btnBorrar.addEventListener("click", async () => {
     if (!confirm("¿Eliminar esta cuenta de jugador? Esto no se puede deshacer.")) return;
-    await firestoreDb.collection("players").doc(playersAdminState.jugadorId).delete();
-    await firebase.auth().currentUser.delete();
-    playersAdminState.jugadorId = null;
-    playersAdminState.borrador = null;
-    renderPlayersAdminView();
-    alert("Cuenta eliminada.");
+    try {
+      await firestoreDb.collection("players").doc(playersAdminState.jugadorId).delete();
+      alert(
+        "Se borraron los datos del jugador en Firestore. Su cuenta de acceso (email + contraseña) sigue existiendo " +
+        "en Authentication — para borrarla también, hazlo desde la consola de Firebase → Authentication (el SDK del " +
+        "navegador no puede borrar la cuenta de otro usuario, solo la del que está logueado)."
+      );
+      playersAdminState.jugadorId = null;
+      playersAdminState.borrador = null;
+      renderPlayersAdminView();
+    } catch (err) {
+      console.error("No se pudo borrar el jugador:", err);
+      alert("No se pudo borrar: " + (err.message || "error desconocido"));
+    }
   });
 }
