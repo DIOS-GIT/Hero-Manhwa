@@ -23,11 +23,9 @@
  * -----------------------------------------------------------------------
  */
 
-let _nextProtagonistId = 1;
-
 function createEmptyProtagonist() {
   return {
-    id: "protagonista_" + _nextProtagonistId++,
+    id: generateUniqueId("protagonista"),
     nombre: "Nuevo protagonista",
     arquetipo: "Táctico",
     descripcion: "",
