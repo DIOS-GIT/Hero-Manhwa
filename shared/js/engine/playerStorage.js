@@ -37,6 +37,11 @@ let PlayerData = {
   personalizacionProtagonistas: {}, // { [protagonistId]: { apodo, varianteIndex } } — ver engine/protagonistCustomization.js
   fragmentosCartas: {}, // { [cardId]: cantidad } — de duplicados, se gastan al evolucionar (ver engine/evolutionEngine.js)
   yaTuvoPrimeraTirada: false, // controla el gacha "primera tirada siempre legendaria" (ver engine/gacha.js)
+  nombre: null, // apodo único elegido en el primer login — ver engine/firebaseClient.js:claimNickname
+  nombreLower: null,
+  avatarColor: null, // color de fondo del avatar circular en el perfil (hex), null = usa el color por defecto
+  creadoEn: null, // ISO string, se fija una sola vez al crear la cuenta
+  objetosActivos: [], // ids de objetos comprados en la tienda para la próxima run — ver engine/runState.js
 };
 
 function aplicarPlayerData(parsed) {
@@ -52,6 +57,11 @@ function aplicarPlayerData(parsed) {
     personalizacionProtagonistas: parsed.personalizacionProtagonistas || {},
     fragmentosCartas: parsed.fragmentosCartas || {},
     yaTuvoPrimeraTirada: parsed.yaTuvoPrimeraTirada || false,
+    nombre: parsed.nombre || null,
+    nombreLower: parsed.nombreLower || null,
+    avatarColor: parsed.avatarColor || null,
+    creadoEn: parsed.creadoEn || null,
+    objetosActivos: parsed.objetosActivos || [],
   };
 }
 
