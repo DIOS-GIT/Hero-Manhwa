@@ -33,6 +33,9 @@ function performGachaRoll() {
     return { ok: false, motivo: "Moneda insuficiente para tirar." };
   }
 
+  PlayerData.gachaTiradasTotales = (PlayerData.gachaTiradasTotales || 0) + 1;
+  savePlayerData();
+
   // La primerísima tirada de cada jugador siempre da una legendaria, para
   // que arranque motivado — configurable en economyConfig.js.
   const esPrimeraTiradaGarantizada = !PlayerData.yaTuvoPrimeraTirada && ECONOMY_CONFIG.gacha.garantizarLegendariaPrimeraTirada;
