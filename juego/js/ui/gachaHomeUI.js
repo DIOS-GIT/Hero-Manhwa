@@ -18,16 +18,6 @@ let _gachaRevealTimer = null;
 
 const GACHA_REVEAL_DELAY_MS = 850;
 
-/**
- * Convierte 0.55 en "55%" en vez de "55.00000000000001%" (error clásico
- * de punto flotante de JS al multiplicar decimales por 100). Redondea a
- * 1 decimal y quita el ".0" si el número ya es entero.
- */
-function formatearProbabilidad(valorDecimal) {
-  const pct = Math.round(valorDecimal * 1000) / 10;
-  return (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)) + "%";
-}
-
 function renderGachaHomeView() {
   const container = document.getElementById("view-tienda");
   const costo = ECONOMY_CONFIG.gacha.costoPorTirada;
@@ -37,11 +27,11 @@ function renderGachaHomeView() {
     ${renderScreenHeader("Tienda", "hub")}
     <div class="gacha">
       <p class="gacha__moneda">🪙 ${PlayerData.moneda}</p>
-      <p>Cada tirada cuesta 🪙 ${costo}. Probabilidades: Común ${formatearProbabilidad(ECONOMY_CONFIG.gacha.probabilidadPorRareza.comun)} ·
-        Rara ${formatearProbabilidad(ECONOMY_CONFIG.gacha.probabilidadPorRareza.rara)} ·
-        Épica ${formatearProbabilidad(ECONOMY_CONFIG.gacha.probabilidadPorRareza.epica)} ·
-        Legendaria ${formatearProbabilidad(ECONOMY_CONFIG.gacha.probabilidadPorRareza.legendaria)} ·
-        Mítica ${formatearProbabilidad(ECONOMY_CONFIG.gacha.probabilidadPorRareza.mitica)}
+      <p>Cada tirada cuesta 🪙 ${costo}. Probabilidades: Común ${ECONOMY_CONFIG.gacha.probabilidadPorRareza.comun * 100}% ·
+        Rara ${ECONOMY_CONFIG.gacha.probabilidadPorRareza.rara * 100}% ·
+        Épica ${ECONOMY_CONFIG.gacha.probabilidadPorRareza.epica * 100}% ·
+        Legendaria ${ECONOMY_CONFIG.gacha.probabilidadPorRareza.legendaria * 100}% ·
+        Mítica ${ECONOMY_CONFIG.gacha.probabilidadPorRareza.mitica * 100}%
       </p>
       <button class="btn btn--titulo" id="btn-tirar-gacha" ${PlayerData.moneda < costo || tirando ? "disabled" : ""}>Tirar (🪙 ${costo})</button>
 
