@@ -247,8 +247,24 @@
 }
 
 .runbanner__icono { font-size: 24px; flex-shrink: 0; }
+.runbanner__texto { flex: 1 1 auto; min-width: 0; }
 .runbanner__texto strong { font-size: 13.5px; display: block; margin-bottom: 2px; }
 .runbanner__texto p { margin: 0; font-size: 12px; color: var(--texto-tenue); }
+
+.runbanner__cancelar {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--peligro);
+  color: var(--peligro);
+  font-size: 11.5px;
+  padding: 6px 11px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.runbanner__cancelar:hover {
+  background: rgba(224, 71, 63, 0.12);
+}
 
 .teampreview {
   background: var(--bg-panel);
@@ -356,50 +372,195 @@
 .collection__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .collectioncard {
-  background: linear-gradient(160deg, var(--bg-panel), var(--bg-abismo));
+  --rareza-color: var(--rareza-comun);
+  background: linear-gradient(165deg, var(--bg-panel-alt), var(--bg-abismo) 65%);
   border: 1px solid var(--borde);
-  border-top: 3px solid var(--rareza-comun);
-  border-radius: var(--radio);
-  padding: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  border-radius: var(--radio-l);
+  padding: 0 0 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
   position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.collectioncard--comun { border-top-color: var(--rareza-comun); }
-.collectioncard--rara { border-top-color: var(--rareza-rara); }
-.collectioncard--epica { border-top-color: var(--rareza-epica); }
-.collectioncard--legendaria { border-top-color: var(--rareza-legendaria); }
-.collectioncard--mitica {
-  border-top: 3px solid;
-  border-image: linear-gradient(90deg, var(--rareza-mitica-1), var(--rareza-mitica-2)) 1;
+.collectioncard:active { transform: scale(0.97); }
+
+.collectioncard--comun { --rareza-color: var(--rareza-comun); }
+.collectioncard--rara { --rareza-color: var(--rareza-rara); }
+.collectioncard--epica { --rareza-color: var(--rareza-epica); }
+.collectioncard--legendaria { --rareza-color: var(--rareza-legendaria); }
+.collectioncard--mitica { --rareza-color: var(--rareza-mitica-1); }
+.collectioncard--mitica::before {
+  border-color: var(--rareza-mitica-1);
+  box-shadow: 0 0 16px -2px var(--rareza-mitica-1) inset, 0 0 10px -1px var(--rareza-mitica-2);
+}
+
+.collectioncard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid var(--rareza-color);
+  opacity: 0.55;
+  pointer-events: none;
+  box-shadow: 0 0 14px -2px var(--rareza-color) inset;
+}
+
+.collectioncard__arte {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.04), transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.collectioncard__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.collectioncard__sinarte {
+  font-family: var(--fuente-titulos);
+  font-size: 40px;
+  color: var(--rareza-color);
+  opacity: 0.5;
+  align-self: center;
+}
+
+.collectioncard__chiprareza {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(10, 8, 14, 0.75);
+  color: var(--rareza-color);
+  border: 1px solid var(--rareza-color);
+  z-index: 2;
+}
+
+.collectioncard__nivel {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  font-size: 8.5px;
+  font-family: var(--fuente-numeros);
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(10, 8, 14, 0.75);
+  color: var(--texto);
+  z-index: 2;
+}
+
+.collectioncard__arte::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(8, 6, 10, 0.9) 100%);
+  z-index: 1;
+}
+
+.collectioncard__cuerpo {
+  padding: 9px 10px 0;
+}
+
+.collectioncard__nombre {
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.25;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collectioncard__meta {
+  font-size: 10.5px;
+  color: var(--texto-tenue);
+  text-transform: capitalize;
+  margin-bottom: 6px;
+}
+
+.collectioncard__xpbar {
+  height: 4px;
+  background: var(--bg-abismo);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+.collectioncard__xpbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rareza-color), var(--acento-suave));
+}
+
+.collectioncard__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 9.5px;
+  color: var(--texto-tenue);
+  margin-bottom: 8px;
+  font-family: var(--fuente-numeros);
+}
+.collectioncard__stats span {
+  background: var(--bg-abismo);
+  border-radius: 5px;
+  padding: 2px 5px;
 }
 
 .collectioncard--bloqueada {
-  opacity: 0.45;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 130px;
+  opacity: 0.55;
+}
+.collectioncard--bloqueada .collectioncard__arte {
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 8px, transparent 8px 16px);
+}
+.collectioncard--bloqueada::before { border-color: var(--borde); opacity: 0.6; box-shadow: none; }
+
+.collectioncard__silueta {
+  align-self: center;
+  font-size: 30px;
+  color: var(--texto-tenue-2);
+  font-family: var(--fuente-titulos);
+  z-index: 1;
 }
 
-.collectioncard__silueta { font-size: 28px; color: var(--texto-tenue-2); font-family: var(--fuente-titulos); }
+.collectioncard__nombreoculto {
+  text-align: center;
+  font-size: 11px;
+  color: var(--texto-tenue-2);
+  letter-spacing: 0.1em;
+  padding: 8px 0 10px;
+}
 
-.collectioncard--caida { border-top-color: var(--peligro); }
 .collectioncard--caida::after {
   content: "CAÍDA";
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 8.5px;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
   letter-spacing: 0.06em;
   color: var(--peligro-suave);
   font-weight: 700;
+  background: rgba(10, 8, 14, 0.8);
+  padding: 2px 8px;
+  border-radius: 20px;
+  z-index: 2;
 }
 
 .collectioncard__img {
@@ -419,8 +580,9 @@
 
 .collectioncard__fmc {
   position: absolute;
-  top: 6px;
+  top: 26px;
   right: 6px;
+  z-index: 2;
   background: linear-gradient(135deg, #e0b93f, #e0473f);
   color: #fff;
   font-size: 9px;
@@ -432,7 +594,7 @@
 }
 
 .collectioncard__evolucion {
-  margin-top: 8px;
+  margin: 8px 10px 0;
   padding-top: 8px;
   border-top: 1px dashed var(--borde);
   font-size: 11px;
@@ -536,9 +698,24 @@
 .carddetail__lista { text-align: left; list-style: none; padding: 0; margin: 4px 0 12px; font-size: 13px; }
 .carddetail__lista li { padding: 4px 0; border-bottom: 1px solid var(--borde); }
 .carddetail__lista li:last-child { border-bottom: none; }
-.collectioncard__stats { font-family: var(--fuente-numeros); font-size: 10px; color: var(--texto-tenue); margin-bottom: 8px; }
-.collectioncard__estado { font-size: 10.5px; color: var(--exito-suave); font-weight: 600; }
-.collectioncard .btn--revivir { width: 100%; min-height: 38px; font-size: 11.5px; }
+
+.carddetail__lista--efectos li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 0;
+}
+.carddetail__lista--efectos strong {
+  font-size: 13px;
+  color: var(--acento-suave);
+}
+.carddetail__lista--efectos span {
+  font-size: 12px;
+  color: var(--texto-tenue);
+  line-height: 1.4;
+}
+.collectioncard__estado { font-size: 10.5px; color: var(--exito-suave); font-weight: 600; padding: 0 10px; }
+.collectioncard .btn--revivir { width: 100%; min-height: 38px; font-size: 11.5px; margin: 0 10px; width: calc(100% - 20px); }
 
 /* =======================================================================
    PROTAGONISTAS
@@ -1398,6 +1575,45 @@
   margin-bottom: 10px;
 }
 
+.profile__campos fieldset {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.profile__campos legend {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--acento-suave);
+  padding: 0 4px;
+}
+
+.profile__campos fieldset .hint {
+  margin: -4px 0 6px;
+}
+
+.profile__colores {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.profile__colorbtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile__colorbtn--activo {
+  border-color: var(--texto);
+}
+
 .profile__cerrar {
   margin-top: 24px;
   text-align: center;
@@ -1406,3 +1622,36 @@
 .profile__cerrar .btn {
   width: 100%;
 }
+
+/* ===== Objetos para iniciar la próxima run (Tienda del hub) ===== */
+.startitems {
+  margin-top: 22px;
+  text-align: left;
+}
+.startitems h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.startitems .hint {
+  margin-bottom: 12px;
+}
+
+.startitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.startitem--activo {
+  border-color: var(--exito);
+  background: linear-gradient(180deg, rgba(79, 174, 106, 0.1), transparent);
+}
+
+.startitem__texto { flex: 1 1 auto; min-width: 0; }
+.startitem__texto strong { display: block; font-size: 13px; margin-bottom: 2px; }
+.startitem__texto p { margin: 0; font-size: 11.5px; color: var(--texto-tenue); }
