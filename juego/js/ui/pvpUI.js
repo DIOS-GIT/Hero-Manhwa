@@ -9,6 +9,8 @@
  */
 
 let pvpRetosCache = { recibidos: [], enviados: [] };
+let pvpModoActivo = "ranked"; // "ranked" | "normal" | "amistosa"
+let pvpBuscandoRanked = false;
 
 async function renderPvpView() {
   const container = document.getElementById("view-pvp");
@@ -36,17 +38,13 @@ async function renderPvpView() {
         </div>
       </div>
 
-      <div class="pvpretar">
-        <h4>Retar a alguien</h4>
-        <input type="text" id="input-apodo-rival" placeholder="Apodo del rival" maxlength="20" />
-        <select id="select-modo-reto">
-          <option value="ranked">Ranked — LP y créditos</option>
-          <option value="normal">Normal — solo créditos</option>
-          <option value="amistosa">Amistosa — sin recompensa</option>
-        </select>
-        <button class="btn btn--titulo" id="btn-mandar-reto">Retar</button>
-        <div id="pvp-reto-error" class="loginbox__error" style="display:none"></div>
+      <div class="leaderboard__tabs">
+        <button type="button" class="leaderboard__tab ${pvpModoActivo === "ranked" ? "leaderboard__tab--activo" : ""}" data-modo="ranked">Ranked</button>
+        <button type="button" class="leaderboard__tab ${pvpModoActivo === "normal" ? "leaderboard__tab--activo" : ""}" data-modo="normal">Normal</button>
+        <button type="button" class="leaderboard__tab ${pvpModoActivo === "amistosa" ? "leaderboard__tab--activo" : ""}" data-modo="amistosa">Amistosa</button>
       </div>
+
+      ${pvpModoActivo === "ranked" ? renderRankedQueueSection() : renderChallengeSection(pvpModoActivo)}
 
       <div class="pvpretos">
         <h4>Retos que te mandaron</h4>
@@ -62,10 +60,91 @@ async function renderPvpView() {
 
   attachScreenHeaderEvents(container);
 
+  const btnVolver = container.querySelector("[data-volver-a]");
+  if (btnVolver) btnVolver.addEventListener("click", () => {
+    if (pvpBuscandoRanked) {
+      pvpBuscandoRanked = false;
+      leavePvpQueue();
+    }
+  });
+
+  container.querySelectorAll("[data-modo]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pvpModoActivo = btn.dataset.modo;
+      renderPvpView();
+    });
+  });
+
+  if (pvpModoActivo === "ranked") {
+    attachRankedQueueEvents(container);
+  } else {
+    attachChallengeEvents(container);
+  }
+
+  cargarYRenderizarRetos();
+}
+
+function renderRankedQueueSection() {
+  return `
+    <div class="pvpretar pvpretar--ranked">
+      <h4>Ranked — emparejamiento aleatorio</h4>
+      <p class="hint">No puedes elegir rival acá a propósito: así nadie se pone de acuerdo con un amigo para regalarse puntos de liga.</p>
+      ${
+        pvpBuscandoRanked
+          ? `<p class="pvpbuscando">🔍 Buscando rival…</p><button class="btn btn--secundario" id="btn-cancelar-cola">Cancelar búsqueda</button>`
+          : `<button class="btn btn--titulo" id="btn-entrar-cola">Buscar partida Ranked</button>`
+      }
+    </div>
+  `;
+}
+
+function renderChallengeSection(modo) {
+  const label = modo === "normal" ? "Normal — solo créditos" : "Amistosa — sin recompensa";
+  return `
+    <div class="pvpretar">
+      <h4>Retar a alguien (${label})</h4>
+      <input type="text" id="input-apodo-rival" placeholder="Apodo del rival" maxlength="20" />
+      <button class="btn btn--titulo" id="btn-mandar-reto" data-modo="${modo}">Retar</button>
+      <div id="pvp-reto-error" class="loginbox__error" style="display:none"></div>
+    </div>
+  `;
+}
+
+function attachRankedQueueEvents(container) {
+  const btnEntrar = container.querySelector("#btn-entrar-cola");
+  if (btnEntrar) btnEntrar.addEventListener("click", async () => {
+    pvpBuscandoRanked = true;
+    renderPvpView();
+
+    const resultado = await joinPvpQueue();
+    if (resultado.emparejadoDeUna) {
+      manejarRankedEmparejado(resultado.matchId);
+      return;
+    }
+    listenForQueueMatch((matchId) => manejarRankedEmparejado(matchId));
+  });
+
+  const btnCancelar = container.querySelector("#btn-cancelar-cola");
+  if (btnCancelar) btnCancelar.addEventListener("click", async () => {
+    await leavePvpQueue();
+    pvpBuscandoRanked = false;
+    renderPvpView();
+  });
+}
+
+async function manejarRankedEmparejado(matchId) {
+  pvpBuscandoRanked = false;
+  await leavePvpQueue();
+  alert("¡Rival encontrado! El combate en vivo todavía no está disponible en esta versión — llega en la próxima entrega.");
+  renderPvpView();
+}
+
+function attachChallengeEvents(container) {
   const btnRetar = container.querySelector("#btn-mandar-reto");
+  if (!btnRetar) return;
   btnRetar.addEventListener("click", async () => {
     const apodo = document.getElementById("input-apodo-rival").value;
-    const modo = document.getElementById("select-modo-reto").value;
+    const modo = btnRetar.dataset.modo;
     const errorBox = document.getElementById("pvp-reto-error");
     errorBox.style.display = "none";
 
@@ -84,8 +163,6 @@ async function renderPvpView() {
     alert(`¡Reto enviado! Expira en ${ECONOMY_CONFIG.pvp.retoExpiraEnMinutos} minutos si no responde.`);
     cargarYRenderizarRetos();
   });
-
-  cargarYRenderizarRetos();
 }
 
 async function cargarYRenderizarRetos() {

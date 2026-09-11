@@ -1902,6 +1902,18 @@
 .pvpretar h4, .pvpretos h4 { font-size: 13px; margin: 0 0 10px; }
 .pvpretar input, .pvpretar select { width: 100%; margin-bottom: 8px; }
 
+.pvpretar--ranked { text-align: center; }
+.pvpbuscando {
+  font-size: 13px;
+  color: var(--acento-suave);
+  margin: 10px 0;
+  animation: pvp-pulso 1.2s ease-in-out infinite;
+}
+@keyframes pvp-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .pvpretocard {
   display: flex;
   align-items: center;
