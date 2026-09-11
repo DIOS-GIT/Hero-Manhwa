@@ -31,8 +31,12 @@ function getChestRarezaPorProfundidad(nodosAlcanzados) {
  * mostrarse.
  */
 function openChest(rareza) {
+  const eventoActivo = getActiveEvent();
+  if (eventoActivo) ensureEventProgress(eventoActivo.id).cofresAbiertosEvento++;
+
   const cartasDeEsaRareza = getCardsArrayByRarity(rareza);
   if (cartasDeEsaRareza.length === 0) {
+    if (eventoActivo) savePlayerData();
     return { ok: false, motivo: `Todavía no hay cartas de rareza "${rareza}" cargadas en el admin.` };
   }
 

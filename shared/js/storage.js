@@ -27,6 +27,7 @@ const STORAGE_KEY = "cardGameOffline_v1";
 let GameData = {
   cartas: [],
   reglas: null,
+  reglasPvp: null,
   protagonistas: [],
   rutas: null,
   niveles: null,
@@ -34,6 +35,7 @@ let GameData = {
   tienda: null,
   pantallas: null,
   historia: null,
+  eventos: [],
 };
 
 // Clon seguro compatible con cualquier navegador. Reemplaza a structuredClone()
@@ -44,6 +46,7 @@ function safeClone(obj) {
 function aplicarGameData(parsed) {
   GameData.cartas = parsed.cartas || [];
   GameData.reglas = parsed.reglas || safeClone(DEFAULT_RULES);
+  GameData.reglasPvp = parsed.reglasPvp || safeClone(DEFAULT_RULES);
   GameData.protagonistas = parsed.protagonistas && parsed.protagonistas.length > 0 ? parsed.protagonistas : safeClone(PROTAGONISTS_DEFAULT);
   GameData.rutas = parsed.rutas || safeClone(RUN_CONFIG_DEFAULT);
   // Por si el guardado es de antes de que existieran las plantillas de mapa:
@@ -54,6 +57,7 @@ function aplicarGameData(parsed) {
   GameData.tienda = parsed.tienda || safeClone(SHOP_CONFIG_DEFAULT);
   GameData.pantallas = parsed.pantallas || safeClone(SCREENS_CONFIG_DEFAULT);
   GameData.historia = parsed.historia || safeClone(STORY_CONFIG_DEFAULT);
+  GameData.eventos = parsed.eventos || [];
   // Por si se agregan pantallas nuevas más adelante y el guardado viejo no las tiene:
   SCREENS_LIST.forEach((s) => {
     if (!GameData.pantallas[s.id]) GameData.pantallas[s.id] = crearPantallaVacia();
@@ -94,6 +98,7 @@ async function initGameData() {
 
   GameData.cartas = getAllBaseCards();
   GameData.reglas = safeClone(DEFAULT_RULES);
+  GameData.reglasPvp = safeClone(DEFAULT_RULES);
   GameData.protagonistas = safeClone(PROTAGONISTS_DEFAULT);
   GameData.rutas = safeClone(RUN_CONFIG_DEFAULT);
   GameData.niveles = safeClone(LEVELING_CONFIG_DEFAULT);
@@ -101,6 +106,7 @@ async function initGameData() {
   GameData.tienda = safeClone(SHOP_CONFIG_DEFAULT);
   GameData.pantallas = safeClone(SCREENS_CONFIG_DEFAULT);
   GameData.historia = safeClone(STORY_CONFIG_DEFAULT);
+  GameData.eventos = [];
   saveGameData();
   return GameData;
 }
@@ -155,9 +161,14 @@ function importGameDataFromFile(file) {
 /**
  * Restaura las reglas globales a los valores de fábrica de
  * js/data/rules-default.js, sin tocar las cartas.
+ * @param {"pve"|"pvp"} mundo cuál de los dos balances resetear (por defecto PvE)
  */
-function resetRulesToDefault() {
-  GameData.reglas = safeClone(DEFAULT_RULES);
+function resetRulesToDefault(mundo) {
+  if (mundo === "pvp") {
+    GameData.reglasPvp = safeClone(DEFAULT_RULES);
+  } else {
+    GameData.reglas = safeClone(DEFAULT_RULES);
+  }
   saveGameData();
 }
 

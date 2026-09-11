@@ -48,6 +48,8 @@ let PlayerData = {
   logrosCompletados: [], // ids de logros ya reclamados — ver data/achievementsPool.js
   victoriasTotales: 0, // combates ganados en runs (para el ranking) — se incrementa en engine/runState.js
   gachaTiradasTotales: 0, // tiradas de gacha hechas en total (para logros) — ver engine/gacha.js
+  eventoProgreso: {}, // { [eventoId]: {...} } — progreso de eventos de temporada, ver engine/eventEngine.js
+  pvp: null, // se crea con getDefaultPvpProfile() la primera vez que hace falta — ver engine/rankEngine.js
 };
 
 function aplicarPlayerData(parsed) {
@@ -74,6 +76,8 @@ function aplicarPlayerData(parsed) {
     logrosCompletados: parsed.logrosCompletados || [],
     victoriasTotales: parsed.victoriasTotales || 0,
     gachaTiradasTotales: parsed.gachaTiradasTotales || 0,
+    eventoProgreso: parsed.eventoProgreso || {},
+    pvp: parsed.pvp || null,
   };
 }
 
@@ -177,8 +181,10 @@ function addCardToCollection(cardId) {
   }
 }
 
+/** Mientras haya un evento de temporada activo, TODA la moneda ganada se duplica (ver eventEngine.js). */
 function addCoins(cantidad) {
-  PlayerData.moneda += cantidad;
+  const evento = typeof getActiveEvent === "function" ? getActiveEvent() : null;
+  PlayerData.moneda += evento ? cantidad * 2 : cantidad;
   savePlayerData();
 }
 

@@ -161,6 +161,8 @@ function enterCombatNode(nodo, onNodeResolved) {
       addCoins(recompensa);
 
       PlayerData.victoriasTotales = (PlayerData.victoriasTotales || 0) + 1;
+      const eventoActivoAlGanar = getActiveEvent();
+      if (eventoActivoAlGanar) ensureEventProgress(eventoActivoAlGanar.id).victoriasEvento++;
       savePlayerData();
       syncLeaderboardEntry();
 

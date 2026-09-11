@@ -19,11 +19,14 @@
 /** Sube/actualiza la fila pública del jugador actual. Se llama cada vez que cambian sus victorias o colección. */
 async function syncLeaderboardEntry() {
   if (!firebaseEnabled || !currentUser || !firestoreDb) return;
+  const pvp = PlayerData.pvp; // puede ser null si nunca jugó PvP todavía
   try {
     await firestoreDb.collection("leaderboard").doc(currentUser.uid).set({
       nombre: PlayerData.nombre || currentUser.email,
       victorias: PlayerData.victoriasTotales || 0,
       coleccion: PlayerData.coleccion.length,
+      rangoPvp: pvp ? getRankLabel(pvp) : null,
+      rangoPvpScore: pvp ? getRankScore(pvp) : -1,
       actualizadoEn: new Date().toISOString(),
     });
   } catch (err) {

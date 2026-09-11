@@ -89,4 +89,18 @@ const ECONOMY_CONFIG = {
     diasPorHito: 7,
     rarezaPorSemana: ["comun", "rara", "epica", "legendaria"],
   },
+
+  pvp: {
+    // Divisiones de menor a mayor, cada una con 4 sub-rangos (IV, III, II, I),
+    // estilo LoL. Al llegar a 100 LP en el sub-rango I de una división, sube
+    // a la división siguiente (IV, 0 LP). Al bajar de 0 LP en el IV de una
+    // división, baja a la anterior (I, 99 LP) — con piso en Bronce IV, 0 LP.
+    divisiones: ["bronce", "plata", "oro", "platino", "diamante"],
+    lpPorVictoriaRanked: 20,
+    lpPorDerrotaRanked: 15,
+    creditosPorVictoriaRanked: 80,
+    creditosPorVictoriaNormal: 40,
+    // Amistosa: no cambia LP ni da créditos, solo cuenta en el historial.
+    retoExpiraEnMinutos: 5,
+  },
 };

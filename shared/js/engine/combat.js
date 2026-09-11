@@ -66,7 +66,7 @@ function createCombat(equipoJugadorTemplates, equipoEnemigoTemplates, opciones =
 
   const combatState = {
     cards,
-    reglas: structuredClone(GameData.reglas),
+    reglas: structuredClone(opciones.reglas || GameData.reglas),
     bonoElemento, // para mostrarlo en la UI de combate — ver battlefieldUI.js
     energia: { jugador: 0, enemigo: 0 },
     danoHechoPorJugador: 0, // usado por engine/runState.js para el historial
