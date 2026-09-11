@@ -57,6 +57,18 @@ function renderHubView() {
         <span class="hubtile__icono">📊</span>
         <span class="hubtile__label">Ranking</span>
       </button>
+      ${
+        getActiveEvent()
+          ? `<button type="button" class="hubtile hubtile--evento" data-hub-nav="evento">
+              <span class="hubtile__icono">🌟</span>
+              <span class="hubtile__label">Evento</span>
+            </button>`
+          : ""
+      }
+      <button type="button" class="hubtile" data-hub-nav="pvp">
+        <span class="hubtile__icono">⚔️</span>
+        <span class="hubtile__label">PvP</span>
+      </button>
     </div>
 
     <button type="button" class="btn btn--aventura" id="btn-iniciar-aventura">

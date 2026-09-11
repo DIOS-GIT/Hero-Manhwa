@@ -9,7 +9,7 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking"];
+const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking", "evento", "pvp"];
 let ultimoResultadoRacha = null; // ver dailyStreak.js — se muestra una vez en la pantalla de título
 
 /**
@@ -55,6 +55,8 @@ function showView(nombre) {
   if (nombre === "cofres") renderChestsView();
   if (nombre === "logros") renderAchievementsView();
   if (nombre === "ranking") renderLeaderboardView();
+  if (nombre === "evento") renderEventView();
+  if (nombre === "pvp") renderPvpView();
 }
 
 /* =======================================================================

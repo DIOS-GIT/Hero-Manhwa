@@ -8,8 +8,8 @@
  * -----------------------------------------------------------------------
  */
 
-let leaderboardTabActiva = "victorias"; // "victorias" | "coleccion"
-let leaderboardCache = { victorias: null, coleccion: null };
+let leaderboardTabActiva = "victorias"; // "victorias" | "coleccion" | "rangoPvpScore"
+let leaderboardCache = { victorias: null, coleccion: null, rangoPvpScore: null };
 
 async function renderLeaderboardView() {
   const container = document.getElementById("view-ranking");
@@ -20,6 +20,7 @@ async function renderLeaderboardView() {
       <div class="leaderboard__tabs">
         <button type="button" class="leaderboard__tab ${leaderboardTabActiva === "victorias" ? "leaderboard__tab--activo" : ""}" data-tab="victorias">Victorias</button>
         <button type="button" class="leaderboard__tab ${leaderboardTabActiva === "coleccion" ? "leaderboard__tab--activo" : ""}" data-tab="coleccion">Colección</button>
+        <button type="button" class="leaderboard__tab ${leaderboardTabActiva === "rangoPvpScore" ? "leaderboard__tab--activo" : ""}" data-tab="rangoPvpScore">Rango PvP</button>
       </div>
       <div id="leaderboard-lista">
         ${!firebaseEnabled ? '<p class="empty-hint">El ranking necesita conexión — estás jugando en modo 100% local.</p>' : '<p class="hint">Cargando…</p>'}
@@ -56,11 +57,12 @@ async function renderLeaderboardView() {
       ${lista
         .map((fila, i) => {
           const esYo = currentUser && fila.uid === currentUser.uid;
+          const valor = campo === "victorias" ? `⚔️ ${fila.victorias || 0}` : campo === "coleccion" ? `🃏 ${fila.coleccion || 0}` : `🏅 ${fila.rangoPvp || "Sin rango"}`;
           return `
           <div class="leaderboardrow ${esYo ? "leaderboardrow--yo" : ""}">
             <span class="leaderboardrow__pos">${i + 1}</span>
             <span class="leaderboardrow__nombre">${fila.nombre || "Jugador"}</span>
-            <span class="leaderboardrow__valor">${campo === "victorias" ? "⚔️" : "🃏"} ${fila[campo] || 0}</span>
+            <span class="leaderboardrow__valor">${valor}</span>
           </div>
         `;
         })
