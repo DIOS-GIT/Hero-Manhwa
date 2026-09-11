@@ -38,8 +38,12 @@ async function findPlayerByNickname(apodo) {
   }
 }
 
-/** Crea un reto pendiente contra otro jugador. */
+/** Crea un reto pendiente contra otro jugador. Ranked NO se puede retar por apodo — ver pvpMatchmaking.js. */
 async function sendPvpChallenge(apodoRival, modo) {
+  if (modo === "ranked") {
+    return { ok: false, motivo: "Ranked se juega por cola de emparejamiento, no por reto directo." };
+  }
+
   const busqueda = await findPlayerByNickname(apodoRival);
   if (!busqueda.ok) return busqueda;
 
