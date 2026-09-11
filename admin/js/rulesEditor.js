@@ -8,11 +8,19 @@
  * -----------------------------------------------------------------------
  */
 
+let rulesEditorMundo = "pve"; // "pve" | "pvp" — cuál balance se está editando ahora mismo
+
 function renderRulesEditorView() {
   const container = document.getElementById("view-reglas");
-  const r = GameData.reglas;
+  const r = rulesEditorMundo === "pvp" ? GameData.reglasPvp : GameData.reglas;
 
   container.innerHTML = `
+    <div class="rulesform__mundotabs">
+      <button type="button" class="leaderboard__tab ${rulesEditorMundo === "pve" ? "leaderboard__tab--activo" : ""}" data-mundo="pve">Reglas PvE</button>
+      <button type="button" class="leaderboard__tab ${rulesEditorMundo === "pvp" ? "leaderboard__tab--activo" : ""}" data-mundo="pvp">Reglas PvP</button>
+    </div>
+    <p class="hint">${rulesEditorMundo === "pvp" ? "Estos números solo afectan a los combates PvP — el PvE (tus runs contra la IA) usa su propio balance, sin tocarse." : "Estos números afectan al PvE (runs contra la IA) — el PvP tiene su propio balance aparte."}</p>
+
     <form id="form-reglas" class="rulesform">
       <fieldset>
         <legend>Formación</legend>
@@ -89,20 +97,27 @@ function renderRulesEditorView() {
     </form>
   `;
 
+  container.querySelectorAll("[data-mundo]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      rulesEditorMundo = btn.dataset.mundo;
+      renderRulesEditorView();
+    });
+  });
+
   document.getElementById("form-reglas").addEventListener("submit", (e) => {
     e.preventDefault();
     saveRulesFromForm(e.target);
   });
 
   document.getElementById("btn-restaurar-reglas").addEventListener("click", () => {
-    if (!confirm("¿Restaurar todas las reglas a los valores de fábrica?")) return;
-    resetRulesToDefault();
+    if (!confirm(`¿Restaurar las reglas de ${rulesEditorMundo === "pvp" ? "PvP" : "PvE"} a los valores de fábrica?`)) return;
+    resetRulesToDefault(rulesEditorMundo);
     renderRulesEditorView();
   });
 }
 
 function saveRulesFromForm(form) {
-  const r = GameData.reglas;
+  const r = rulesEditorMundo === "pvp" ? GameData.reglasPvp : GameData.reglas;
   const getNum = (path) => Number(form.elements[path].value);
   const getChecked = (path) => form.elements[path].checked;
 
