@@ -60,6 +60,17 @@ function renderProtagonistForm(p) {
       </div>
 
       <fieldset>
+        <legend>Desbloqueo</legend>
+        <label class="checkbox-label">
+          <input type="checkbox" name="gratis" ${p.gratis ? "checked" : ""} />
+          Disponible gratis desde el inicio (si lo desmarcas, el jugador lo compra en la Tienda)
+        </label>
+        <label>Costo en la Tienda (moneda) — se ignora si está marcado "gratis"
+          <input type="number" name="costoDesbloqueo" min="0" value="${p.costoDesbloqueo ?? 300}" />
+        </label>
+      </fieldset>
+
+      <fieldset>
         <legend>Activa única (1 vez por combate)</legend>
         <label>Nombre de la activa
           <input type="text" name="activaNombre" value="${p.activaUnica.nombre}" />
@@ -182,6 +193,8 @@ function attachProtagonistEditorEvents() {
     const b = protagonistEditorState.borrador;
     b.nombre = form.elements["nombre"].value;
     b.arquetipo = form.elements["arquetipo"].value;
+    b.gratis = form.elements["gratis"].checked;
+    b.costoDesbloqueo = Number(form.elements["costoDesbloqueo"].value) || 0;
     b.descripcion = form.elements["descripcion"].value;
     // b.imagen NO se toca aquí — la maneja el input de archivo (ver abajo)
     b.activaUnica = {

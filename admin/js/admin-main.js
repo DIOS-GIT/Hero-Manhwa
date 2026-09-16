@@ -9,7 +9,7 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_ADMIN = ["cartas", "protagonistas", "reglas", "rutas", "niveles", "elementos", "tienda", "pantallas", "historia", "eventos", "equipos", "combate", "datos", "jugadores"];
+const VISTAS_ADMIN = ["cartas", "protagonistas", "reglas", "rutas", "niveles", "elementos", "tienda", "pantallas", "historia", "eventos", "correo", "equipos", "combate", "datos", "jugadores"];
 
 function showView(nombre) {
   VISTAS_ADMIN.forEach((v) => {
@@ -32,6 +32,7 @@ function refreshView(nombre) {
   if (nombre === "pantallas") renderScreensEditorView();
   if (nombre === "historia") renderHistoriaEditorView();
   if (nombre === "eventos") renderEventsEditorView();
+  if (nombre === "correo") renderMailboxEditorView();
   if (nombre === "equipos") renderTeamBuilderView();
   if (nombre === "combate") renderCombatScreen();
   if (nombre === "datos") renderDataPanelView();

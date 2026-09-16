@@ -26,7 +26,7 @@ function renderElementsEditorView() {
 
       <fieldset>
         <legend>Elementos y rueda de ventajas</legend>
-        <p class="hint">Para cada elemento, elegí contra cuál es fuerte. El motor deduce solo que, si Fuego es fuerte contra Tierra, entonces Tierra es débil contra Fuego.</p>
+        <p class="hint">Para cada elemento, elegí contra cuál es fuerte — el motor deduce solo que, si Fuego es fuerte contra Tierra, entonces Tierra es débil contra Fuego. Si además querés que un elemento sea débil contra algo que nadie declaró ser fuerte contra él, usá el campo "Débil contra" — es independiente y no hace falta tocar la fila del otro elemento.</p>
         <div id="lista-elementos">${cfg.lista.map((el) => renderElementRow(el, cfg)).join("")}</div>
         <button type="button" class="btn btn--secundario" id="btn-agregar-elemento">+ Agregar elemento</button>
       </fieldset>
@@ -66,6 +66,12 @@ function renderElementsEditorView() {
       Object.keys(cfg.ventajas).forEach((k) => {
         if (cfg.ventajas[k] === id) cfg.ventajas[k] = null;
       });
+      if (cfg.debilidades) {
+        delete cfg.debilidades[id];
+        Object.keys(cfg.debilidades).forEach((k) => {
+          if (cfg.debilidades[k] === id) cfg.debilidades[k] = null;
+        });
+      }
       saveGameData();
       renderElementsEditorView();
     });
@@ -75,6 +81,7 @@ function renderElementsEditorView() {
 function renderElementRow(el, cfg) {
   const otros = cfg.lista.filter((e) => e.id !== el.id);
   const fuerteContra = cfg.ventajas[el.id] || "";
+  const debilContra = (cfg.debilidades && cfg.debilidades[el.id]) || "";
 
   return `
     <div class="elementrow" data-elemento-id="${el.id}">
@@ -87,6 +94,13 @@ function renderElementRow(el, cfg) {
           ${otros.map((o) => `<option value="${o.id}" ${fuerteContra === o.id ? "selected" : ""}>${o.label}</option>`).join("")}
         </select>
       </label>
+      <label class="elementrow__fuerte">
+        Débil contra:
+        <select name="debil.${el.id}">
+          <option value="">Ninguno (o el que se deduzca solo)</option>
+          ${otros.map((o) => `<option value="${o.id}" ${debilContra === o.id ? "selected" : ""}>${o.label}</option>`).join("")}
+        </select>
+      </label>
       <button type="button" class="btn btn--peligro btn--icono" data-borrar-elemento="${el.id}">Borrar</button>
     </div>
   `;
@@ -96,12 +110,15 @@ function saveElementsFromForm(form) {
   const cfg = GameData.elementos;
   cfg.multiplicadores.ventaja = Number(form.elements["multVentaja"].value);
   cfg.multiplicadores.desventaja = Number(form.elements["multDesventaja"].value);
+  if (!cfg.debilidades) cfg.debilidades = {};
 
   cfg.lista.forEach((el) => {
     el.label = form.elements[`label.${el.id}`].value.trim() || el.label;
     el.color = form.elements[`color.${el.id}`].value;
     const fuerte = form.elements[`fuerte.${el.id}`].value;
     cfg.ventajas[el.id] = fuerte || null;
+    const debil = form.elements[`debil.${el.id}`].value;
+    cfg.debilidades[el.id] = debil || null;
   });
 
   saveGameData();
