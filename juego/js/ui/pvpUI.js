@@ -135,7 +135,7 @@ function attachRankedQueueEvents(container) {
 async function manejarRankedEmparejado(matchId) {
   pvpBuscandoRanked = false;
   await leavePvpQueue();
-  alert("¡Rival encontrado! El combate en vivo todavía no está disponible en esta versión — llega en la próxima entrega.");
+  showToast("¡Rival encontrado! El combate en vivo llega en la próxima entrega.", "exito");
   renderPvpView();
 }
 
@@ -160,7 +160,7 @@ function attachChallengeEvents(container) {
       return;
     }
     document.getElementById("input-apodo-rival").value = "";
-    alert(`¡Reto enviado! Expira en ${ECONOMY_CONFIG.pvp.retoExpiraEnMinutos} minutos si no responde.`);
+    showToast(`¡Reto enviado! Expira en ${ECONOMY_CONFIG.pvp.retoExpiraEnMinutos} minutos.`, "exito");
     cargarYRenderizarRetos();
   });
 }
@@ -202,10 +202,10 @@ async function cargarYRenderizarRetos() {
     btn.addEventListener("click", async () => {
       const resultado = await acceptPvpChallenge(btn.dataset.aceptar);
       if (!resultado.ok) {
-        alert(resultado.motivo);
+        showToast(resultado.motivo, "error");
         return;
       }
-      alert("¡Reto aceptado! El combate en vivo todavía no está disponible en esta versión — llega en la próxima entrega.");
+      showToast("¡Reto aceptado! El combate en vivo llega en la próxima entrega.", "info");
       cargarYRenderizarRetos();
     });
   });

@@ -40,6 +40,7 @@ function renderGachaHomeView() {
       </div>
 
       ${renderStartItemsSection()}
+      ${renderProtagonistShopSection()}
     </div>
   `;
 
@@ -55,7 +56,20 @@ function renderGachaHomeView() {
     _gachaRevealTimer = setTimeout(() => {
       gachaFaseRevelacion = "revelado";
       renderGachaHomeView();
+      celebrarSiEsRareza(ultimoResultadoGacha);
     }, GACHA_REVEAL_DELAY_MS);
+  });
+
+  container.querySelectorAll(".protagonistshop__comprar").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = getProtagonistById(btn.dataset.id);
+      if (!p || PlayerData.moneda < p.costoDesbloqueo) return;
+      if (!confirm(`¿Desbloquear a ${p.nombre} por 🪙 ${p.costoDesbloqueo}?`)) return;
+      PlayerData.moneda -= p.costoDesbloqueo;
+      PlayerData.protagonistasDesbloqueados = [...(PlayerData.protagonistasDesbloqueados || []), p.id];
+      savePlayerData();
+      renderGachaHomeView();
+    });
   });
 
   container.querySelectorAll(".startitem__comprar").forEach((btn) => {
@@ -167,4 +181,39 @@ function renderGachaResult(resultado) {
       </div>
     </div>
   `;
+}
+
+/** Protagonistas bloqueados comprables con moneda normal — ver data/protagonists.js:isProtagonistUnlocked. */
+function renderProtagonistShopSection() {
+  const bloqueados = getAllProtagonists().filter((p) => !isProtagonistUnlocked(p.id));
+  if (bloqueados.length === 0) return "";
+
+  return `
+    <div class="startitems">
+      <h3>Protagonistas</h3>
+      <p class="hint">Desbloquéalos una sola vez con moneda — quedan tuyos para siempre.</p>
+      ${bloqueados
+        .map(
+          (p) => `
+        <div class="startitem">
+          <div class="startitem__texto">
+            <strong>${p.nombre}</strong>
+            <p>${p.arquetipo}</p>
+          </div>
+          <button type="button" class="btn protagonistshop__comprar" data-id="${p.id}" ${PlayerData.moneda < p.costoDesbloqueo ? "disabled" : ""}>Comprar (🪙 ${p.costoDesbloqueo})</button>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+/** Confeti + toast cuando sale algo bueno — el momento que el jugador espera. */
+function celebrarSiEsRareza(resultado) {
+  if (!resultado || !resultado.ok || resultado.eraDuplicado) return;
+  const rareza = resultado.carta.rareza;
+  if (rareza !== "legendaria" && rareza !== "mitica") return;
+  burstConfetti(document.querySelector(".gacha__resultado"), rareza === "mitica" ? 50 : 34);
+  showToast(`¡${resultado.carta.nombre} — ${rareza.toUpperCase()}!`, "exito");
 }

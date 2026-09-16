@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../shared/css/base.css" />
   <link rel="stylesheet" href="../shared/css/battle.css" />
   <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="../shared/css/uiFx.css" />
 </head>
 <body>
   <div id="screen-backdrop" aria-hidden="true">
@@ -103,6 +104,8 @@
       <section id="view-ranking" class="view"></section>
       <section id="view-evento" class="view"></section>
       <section id="view-pvp" class="view"></section>
+      <section id="view-amigos" class="view"></section>
+      <section id="view-correo" class="view"></section>
       <section id="view-protagonistas" class="view"></section>
       <section id="view-tienda" class="view"></section>
       <section id="view-historial" class="view"></section>
@@ -152,6 +155,7 @@
   <script src="../shared/js/engine/cloudinaryUpload.js"></script>
   <script src="../shared/js/engine/playerStorage.js"></script>
   <script src="../shared/js/engine/cardLevelEngine.js"></script>
+  <script src="../shared/js/engine/combatPower.js"></script>
   <script src="../shared/js/engine/storyEngine.js"></script>
   <script src="../shared/js/engine/protagonistCustomization.js"></script>
   <script src="../shared/js/engine/evolutionEngine.js"></script>
@@ -176,6 +180,8 @@
   <script src="../shared/js/engine/rankEngine.js"></script>
   <script src="../shared/js/engine/pvpChallengeEngine.js"></script>
   <script src="../shared/js/engine/pvpMatchmaking.js"></script>
+  <script src="../shared/js/engine/friendsEngine.js"></script>
+  <script src="../shared/js/engine/mailboxEngine.js"></script>
   <script src="../shared/js/data/achievementsPool.js"></script>
   <script src="../shared/js/engine/achievementsEngine.js"></script>
   <script src="../shared/js/engine/leaderboard.js"></script>
@@ -186,6 +192,8 @@
   <script src="../shared/js/ui/battle/turnQueueUI.js"></script>
   <script src="../shared/js/ui/battle/relicsBarUI.js"></script>
   <script src="../shared/js/ui/battle/moveHistoryUI.js"></script>
+  <script src="../shared/js/ui/uiFx.js"></script>
+  <script src="../shared/js/ui/battle/combatFx.js"></script>
   <script src="../shared/js/ui/battle/combatController.js"></script>
 
   <!-- runState.js usa startCombatFromTeams (arriba), por eso va después -->
@@ -202,6 +210,8 @@
   <script src="js/ui/leaderboardUI.js"></script>
   <script src="js/ui/eventUI.js"></script>
   <script src="js/ui/pvpUI.js"></script>
+  <script src="js/ui/friendsUI.js"></script>
+  <script src="js/ui/mailboxUI.js"></script>
   <script src="js/ui/mapUI.js"></script>
   <script src="js/ui/historyUI.js"></script>
   <script src="js/ui/hubUI.js"></script>

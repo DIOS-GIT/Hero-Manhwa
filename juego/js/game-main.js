@@ -9,7 +9,7 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking", "evento", "pvp"];
+const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking", "evento", "pvp", "amigos", "correo"];
 let ultimoResultadoRacha = null; // ver dailyStreak.js — se muestra una vez en la pantalla de título
 
 /**
@@ -57,6 +57,10 @@ function showView(nombre) {
   if (nombre === "ranking") renderLeaderboardView();
   if (nombre === "evento") renderEventView();
   if (nombre === "pvp") renderPvpView();
+  if (nombre === "amigos") renderFriendsView();
+  if (nombre === "correo") renderMailboxView();
+
+  playViewTransition(document.getElementById(`view-${nombre}`));
 }
 
 /* =======================================================================
@@ -79,7 +83,7 @@ function renderTitleScreenPanel() {
 
     panel.innerHTML = `
       ${banner}
-      <div class="titlescreen__stat"><span>Apodo</span><strong>${PlayerData.nombre || "(sin apodo)"}</strong></div>
+      <div class="titlescreen__stat"><span>Apodo</span><strong style="color:${PlayerData.colorNombre || "inherit"}">${PlayerData.nombre || "(sin apodo)"}</strong></div>
       <div class="titlescreen__stat"><span>Correo</span><strong>${currentUser.email}</strong></div>
       <div class="titlescreen__stat"><span>Rol</span><strong>${isAdmin() ? "Administrador" : "Jugador"}</strong></div>
       <div class="titlescreen__stat"><span>Moneda</span><strong>🪙 ${PlayerData.moneda}</strong></div>
@@ -91,6 +95,14 @@ function renderTitleScreenPanel() {
       </div>
     `;
     ultimoResultadoRacha = null; // se muestra una sola vez
+
+    const bannerEl = panel.querySelector(".rachabanner");
+    if (bannerEl) {
+      setTimeout(() => {
+        burstConfetti(bannerEl, 24);
+        if (bannerEl.textContent.includes("cofre")) showToast("¡Cofre de racha desbloqueado!", "exito");
+      }, 250);
+    }
 
     document.getElementById("btn-entrar").addEventListener("click", enterGame);
     document.getElementById("btn-cerrar-sesion").addEventListener("click", async () => {
@@ -164,6 +176,7 @@ function renderLoginScreen() {
       // pedir GameData para traer las cartas/reglas reales y actualizadas.
       await initGameData();
       await initPlayerData();
+      await ensurePlayerIdAssigned();
       ultimoResultadoRacha = applyDailyStreak();
       document.getElementById("loginscreen").style.display = "none";
       if (!PlayerData.nombre) {
@@ -210,6 +223,7 @@ function renderRegisterScreen() {
       // podemos leer gamedata/main de verdad en vez de la copia vieja local.
       await initGameData();
       await initPlayerData();
+      await ensurePlayerIdAssigned();
       ultimoResultadoRacha = applyDailyStreak();
       document.getElementById("registerscreen").style.display = "none";
       if (!PlayerData.nombre) {
@@ -270,6 +284,7 @@ function showNicknameScreen() {
 
     PlayerData.nombre = nombre;
     PlayerData.nombreLower = nombre.toLowerCase();
+    await ensurePlayerIdAssigned();
     await savePlayerData();
 
     document.getElementById("nicknamescreen").style.display = "none";
@@ -316,6 +331,7 @@ function enterGame() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  initGlobalButtonFeedback();
   await initGameData();
   await initPlayerData();
   loadActiveRunFromStorage();

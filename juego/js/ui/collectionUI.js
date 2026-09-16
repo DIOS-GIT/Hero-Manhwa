@@ -21,12 +21,14 @@ function renderCollectionView() {
   const claseOptions = `<option value="todas">Todas las clases</option>` +
     CLASSES_LIST.map((c) => `<option value="${c.id}">${c.label}</option>`).join("");
 
-  const cartasFiltradas = GameData.cartas.filter((c) => {
-    if (collectionFilters.rareza !== "todas" && c.rareza !== collectionFilters.rareza) return false;
-    if (collectionFilters.elemento !== "todas" && c.elemento !== collectionFilters.elemento) return false;
-    if (collectionFilters.clase !== "todas" && c.clase !== collectionFilters.clase) return false;
-    return true;
-  });
+  const cartasFiltradas = GameData.cartas
+    .filter((c) => {
+      if (collectionFilters.rareza !== "todas" && c.rareza !== collectionFilters.rareza) return false;
+      if (collectionFilters.elemento !== "todas" && c.elemento !== collectionFilters.elemento) return false;
+      if (collectionFilters.clase !== "todas" && c.clase !== collectionFilters.clase) return false;
+      return true;
+    })
+    .sort((a, b) => (isCardFavorite(b.id) ? 1 : 0) - (isCardFavorite(a.id) ? 1 : 0));
 
   container.innerHTML = `
     ${renderScreenHeader("Colección", "hub")}
@@ -44,6 +46,7 @@ function renderCollectionView() {
   `;
 
   attachScreenHeaderEvents(container);
+  staggerIn(container, ".collectioncard", 28);
 
   container.querySelector("#filtro-rareza").value = collectionFilters.rareza;
   container.querySelector("#filtro-elemento").value = collectionFilters.elemento;
@@ -59,6 +62,14 @@ function renderCollectionView() {
   container.querySelectorAll("[data-abrir-detalle]").forEach((el) => {
     el.addEventListener("click", () => {
       cartaDetalleAbiertaId = el.dataset.abrirDetalle;
+      renderCollectionView();
+    });
+  });
+
+  container.querySelectorAll("[data-favorito]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      toggleFavoriteCard(btn.dataset.favorito);
       renderCollectionView();
     });
   });
@@ -131,6 +142,7 @@ function renderCollectionCard(carta) {
 
   return `
     <div class="collectioncard collectioncard--${carta.rareza} ${caida ? "collectioncard--caida" : ""}" data-abrir-detalle="${carta.id}">
+      <button type="button" class="collectioncard__favbtn ${isCardFavorite(carta.id) ? "collectioncard__favbtn--activo" : ""}" data-favorito="${carta.id}" title="Favorita">★</button>
       <div class="collectioncard__arte">
         <span class="collectioncard__chiprareza">${carta.rareza}</span>
         <span class="collectioncard__nivel">Nv.${nivel}${nivel >= nivelMax ? " máx" : ""}</span>
@@ -144,6 +156,7 @@ function renderCollectionCard(carta) {
           <div class="collectioncard__xpbar-fill" style="width:${pctXp}%"></div>
         </div>
         <div class="collectioncard__stats">
+          <span class="collectioncard__cp" title="Poder de equipo">⚡ ${getCardCombatPower(cartaNivelada)}</span>
           <span>❤️ ${cartaNivelada.stats.hp}</span>
           <span>⚔️ ${cartaNivelada.stats.atk}</span>
           <span>🛡️ ${cartaNivelada.stats.def}</span>
@@ -192,6 +205,7 @@ function renderCardDetailModal(cardId) {
         <h3 class="carddetail__nombre">${carta.nombre} ${carta.esFMC ? '<span class="collectioncard__fmc" style="position:static; display:inline-block; vertical-align:middle;">FMC</span>' : ""}</h3>
         <p class="hint">${carta.rareza} · ${clase ? clase.label : carta.clase}${carta.arquetipo ? ` (${carta.arquetipo})` : ""}${elemento ? ` · ${elemento.label}` : ""}</p>
         <p class="carddetail__nivel">Nivel ${nivel}${nivel >= nivelMax ? " (máximo)" : ` / ${nivelMax}`}</p>
+        <p class="carddetail__cp">⚡ Poder de equipo: <strong>${getCardCombatPower(cartaNivelada)}</strong></p>
 
         <div class="carddetail__stats">
           <div class="carddetail__stat">❤️ HP<strong>${cartaNivelada.stats.hp}</strong></div>

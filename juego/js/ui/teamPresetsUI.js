@@ -13,6 +13,8 @@
 
 let presetEnEdicion = []; // array de cardIds mientras se arma uno nuevo
 let protagonistaEnEdicion = null;
+let presetEnEdicionId = null; // null = creando uno nuevo; id = editando un preset ya guardado
+let nombrePresetEnEdicion = "";
 let selectorCartaAbierto = false; // true = mostrar la grilla para agregar carta
 
 const EQUIPO_NOMBRE_ADJETIVOS = [
@@ -34,7 +36,7 @@ function renderPresetsView() {
   const container = document.getElementById("view-equipos");
 
   const cartasDisponibles = PlayerData.coleccion.filter((id) => !isCardCaida(id) && !presetEnEdicion.includes(id));
-  const protagonistas = getAllProtagonists();
+  const protagonistas = getAllProtagonists().filter((p) => isProtagonistUnlocked(p.id));
 
   container.innerHTML = `
     ${renderScreenHeader("Tus equipos", "aventura")}
@@ -49,7 +51,7 @@ function renderPresetsView() {
       </div>
 
       <div class="teambuilder">
-        <h3>Armar equipo nuevo</h3>
+        <h3>${presetEnEdicionId ? "Editando equipo" : "Armar equipo nuevo"}</h3>
         <p class="teambuilder__ayuda">Toca un espacio vacío para elegir una carta. La primera que agregues va a primera línea.</p>
 
         <div class="teambuilder__formacion">
@@ -93,10 +95,11 @@ function renderPresetsView() {
 
         <div class="presets__acciones">
           <div class="teambuilder__nombre">
-            <input type="text" id="input-nombre-preset" placeholder="Nombre del equipo" />
+            <input type="text" id="input-nombre-preset" placeholder="Nombre del equipo" value="${presetEnEdicionId ? nombrePresetEnEdicion : ""}" />
             <button type="button" class="btn btn--secundario" id="btn-nombre-random" title="Nombre aleatorio">🎲 Aleatorio</button>
           </div>
-          <button class="btn" id="btn-guardar-preset" ${presetEnEdicion.length === 0 ? "disabled" : ""}>Guardar equipo</button>
+          <button class="btn" id="btn-guardar-preset" ${presetEnEdicion.length === 0 ? "disabled" : ""}>${presetEnEdicionId ? "Guardar cambios" : "Guardar equipo"}</button>
+          ${presetEnEdicionId ? '<button type="button" class="btn btn--secundario" id="btn-cancelar-edicion-preset">Cancelar edición</button>' : ""}
         </div>
       </div>
     </div>
@@ -147,7 +150,7 @@ function renderPresetCard(preset) {
   const protagonista = preset.protagonistaId ? getPersonalizedProtagonist(preset.protagonistaId) : null;
   return `
     <div class="presetcard">
-      <strong>${preset.nombre}</strong>
+      <strong>${preset.nombre}</strong> <span class="teampreview__cp">⚡ ${getTeamCombatPower(preset.cartaIds)}</span>
       <div class="presetcard__miniaturas">
         ${cartas
           .map(
@@ -159,7 +162,10 @@ function renderPresetCard(preset) {
           .join("")}
       </div>
       ${protagonista ? `<p class="hint">⭐ ${protagonista.nombre}</p>` : ""}
-      <button class="btn btn--peligro btn--icono" data-borrar-preset="${preset.id}">Borrar</button>
+      <div class="presetcard__acciones">
+        <button class="btn btn--secundario btn--pequeno" data-editar-preset="${preset.id}">Editar</button>
+        <button class="btn btn--peligro btn--icono" data-borrar-preset="${preset.id}">Borrar</button>
+      </div>
     </div>
   `;
 }
@@ -211,15 +217,51 @@ function attachPresetsEvents(container) {
   const btnGuardar = container.querySelector("#btn-guardar-preset");
   if (btnGuardar) btnGuardar.addEventListener("click", () => {
     const nombre = container.querySelector("#input-nombre-preset").value.trim() || generarNombreEquipoAleatorio();
-    savePreset(nombre, presetEnEdicion, protagonistaEnEdicion);
+    if (presetEnEdicionId) {
+      updatePreset(presetEnEdicionId, nombre, presetEnEdicion, protagonistaEnEdicion);
+    } else {
+      savePreset(nombre, presetEnEdicion, protagonistaEnEdicion);
+    }
     presetEnEdicion = [];
     protagonistaEnEdicion = null;
+    presetEnEdicionId = null;
+    nombrePresetEnEdicion = "";
     selectorCartaAbierto = false;
     renderPresetsView();
   });
 
+  const btnCancelarEdicion = container.querySelector("#btn-cancelar-edicion-preset");
+  if (btnCancelarEdicion) btnCancelarEdicion.addEventListener("click", () => {
+    presetEnEdicion = [];
+    protagonistaEnEdicion = null;
+    presetEnEdicionId = null;
+    nombrePresetEnEdicion = "";
+    selectorCartaAbierto = false;
+    renderPresetsView();
+  });
+
+  container.querySelectorAll("[data-editar-preset]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const preset = PlayerData.presets.find((p) => p.id === btn.dataset.editarPreset);
+      if (!preset) return;
+      presetEnEdicionId = preset.id;
+      presetEnEdicion = preset.cartaIds.slice();
+      protagonistaEnEdicion = preset.protagonistaId || null;
+      nombrePresetEnEdicion = preset.nombre;
+      selectorCartaAbierto = false;
+      renderPresetsView();
+      document.getElementById("view-equipos").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
   container.querySelectorAll("[data-borrar-preset]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (presetEnEdicionId === btn.dataset.borrarPreset) {
+        presetEnEdicion = [];
+        protagonistaEnEdicion = null;
+        presetEnEdicionId = null;
+        nombrePresetEnEdicion = "";
+      }
       deletePreset(btn.dataset.borrarPreset);
       renderPresetsView();
     });

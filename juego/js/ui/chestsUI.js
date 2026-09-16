@@ -51,6 +51,7 @@ function renderChestsView() {
   `;
 
   attachScreenHeaderEvents(container);
+  staggerIn(container, ".chestcard", 40);
 
   container.querySelectorAll(".btn--abrir-cofre").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -68,6 +69,9 @@ function renderChestsView() {
         ultimoResultadoCofre.rarezaCofre = rareza;
         chestFaseApertura = "revelado";
         renderChestsView();
+        if (ultimoResultadoCofre.ok && !ultimoResultadoCofre.eraDuplicado) {
+          burstConfetti(document.querySelector(".gacha__resultado"), 34);
+        }
       }, CHEST_OPEN_DELAY_MS);
     });
   });

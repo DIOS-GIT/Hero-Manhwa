@@ -42,6 +42,17 @@ function attachProtagonistCustomizationEvents(container) {
 }
 
 function renderProtagonistCard(p) {
+  if (!isProtagonistUnlocked(p.id)) {
+    return `
+      <div class="protagonistcard protagonistcard--bloqueado">
+        <div class="protagonistcard__silueta">🔒</div>
+        <div class="protagonistcard__nombre">???</div>
+        <div class="protagonistcard__arquetipo">${p.arquetipo}</div>
+        <p class="protagonistcard__descripcion">Se desbloquea en la Tienda por 🪙 ${p.costoDesbloqueo}.</p>
+      </div>
+    `;
+  }
+
   const custom = getProtagonistCustomization(p.id);
   const variantes = p.variantes || [];
 

@@ -754,6 +754,13 @@
   box-shadow: var(--sombra-panel);
 }
 
+.protagonistcard--bloqueado {
+  opacity: 0.6;
+  text-align: center;
+  border-style: dashed;
+}
+.protagonistcard__silueta { font-size: 32px; margin-bottom: 6px; }
+
 .protagonistcard__img {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -813,6 +820,9 @@
 }
 
 .presetcard strong { font-family: var(--fuente-titulos); font-size: 15px; }
+
+.presetcard__acciones { display: flex; gap: 6px; margin-top: 8px; }
+.presetcard__acciones .btn { flex: 1 1 auto; }
 
 .presetcard__miniaturas { display: flex; gap: 5px; margin: 8px 0; flex-wrap: wrap; }
 
@@ -1573,6 +1583,21 @@
   justify-content: center;
   margin: 0 auto 12px;
   font-family: var(--fuente-titulos);
+  overflow: hidden;
+}
+.profile__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile__fotoacciones {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.profile__fotoacciones label { cursor: pointer; }
 }
 
 .profile h3 {
@@ -1927,3 +1952,99 @@
   font-size: 12px;
 }
 .pvpretocard__botones { display: flex; gap: 6px; flex-shrink: 0; }
+
+.profile__idrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.profile__idrow input {
+  flex: 1 1 auto;
+  font-family: var(--fuente-numeros);
+  letter-spacing: 0.08em;
+  color: var(--acento-suave) !important;
+  margin-bottom: 0 !important;
+}
+.profile__idrow .btn { flex-shrink: 0; }
+
+/* ===== Pantalla de Amigos ===== */
+.friendsid {
+  text-align: center;
+  padding: 14px;
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.12), transparent);
+  margin-bottom: 14px;
+}
+.friendsid .hint { margin-bottom: 4px; }
+.friendsid__codigo {
+  font-family: var(--fuente-numeros);
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  color: var(--acento-suave);
+}
+
+.friendcard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radio-s);
+  background: var(--bg-abismo);
+  border: 1px solid var(--borde);
+  margin-bottom: 6px;
+}
+.friendcard__info { display: flex; flex-direction: column; min-width: 0; }
+.friendcard__info strong { font-size: 13px; }
+.friendcard__info .hint { font-size: 11px; margin: 0; }
+
+.collectioncard__favbtn {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(10, 8, 14, 0.6);
+  color: var(--texto-tenue-2);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+.collectioncard__favbtn--activo {
+  color: #ffd76a;
+  background: rgba(10, 8, 14, 0.75);
+  text-shadow: 0 0 6px rgba(255, 215, 106, 0.7);
+}
+
+.collectioncard__cp { color: var(--acento-suave) !important; font-weight: 700; }
+.carddetail__cp { font-size: 12.5px; color: var(--acento-suave); margin: 2px 0 8px; }
+.teampreview__cp {
+  font-family: var(--fuente-numeros);
+  font-size: 11px;
+  color: var(--acento-suave);
+  font-weight: 700;
+}
+
+/* ===== Pantalla de Correo ===== */
+.mailcard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(160deg, var(--bg-panel), var(--bg-panel-alt));
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 12px -4px var(--acento) inset;
+}
+.mailcard__texto { flex: 1 1 auto; min-width: 0; }
+.mailcard__texto strong { font-size: 13.5px; display: block; margin-bottom: 3px; }
+.mailcard__texto p { font-size: 12px; color: var(--texto-tenue); margin: 0 0 6px; }
+.mailcard__recompensa { font-size: 12px; color: var(--acento-suave); font-family: var(--fuente-numeros); }

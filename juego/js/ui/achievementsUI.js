@@ -40,17 +40,19 @@ function renderAchievementsView() {
   `;
 
   attachScreenHeaderEvents(container);
+  staggerIn(container, ".achievement", 30);
 
   container.querySelectorAll(".btn--reclamar-logro").forEach((btn) => {
     btn.addEventListener("click", () => {
       const resultado = claimAchievement(btn.dataset.id);
       if (!resultado.ok) {
-        alert(resultado.motivo);
+        showToast(resultado.motivo, "error");
         return;
       }
       const premio = resultado.logro.recompensa;
-      alert(`¡Logro reclamado! +${premio.moneda} moneda${premio.cofre ? ` + un cofre ${premio.cofre}` : ""}.`);
-      renderAchievementsView();
+      burstConfetti(btn);
+      showToast(`¡${resultado.logro.titulo}! +${premio.moneda} moneda${premio.cofre ? ` + cofre ${premio.cofre}` : ""}`, "exito");
+      setTimeout(() => renderAchievementsView(), 450);
     });
   });
 }
