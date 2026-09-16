@@ -36,6 +36,7 @@ let GameData = {
   pantallas: null,
   historia: null,
   eventos: [],
+  correoGlobal: [], // mensajes del admin con recompensa para TODOS los jugadores — ver engine/mailboxEngine.js
 };
 
 // Clon seguro compatible con cualquier navegador. Reemplaza a structuredClone()
@@ -54,10 +55,12 @@ function aplicarGameData(parsed) {
   if (GameData.rutas.usarPlantillas === undefined) GameData.rutas.usarPlantillas = false;
   GameData.niveles = parsed.niveles || safeClone(LEVELING_CONFIG_DEFAULT);
   GameData.elementos = parsed.elementos || safeClone(ELEMENTS_CONFIG_DEFAULT);
+  if (!GameData.elementos.debilidades) GameData.elementos.debilidades = {}; // migración: configs guardadas antes de este campo
   GameData.tienda = parsed.tienda || safeClone(SHOP_CONFIG_DEFAULT);
   GameData.pantallas = parsed.pantallas || safeClone(SCREENS_CONFIG_DEFAULT);
   GameData.historia = parsed.historia || safeClone(STORY_CONFIG_DEFAULT);
   GameData.eventos = parsed.eventos || [];
+  GameData.correoGlobal = parsed.correoGlobal || [];
   // Por si se agregan pantallas nuevas más adelante y el guardado viejo no las tiene:
   SCREENS_LIST.forEach((s) => {
     if (!GameData.pantallas[s.id]) GameData.pantallas[s.id] = crearPantallaVacia();
@@ -107,6 +110,7 @@ async function initGameData() {
   GameData.pantallas = safeClone(SCREENS_CONFIG_DEFAULT);
   GameData.historia = safeClone(STORY_CONFIG_DEFAULT);
   GameData.eventos = [];
+  GameData.correoGlobal = [];
   saveGameData();
   return GameData;
 }

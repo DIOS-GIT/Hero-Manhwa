@@ -174,9 +174,11 @@ function attachCombatScreenEvents() {
   const container = document.getElementById("view-combate");
 
   const btnAtacar = container.querySelector("#btn-atacar");
-  if (btnAtacar) btnAtacar.addEventListener("click", () => {
-    actionAttack(activeCombat, activeCombat.actorActual, {});
-    afterPlayerAction();
+  if (btnAtacar) btnAtacar.addEventListener("click", async () => {
+    const atacanteId = activeCombat.actorActual.instanceId;
+    await playAttackLunge(atacanteId);
+    const resultado = actionAttack(activeCombat, activeCombat.actorActual, {});
+    afterPlayerAction(resultado);
   });
 
   const btnSaltar = container.querySelector("#btn-saltar-linea");
@@ -187,8 +189,8 @@ function attachCombatScreenEvents() {
 
   const btnDefender = container.querySelector("#btn-defender");
   if (btnDefender) btnDefender.addEventListener("click", () => {
-    actionDefend(activeCombat, activeCombat.actorActual);
-    afterPlayerAction();
+    const resultado = actionDefend(activeCombat, activeCombat.actorActual);
+    afterPlayerAction(resultado);
   });
 
   const btnCambiarFormacion = container.querySelector("#btn-cambiar-formacion");
@@ -217,8 +219,8 @@ function attachCombatScreenEvents() {
       const nombre = btn.dataset.habilidad;
       const habilidad = activeCombat.actorActual.habilidades.find((h) => h.nombre === nombre);
       if (habilidad.tipoObjetivo === "uno_mismo" || habilidad.tipoObjetivo === "area") {
-        actionUseAbility(activeCombat, activeCombat.actorActual, nombre, null);
-        afterPlayerAction();
+        const resultado = actionUseAbility(activeCombat, activeCombat.actorActual, nombre, null);
+        afterPlayerAction(resultado);
       } else {
         seleccionModo = "habilidad";
         habilidadSeleccionada = habilidad;
@@ -237,17 +239,21 @@ function attachCombatScreenEvents() {
   });
 
   const btnContinuarIA = container.querySelector("#btn-continuar-ia");
-  if (btnContinuarIA) btnContinuarIA.addEventListener("click", () => {
-    runEnemyAITurn(activeCombat, activeCombat.actorActual);
+  if (btnContinuarIA) btnContinuarIA.addEventListener("click", async () => {
+    const atacanteId = activeCombat.actorActual.instanceId;
+    await playAttackLunge(atacanteId);
+    const resultado = runEnemyAITurn(activeCombat, activeCombat.actorActual);
     if (!activeCombat.finalizado) advanceTurn(activeCombat);
     accionesAbiertas = false;
     renderCombatScreen();
+    if (resultado && resultado.fx) playCombatFx(resultado.fx);
   });
 
   const btnActivaProtagonista = container.querySelector("#btn-activa-protagonista");
   if (btnActivaProtagonista) btnActivaProtagonista.addEventListener("click", () => {
-    actionUseProtagonistActive(activeCombat);
+    const resultado = actionUseProtagonistActive(activeCombat);
     renderCombatScreen();
+    if (resultado && resultado.fx) playCombatFx(resultado.fx);
   });
 
   const btnAbandonar = container.querySelector("#btn-abandonar-combate");
@@ -261,6 +267,10 @@ function attachCombatScreenEvents() {
   });
 
   const btnCerrar = container.querySelector("#btn-cerrar-combate");
+  if (btnCerrar && activeCombat.resultado === "victoria" && !activeCombat._celebrado) {
+    activeCombat._celebrado = true; // una sola vez, no en cada repintado
+    setTimeout(() => burstConfetti(container.querySelector(".resultado"), 44), 200);
+  }
   if (btnCerrar) btnCerrar.addEventListener("click", () => {
     const resultadoCombate = activeCombat;
     const callback = combatFinishCallback;
@@ -299,19 +309,24 @@ function handleCardTap(instanceId) {
   renderCombatScreen();
 }
 
-function handleTargetSelection(instanceId) {
+async function handleTargetSelection(instanceId) {
   if (seleccionModo === "saltar_linea") {
-    actionAttack(activeCombat, activeCombat.actorActual, {
+    const atacanteId = activeCombat.actorActual.instanceId;
+    seleccionModo = null;
+    await playAttackLunge(atacanteId);
+    const resultado = actionAttack(activeCombat, activeCombat.actorActual, {
       saltarPrimeraLinea: true,
       objetivoElegidoId: instanceId,
     });
-    seleccionModo = null;
-    afterPlayerAction();
+    afterPlayerAction(resultado);
   } else if (seleccionModo === "habilidad") {
-    actionUseAbility(activeCombat, activeCombat.actorActual, habilidadSeleccionada.nombre, instanceId);
+    const atacanteId = activeCombat.actorActual.instanceId;
+    const habilidad = habilidadSeleccionada;
     seleccionModo = null;
     habilidadSeleccionada = null;
-    afterPlayerAction();
+    await playAttackLunge(atacanteId);
+    const resultado = actionUseAbility(activeCombat, activeCombat.actorActual, habilidad.nombre, instanceId);
+    afterPlayerAction(resultado);
   } else if (seleccionModo === "formacion") {
     if (!formacionPrimeraSeleccion) {
       formacionPrimeraSeleccion = instanceId;
@@ -325,10 +340,11 @@ function handleTargetSelection(instanceId) {
   }
 }
 
-function afterPlayerAction() {
+function afterPlayerAction(resultadoAccion) {
   accionesAbiertas = false;
   if (!activeCombat.finalizado) {
     advanceTurn(activeCombat);
   }
   renderCombatScreen();
+  if (resultadoAccion && resultadoAccion.fx) playCombatFx(resultadoAccion.fx);
 }

@@ -19,6 +19,8 @@ const PROTAGONISTS_DEFAULT = [
     arquetipo: "Táctico ofensivo",
     descripcion: "Un exgeneral que aprendió a leer el campo de batalla antes que a leer libros.",
     imagen: "",
+    gratis: true,
+    costoDesbloqueo: 0,
     activaUnica: {
       nombre: "Andanada",
       descripcion: "Inflige daño a todo el equipo enemigo, con un multiplicador basado en el ATQ promedio de tu equipo.",
@@ -31,6 +33,8 @@ const PROTAGONISTS_DEFAULT = [
     arquetipo: "Defensivo",
     descripcion: "Antigua sacerdotisa de un templo caído; protege lo poco que le queda con todo lo que tiene.",
     imagen: "",
+    gratis: true,
+    costoDesbloqueo: 0,
     activaUnica: {
       nombre: "Formación de hierro",
       descripcion: "Todo tu equipo gana +20% DEF durante 3 turnos.",
@@ -45,4 +49,12 @@ function getAllProtagonists() {
 
 function getProtagonistById(id) {
   return GameData.protagonistas.find((p) => p.id === id) || null;
+}
+
+/** Un protagonista está desbloqueado si viene gratis de fábrica o el jugador ya lo compró en la Tienda. */
+function isProtagonistUnlocked(protagonistaId) {
+  const p = getProtagonistById(protagonistaId);
+  if (!p) return false;
+  if (p.gratis) return true;
+  return (PlayerData.protagonistasDesbloqueados || []).includes(protagonistaId);
 }

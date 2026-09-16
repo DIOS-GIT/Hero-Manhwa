@@ -39,7 +39,10 @@ let PlayerData = {
   yaTuvoPrimeraTirada: false, // controla el gacha "primera tirada siempre legendaria" (ver engine/gacha.js)
   nombre: null, // apodo único elegido en el primer login — ver engine/firebaseClient.js:claimNickname
   nombreLower: null,
+  playerId: null, // código corto permanente tipo "A7K2P9" — no cambia aunque cambie el apodo, ver claimPlayerId
   avatarColor: null, // color de fondo del avatar circular en el perfil (hex), null = usa el color por defecto
+  avatarImagen: null, // URL/base64 de la foto de perfil subida — si está, reemplaza el círculo con inicial
+  colorNombre: null, // color del texto del apodo (hex), null = usa el color por defecto del tema
   creadoEn: null, // ISO string, se fija una sola vez al crear la cuenta
   objetosActivos: [], // ids de objetos comprados en la tienda para la próxima run — ver engine/runState.js
   cofres: [], // array de rarezas sin abrir, ej ["comun","comun","rara"] — ver engine/chestEngine.js
@@ -50,6 +53,10 @@ let PlayerData = {
   gachaTiradasTotales: 0, // tiradas de gacha hechas en total (para logros) — ver engine/gacha.js
   eventoProgreso: {}, // { [eventoId]: {...} } — progreso de eventos de temporada, ver engine/eventEngine.js
   pvp: null, // se crea con getDefaultPvpProfile() la primera vez que hace falta — ver engine/rankEngine.js
+  protagonistasDesbloqueados: [], // ids de protagonistas comprados en la Tienda — ver data/protagonists.js:isProtagonistUnlocked
+  regalosEnviados: {}, // { [amigoUid]: fechaISO } — para el límite de 1 regalo cada 24h por amigo, ver engine/friendsEngine.js
+  cartasFavoritas: [], // ids de cartas marcadas con estrella en la colección — solo visual/organizativo
+  correoReclamado: [], // ids de correos globales del admin ya reclamados — ver engine/mailboxEngine.js
 };
 
 function aplicarPlayerData(parsed) {
@@ -67,7 +74,10 @@ function aplicarPlayerData(parsed) {
     yaTuvoPrimeraTirada: parsed.yaTuvoPrimeraTirada || false,
     nombre: parsed.nombre || null,
     nombreLower: parsed.nombreLower || null,
+    playerId: parsed.playerId || null,
     avatarColor: parsed.avatarColor || null,
+    avatarImagen: parsed.avatarImagen || null,
+    colorNombre: parsed.colorNombre || null,
     creadoEn: parsed.creadoEn || null,
     objetosActivos: parsed.objetosActivos || [],
     cofres: parsed.cofres || [],
@@ -78,6 +88,10 @@ function aplicarPlayerData(parsed) {
     gachaTiradasTotales: parsed.gachaTiradasTotales || 0,
     eventoProgreso: parsed.eventoProgreso || {},
     pvp: parsed.pvp || null,
+    protagonistasDesbloqueados: parsed.protagonistasDesbloqueados || [],
+    regalosEnviados: parsed.regalosEnviados || {},
+    cartasFavoritas: parsed.cartasFavoritas || [],
+    correoReclamado: parsed.correoReclamado || [],
   };
 }
 
@@ -173,6 +187,20 @@ function isCardCaida(cardId) {
   return PlayerData.cartasCaidas.includes(cardId);
 }
 
+function isCardFavorite(cardId) {
+  return (PlayerData.cartasFavoritas || []).includes(cardId);
+}
+
+function toggleFavoriteCard(cardId) {
+  if (!PlayerData.cartasFavoritas) PlayerData.cartasFavoritas = [];
+  if (isCardFavorite(cardId)) {
+    PlayerData.cartasFavoritas = PlayerData.cartasFavoritas.filter((id) => id !== cardId);
+  } else {
+    PlayerData.cartasFavoritas.push(cardId);
+  }
+  savePlayerData();
+}
+
 function addCardToCollection(cardId) {
   if (!ownsCard(cardId)) {
     PlayerData.coleccion.push(cardId);
@@ -222,6 +250,17 @@ function reviveCard(cardId) {
 function savePreset(nombre, cartaIds, protagonistaId) {
   const preset = { id: "preset_" + Date.now(), nombre, cartaIds, protagonistaId: protagonistaId || null };
   PlayerData.presets.push(preset);
+  savePlayerData();
+  return preset;
+}
+
+/** Modifica un preset ya guardado en el lugar, en vez de crear uno nuevo. */
+function updatePreset(presetId, nombre, cartaIds, protagonistaId) {
+  const preset = PlayerData.presets.find((p) => p.id === presetId);
+  if (!preset) return null;
+  preset.nombre = nombre;
+  preset.cartaIds = cartaIds;
+  preset.protagonistaId = protagonistaId || null;
   savePlayerData();
   return preset;
 }

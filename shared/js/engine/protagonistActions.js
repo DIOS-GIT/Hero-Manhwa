@@ -25,6 +25,7 @@ function actionUseProtagonistActive(combatState) {
   const rivales = combatState.cards.filter((c) => c.team === "enemigo" && c.alive);
 
   log(combatState, `${protagonista.nombre} activa "${activa.nombre}".`);
+  const fx = [];
 
   if (efecto.tipo === "dano_area") {
     const atkPromedio = propias.reduce((sum, c) => sum + c.stats.atk, 0) / (propias.length || 1);
@@ -32,6 +33,7 @@ function actionUseProtagonistActive(combatState) {
       const dano = Math.max(1, Math.round(atkPromedio * efecto.multiplicador));
       const murio = applyDamage(objetivo, dano);
       log(combatState, `${objetivo.nombre} recibe ${dano} de daño.`);
+      fx.push({ instanceId: objetivo.instanceId, tipo: "dano", valor: dano, muerte: murio });
       if (murio) {
         log(combatState, `${objetivo.nombre} ha sido derrotada.`);
         reorderFormationAfterDeath(combatState, "enemigo");
@@ -43,6 +45,7 @@ function actionUseProtagonistActive(combatState) {
       const curacion = Math.round(atkPromedio * efecto.multiplicador);
       applyHeal(c, curacion);
       log(combatState, `${c.nombre} recupera ${curacion} de HP.`);
+      fx.push({ instanceId: c.instanceId, tipo: "curacion", valor: curacion });
     });
   } else if (efecto.tipo === "buff_equipo") {
     propias.forEach((c) => {
@@ -50,6 +53,7 @@ function actionUseProtagonistActive(combatState) {
       c._buffsProtagonista.push({ stat: efecto.stat, modificador: efecto.modificador, turnosRestantes: efecto.duracionTurnos });
       c.statsBase[efecto.stat] *= 1 + efecto.modificador;
       recalculateStats(c);
+      fx.push({ instanceId: c.instanceId, tipo: "buff" });
     });
     log(combatState, `Tu equipo gana +${Math.round(efecto.modificador * 100)}% ${efecto.stat.toUpperCase()} por ${efecto.duracionTurnos} turnos.`);
   } else if (efecto.tipo === "debuff_area") {
@@ -58,13 +62,14 @@ function actionUseProtagonistActive(combatState) {
       c._buffsProtagonista.push({ stat: efecto.stat, modificador: -Math.abs(efecto.modificador), turnosRestantes: efecto.duracionTurnos });
       c.statsBase[efecto.stat] *= 1 - Math.abs(efecto.modificador);
       recalculateStats(c);
+      fx.push({ instanceId: c.instanceId, tipo: "debuff" });
     });
     log(combatState, `El equipo enemigo pierde ${Math.round(Math.abs(efecto.modificador) * 100)}% ${efecto.stat.toUpperCase()} por ${efecto.duracionTurnos} turnos.`);
   }
 
   combatState.protagonistaUsado = true;
   checkVictoryConditions(combatState);
-  return { ok: true };
+  return { ok: true, fx };
 }
 
 /**

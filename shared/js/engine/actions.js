@@ -60,7 +60,22 @@ function actionAttack(combatState, atacante, opciones = {}) {
   }
 
   checkVictoryConditions(combatState);
-  return { ok: true, objetivo, dano: resultado.valor, murio };
+  return {
+    ok: true,
+    objetivo,
+    dano: resultado.valor,
+    murio,
+    fx: [
+      {
+        instanceId: objetivo.instanceId,
+        tipo: "dano",
+        valor: resultado.valor,
+        muerte: murio,
+        ventaja: resultado.fueVentajaElemental,
+        desventaja: resultado.fueDesventajaElemental,
+      },
+    ],
+  };
 }
 
 /** Acción "Defender": reduce el daño que reciba esta carta hasta su próximo turno. */
@@ -68,7 +83,7 @@ function actionDefend(combatState, actor) {
   actor.defendiendo = true;
   actor._reduccionDefender = combatState.reglas.defender.reduccionDano;
   log(combatState, `${actor.nombre} se pone en guardia (Defender).`);
-  return { ok: true };
+  return { ok: true, fx: [{ instanceId: actor.instanceId, tipo: "defender" }] };
 }
 
 /**
@@ -102,12 +117,14 @@ function actionUseAbility(combatState, actor, nombreHabilidad, objetivoId) {
   }
 
   const efecto = habilidad.efecto || {};
+  const fx = [];
 
   if (efecto.tipo === "dano") {
     const resultado = calculateDamage(actor, objetivo, efecto.multiplicador || 1.0);
     const murio = applyDamage(objetivo, resultado.valor);
     if (actor.team === "jugador") combatState.danoHechoPorJugador += resultado.valor;
     log(combatState, `${actor.nombre} usa ${habilidad.nombre} sobre ${objetivo.nombre} (${resultado.valor} de daño).`);
+    fx.push({ instanceId: objetivo.instanceId, tipo: "dano", valor: resultado.valor, muerte: murio });
     if (murio) {
       log(combatState, `${objetivo.nombre} ha sido derrotada.`);
       reorderFormationAfterDeath(combatState, objetivo.team);
@@ -116,10 +133,12 @@ function actionUseAbility(combatState, actor, nombreHabilidad, objetivoId) {
     const cantidad = Math.round(actor.stats.atk * (efecto.multiplicador || 1.0));
     applyHeal(objetivo, cantidad);
     log(combatState, `${actor.nombre} usa ${habilidad.nombre} y cura ${cantidad} de HP a ${objetivo.nombre}.`);
+    fx.push({ instanceId: objetivo.instanceId, tipo: "curacion", valor: cantidad });
   } else if (efecto.tipo === "taunt") {
     actor.protegiendo = true;
     actor.protegiendoTurnosRestantes = 2;
     log(combatState, `${actor.nombre} usa ${habilidad.nombre} y llama la atención del enemigo.`);
+    fx.push({ instanceId: actor.instanceId, tipo: "taunt" });
   }
 
   if (habilidad.estadoQueAplica) {
@@ -133,7 +152,7 @@ function actionUseAbility(combatState, actor, nombreHabilidad, objetivoId) {
   }
 
   checkVictoryConditions(combatState);
-  return { ok: true };
+  return { ok: true, objetivo, fx };
 }
 
 /**

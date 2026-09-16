@@ -170,6 +170,56 @@ async function claimNickname(nombreOriginal) {
   }
 }
 
+/** Genera un código corto tipo "A7K2P9" con un alfabeto sin caracteres confusos (sin 0/O, 1/I/L). */
+function generatePlayerIdCode() {
+  const alfabeto = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let codigo = "";
+  for (let i = 0; i < 6; i++) {
+    codigo += alfabeto[Math.floor(Math.random() * alfabeto.length)];
+  }
+  return codigo;
+}
+
+/**
+ * Asigna un ID de jugador permanente (ej. "#A7K2P9") — a diferencia del
+ * apodo, este NUNCA cambia aunque el jugador cambie de apodo después,
+ * así que sirve para identificarlo de forma estable (amigos, etc).
+ * Reintenta con un código nuevo si por mala suerte ya existe (muy poco
+ * probable con 32^6 combinaciones, pero se cubre igual).
+ */
+async function claimPlayerId() {
+  if (!firebaseEnabled || !currentUser) return { ok: true, id: null }; // modo local: no hace falta
+
+  for (let intento = 0; intento < 5; intento++) {
+    const codigo = generatePlayerIdCode();
+    const ref = firestoreDb.collection("playerIds").doc(codigo);
+    try {
+      await firestoreDb.runTransaction(async (tx) => {
+        const doc = await tx.get(ref);
+        if (doc.exists) throw new Error("ID_OCUPADO");
+        tx.set(ref, { uid: currentUser.uid, creadoEn: new Date().toISOString() });
+      });
+      return { ok: true, id: codigo };
+    } catch (err) {
+      if (err.message !== "ID_OCUPADO") {
+        console.error("No se pudo asignar el ID de jugador:", err);
+        return { ok: false };
+      }
+      // era "ID_OCUPADO" — vuelve a intentar con otro código
+    }
+  }
+  return { ok: false };
+}
+
+/** Si el jugador todavía no tiene ID (cuenta creada antes de que existiera este sistema), le asigna uno ahora. */
+async function ensurePlayerIdAssigned() {
+  if (PlayerData.playerId) return;
+  const resultado = await claimPlayerId();
+  if (resultado.ok && resultado.id) {
+    PlayerData.playerId = resultado.id;
+  }
+}
+
 /** Cambia la contraseña del usuario actualmente logueado (jugador o admin). */
 async function changeOwnPassword(nuevaPassword) {
   if (!firebaseEnabled || !firebase.auth().currentUser) {

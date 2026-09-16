@@ -37,6 +37,15 @@ const ELEMENTS_CONFIG_DEFAULT = {
     oscuridad: "fuego",
   },
 
+  // Debilidades EXPLÍCITAS, aparte de las que ya se deducen solas de
+  // "ventajas" de arriba. Existen para poder declarar "yo soy débil
+  // contra X" directamente, sin depender de que X declare que es
+  // fuerte contra mí — útil en cuanto la rueda deja de ser un círculo
+  // perfecto (números de elementos impares, relaciones que no son de
+  // ida y vuelta, etc). Mismo formato que "ventajas":
+  // "elemento_atacante": "elemento_defensor_contra_el_que_mi_soy_debil"
+  debilidades: {},
+
   // Multiplicadores de daño según ventaja/desventaja elemental.
   multiplicadores: {
     ventaja: 1.5, // atacante tiene ventaja sobre el defensor
@@ -46,13 +55,17 @@ const ELEMENTS_CONFIG_DEFAULT = {
 
 /**
  * Devuelve el multiplicador de daño elemental entre un atacante y un
- * defensor, según `reglasElementos.ventajas` (normalmente GameData.elementos).
+ * defensor, según `reglasElementos.ventajas`/`.debilidades` (normalmente
+ * GameData.elementos). Si un elemento queda declarado como ventaja Y
+ * desventaja a la vez para el mismo par (contradicción del admin), la
+ * ventaja gana — así nunca hay un multiplicador de 1.5 x 0.66 mezclado.
  */
 function getElementMultiplier(attackerElementId, defenderElementId, reglasElementos) {
   if (!attackerElementId || !defenderElementId || !reglasElementos) return 1.0;
-  const { ventajas, multiplicadores } = reglasElementos;
+  const { ventajas, debilidades, multiplicadores } = reglasElementos;
   if (ventajas[attackerElementId] === defenderElementId) return multiplicadores.ventaja;
   if (ventajas[defenderElementId] === attackerElementId) return multiplicadores.desventaja;
+  if (debilidades && debilidades[attackerElementId] === defenderElementId) return multiplicadores.desventaja;
   return 1.0;
 }
 

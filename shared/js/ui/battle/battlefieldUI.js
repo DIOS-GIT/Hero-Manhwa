@@ -115,6 +115,16 @@ function renderEnergyBar(combatState, team) {
   `;
 }
 
+function renderProtagonistLeaderBadge(protagonista) {
+  if (!protagonista) return "";
+  return `
+    <div class="liderbadge" title="${protagonista.nombre} — líder de tu equipo">
+      ${protagonista.imagen ? `<img class="liderbadge__img" src="${protagonista.imagen}" alt="${protagonista.nombre}" />` : `<span class="liderbadge__inicial">${protagonista.nombre[0]}</span>`}
+      <span class="liderbadge__etiqueta">Líder</span>
+    </div>
+  `;
+}
+
 function renderBattlefield(combatState, seleccionables = []) {
   return `
     <div class="battlefield">
@@ -124,7 +134,10 @@ function renderBattlefield(combatState, seleccionables = []) {
       </div>
       <div class="battlefield__side battlefield__side--jugador">
         ${renderTeamFormation(combatState, "jugador", seleccionables)}
-        ${renderEnergyBar(combatState, "jugador")}
+        <div class="battlefield__pie">
+          ${renderProtagonistLeaderBadge(combatState.protagonista)}
+          ${renderEnergyBar(combatState, "jugador")}
+        </div>
       </div>
     </div>
   `;

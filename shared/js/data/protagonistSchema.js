@@ -30,6 +30,8 @@ function createEmptyProtagonist() {
     arquetipo: "Táctico",
     descripcion: "",
     imagen: "",
+    gratis: false,
+    costoDesbloqueo: 300,
     activaUnica: {
       nombre: "Activa única",
       descripcion: "",
