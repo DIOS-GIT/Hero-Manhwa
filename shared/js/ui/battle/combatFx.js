@@ -33,7 +33,7 @@ function playAttackLunge(instanceId) {
     setTimeout(() => {
       el.classList.remove("formcard--embistiendo");
       resolve();
-    }, 260);
+    }, escalarDuracion(260));
   });
 }
 
@@ -65,7 +65,7 @@ function spawnFloatingNumber(instanceId, texto, tipo) {
   numero.style.setProperty("--fx-offset", `${Math.round((Math.random() - 0.5) * 30)}px`);
 
   getOrCreateFxLayer().appendChild(numero);
-  setTimeout(() => numero.remove(), 950);
+  setTimeout(() => numero.remove(), escalarDuracion(950));
 }
 
 /** Destello + sacudida corta sobre la carta que acaba de recibir el efecto. */
@@ -75,7 +75,7 @@ function playImpactFlash(instanceId, tipo) {
 
   const clase = tipo === "curacion" ? "formcard--brillo-cura" : "formcard--golpeada";
   el.classList.add(clase);
-  setTimeout(() => el.classList.remove(clase), 420);
+  setTimeout(() => el.classList.remove(clase), escalarDuracion(420));
 }
 
 /** Colapso al morir — se dispara una sola vez, cuando el fx trae muerte:true. */
@@ -83,7 +83,7 @@ function playDeathCollapse(instanceId) {
   const el = getCombatCardEl(instanceId);
   if (!el) return;
   el.classList.add("formcard--cayendo");
-  setTimeout(() => el.classList.remove("formcard--cayendo"), 500);
+  setTimeout(() => el.classList.remove("formcard--cayendo"), escalarDuracion(500));
 }
 
 /**
@@ -111,7 +111,7 @@ function animateHpBar(instanceId, deltaConSigno) {
   const pctAhora = (Math.max(0, hpActual) / hpMax) * 100;
   if (pctAntes === pctAhora) return;
 
-  fill.animate([{ width: `${pctAntes}%` }, { width: `${pctAhora}%` }], { duration: 450, easing: "ease-out", fill: "forwards" });
+  fill.animate([{ width: `${pctAntes}%` }, { width: `${pctAhora}%` }], { duration: escalarDuracion(450), easing: "ease-out", fill: "forwards" });
 }
 
 /** Sacude toda la pantalla de combate — solo para golpes grandes (ventaja elemental, activa de protagonista). */
@@ -119,7 +119,7 @@ function shakeCombatScreen() {
   const el = document.querySelector(".combatscreen");
   if (!el) return;
   el.classList.add("combatscreen--sacudida");
-  setTimeout(() => el.classList.remove("combatscreen--sacudida"), 350);
+  setTimeout(() => el.classList.remove("combatscreen--sacudida"), escalarDuracion(350));
 }
 
 /**
@@ -138,12 +138,15 @@ function playCombatFx(fx) {
       spawnFloatingNumber(efecto.instanceId, texto, efecto.ventaja ? "critico" : "dano");
       playImpactFlash(efecto.instanceId, "dano");
       animateHpBar(efecto.instanceId, efecto.valor);
+      if (efecto.ventaja && typeof sfxCritico === "function") sfxCritico();
+      else if (typeof sfxHit === "function") sfxHit();
       if (efecto.muerte) playDeathCollapse(efecto.instanceId);
       if (efecto.ventaja) huboGolpeGrande = true;
     } else if (efecto.tipo === "curacion") {
       spawnFloatingNumber(efecto.instanceId, `+${efecto.valor}`, "curacion");
       playImpactFlash(efecto.instanceId, "curacion");
       animateHpBar(efecto.instanceId, -efecto.valor);
+      if (typeof sfxCuracion === "function") sfxCuracion();
     } else if (efecto.tipo === "buff") {
       spawnFloatingNumber(efecto.instanceId, "▲", "buff");
     } else if (efecto.tipo === "debuff") {

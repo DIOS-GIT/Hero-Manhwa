@@ -290,14 +290,34 @@
 
 .combatscreen__topbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.combatscreen__controles {
+  display: flex;
+  gap: 6px;
 }
 
 .btn--abandonar {
   font-size: 11.5px;
   padding: 6px 12px;
   min-height: auto;
+}
+
+.btn--pequeno {
+  font-size: 11px;
+  padding: 5px 10px;
+  min-height: auto;
+}
+
+.btn--auto-activo {
+  background: linear-gradient(180deg, var(--exito-suave), var(--exito));
+  color: var(--bg-abismo);
+  font-weight: 700;
+  animation: uibadge-latir 1.8s ease-in-out infinite;
 }
 
 .turnqueue {

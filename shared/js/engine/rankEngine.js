@@ -142,6 +142,7 @@ function registerPvpResult(modo, gano, oponenteNombre) {
   if (resumenRango && typeof showToast === "function") {
     if (resumenRango.ascendio) {
       if (typeof burstConfetti === "function") burstConfetti(null, 46);
+      if (typeof sfxAscensoRango === "function") sfxAscensoRango();
       showToast(`¡ASCENSO! ${resumenRango.rangoAntes} → ${resumenRango.rangoDespues}`, "exito");
     } else if (resumenRango.descendio) {
       showToast(`Bajaste a ${resumenRango.rangoDespues}`, "error");

@@ -43,6 +43,7 @@ let PlayerData = {
   avatarColor: null, // color de fondo del avatar circular en el perfil (hex), null = usa el color por defecto
   avatarImagen: null, // URL/base64 de la foto de perfil subida — si está, reemplaza el círculo con inicial
   colorNombre: null, // color del texto del apodo (hex), null = usa el color por defecto del tema
+  sonidoActivado: true, // ver shared/js/ui/soundFx.js:isSoundEnabled
   creadoEn: null, // ISO string, se fija una sola vez al crear la cuenta
   objetosActivos: [], // ids de objetos comprados en la tienda para la próxima run — ver engine/runState.js
   cofres: [], // array de rarezas sin abrir, ej ["comun","comun","rara"] — ver engine/chestEngine.js
@@ -78,6 +79,7 @@ function aplicarPlayerData(parsed) {
     avatarColor: parsed.avatarColor || null,
     avatarImagen: parsed.avatarImagen || null,
     colorNombre: parsed.colorNombre || null,
+    sonidoActivado: parsed.sonidoActivado ?? true,
     creadoEn: parsed.creadoEn || null,
     objetosActivos: parsed.objetosActivos || [],
     cofres: parsed.cofres || [],

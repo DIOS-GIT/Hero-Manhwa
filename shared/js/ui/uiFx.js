@@ -29,6 +29,7 @@ function showToast(mensaje, tipo = "info") {
   toast.className = `uitoast uitoast--${tipo}`;
   toast.innerHTML = `<span class="uitoast__icono">${tipo === "exito" ? "✔" : tipo === "error" ? "✕" : "ℹ"}</span><span>${mensaje}</span>`;
   getUiFxLayer().appendChild(toast);
+  if (tipo === "error" && typeof sfxError === "function") sfxError();
 
   setTimeout(() => {
     toast.classList.add("uitoast--saliendo");
@@ -138,5 +139,6 @@ function initGlobalButtonFeedback() {
     void btn.offsetWidth;
     btn.classList.add("uipop");
     setTimeout(() => btn.classList.remove("uipop"), 220);
+    if (typeof sfxClick === "function") sfxClick();
   });
 }

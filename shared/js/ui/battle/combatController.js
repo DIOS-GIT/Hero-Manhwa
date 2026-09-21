@@ -19,10 +19,21 @@ let accionesAbiertas = false;
 
 let combatFinishCallback = null;
 
+let autoCombateActivo = false;
+let velocidadCombate = 1; // 1, 2, o 3
+let _autoTurnTimer = null;
+
+/** Escala una duración en ms según la velocidad elegida — usarlo en todo setTimeout de este archivo/combatFx. */
+function escalarDuracion(ms) {
+  return Math.round(ms / velocidadCombate);
+}
+
 function startCombatFromTeams(equipoJugadorCards, equipoEnemigoCards, opciones = {}) {
   activeCombat = createCombat(equipoJugadorCards, equipoEnemigoCards, opciones);
   combatFinishCallback = opciones.onFinish || null;
   resetInteractionState();
+  clearTimeout(_autoTurnTimer);
+  autoCombateActivo = false;
   showView("combate");
   renderCombatScreen();
 }
@@ -64,6 +75,8 @@ function renderCombatScreen() {
         <button class="btn" id="btn-cerrar-combate">${combatFinishCallback ? "Continuar" : "Volver a Equipos y combate"}</button>
       </div>
     `;
+  } else if (autoCombateActivo) {
+    panelExtraHtml = `<div class="actionpanel"><p class="hint hint--tap">🤖 Combatiendo solo — ${actor ? actor.nombre : "…"} en turno.</p></div>`;
   } else if (!actor) {
     panelExtraHtml = `<div class="actionpanel"><p>Calculando siguiente turno…</p></div>`;
   } else if (!esTurnoJugador) {
@@ -92,6 +105,10 @@ function renderCombatScreen() {
         }
         ${!cs.finalizado ? `
           <div class="combatscreen__topbar">
+            <div class="combatscreen__controles">
+              <button type="button" class="btn btn--secundario btn--pequeno" id="btn-velocidad-combate">${velocidadCombate}x</button>
+              <button type="button" class="btn ${autoCombateActivo ? "btn--auto-activo" : "btn--secundario"} btn--pequeno" id="btn-auto-combate">${autoCombateActivo ? "⏸ Auto" : "▶ Auto"}</button>
+            </div>
             <button type="button" class="btn btn--peligro btn--abandonar" id="btn-abandonar-combate">Abandonar combate</button>
           </div>
         ` : ""}
@@ -106,6 +123,31 @@ function renderCombatScreen() {
   attachRelicsBarEvents(container, renderCombatScreen);
   attachCombatScreenEvents();
   scrollMoveHistoryToBottom();
+  maybeScheduleAutoTurn();
+}
+
+/**
+ * Si el auto-combate está activo, hace que el combate se juegue solo:
+ * la carta con el turno (sea del jugador o enemiga) actúa por su cuenta
+ * usando la misma IA que ya existe para los enemigos — funciona igual
+ * de bien para cualquier bando, no está atada a "enemigo".
+ */
+function maybeScheduleAutoTurn() {
+  clearTimeout(_autoTurnTimer);
+  if (!autoCombateActivo || !activeCombat || activeCombat.finalizado || !activeCombat.actorActual) return;
+
+  _autoTurnTimer = setTimeout(async () => {
+    if (!autoCombateActivo || !activeCombat || activeCombat.finalizado) return;
+    const atacanteId = activeCombat.actorActual.instanceId;
+    await playAttackLunge(atacanteId);
+    if (!autoCombateActivo || !activeCombat || activeCombat.finalizado) return; // se pudo desactivar mientras esperaba
+
+    const resultado = runEnemyAITurn(activeCombat, activeCombat.actorActual);
+    if (!activeCombat.finalizado) advanceTurn(activeCombat);
+    accionesAbiertas = false;
+    renderCombatScreen();
+    if (resultado && resultado.fx) playCombatFx(resultado.fx);
+  }, escalarDuracion(550));
 }
 
 function renderSelectionHint() {
@@ -259,6 +301,8 @@ function attachCombatScreenEvents() {
   const btnAbandonar = container.querySelector("#btn-abandonar-combate");
   if (btnAbandonar) btnAbandonar.addEventListener("click", () => {
     if (!confirm("¿Seguro que quieres abandonar este combate? Se cuenta como derrota y no recibirás ninguna recompensa.")) return;
+    clearTimeout(_autoTurnTimer);
+    autoCombateActivo = false;
     activeCombat.finalizado = true;
     activeCombat.resultado = "derrota";
     activeCombat.abandonado = true;
@@ -266,10 +310,28 @@ function attachCombatScreenEvents() {
     renderCombatScreen();
   });
 
+  const btnAuto = container.querySelector("#btn-auto-combate");
+  if (btnAuto) btnAuto.addEventListener("click", () => {
+    autoCombateActivo = !autoCombateActivo;
+    resetInteractionState();
+    renderCombatScreen();
+  });
+
+  const btnVelocidad = container.querySelector("#btn-velocidad-combate");
+  if (btnVelocidad) btnVelocidad.addEventListener("click", () => {
+    velocidadCombate = velocidadCombate >= 3 ? 1 : velocidadCombate + 1;
+    renderCombatScreen();
+  });
+
   const btnCerrar = container.querySelector("#btn-cerrar-combate");
   if (btnCerrar && activeCombat.resultado === "victoria" && !activeCombat._celebrado) {
     activeCombat._celebrado = true; // una sola vez, no en cada repintado
     setTimeout(() => burstConfetti(container.querySelector(".resultado"), 44), 200);
+    if (typeof sfxVictoria === "function") sfxVictoria();
+  }
+  if (btnCerrar && activeCombat.resultado === "derrota" && !activeCombat._celebrado) {
+    activeCombat._celebrado = true;
+    if (typeof sfxDerrota === "function") sfxDerrota();
   }
   if (btnCerrar) btnCerrar.addEventListener("click", () => {
     const resultadoCombate = activeCombat;
@@ -293,6 +355,7 @@ function attachCombatScreenEvents() {
  *      en la formación, no hace falta "agrandarla").
  */
 function handleCardTap(instanceId) {
+  if (autoCombateActivo) return; // el combate se juega solo, no se puede intervenir a mano
   const cs = activeCombat;
   const carta = cs.cards.find((c) => c.instanceId === instanceId);
   if (!carta) return;
