@@ -45,6 +45,7 @@ function renderMailboxView() {
         return;
       }
       burstConfetti(btn);
+      if (typeof sfxMoneda === "function") sfxMoneda();
       showToast(`¡Reclamaste "${correo.titulo}"!`, "exito");
       setTimeout(() => renderMailboxView(), 450);
     });

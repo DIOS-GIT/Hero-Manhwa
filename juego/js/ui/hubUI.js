@@ -240,6 +240,14 @@ function renderProfileView() {
           <div id="perfil-password-error" class="loginbox__error" style="display:none"></div>
           <button class="btn btn--secundario" id="btn-cambiar-password">Cambiar contraseña</button>
         </fieldset>
+
+        <fieldset>
+          <legend>Preferencias</legend>
+          <label class="checkbox-label">
+            <input type="checkbox" id="input-sonido-activado" ${PlayerData.sonidoActivado ? "checked" : ""} />
+            Efectos de sonido
+          </label>
+        </fieldset>
       </div>
 
       <div class="profile__cerrar">
@@ -348,6 +356,12 @@ function renderProfileView() {
     }
     document.getElementById("input-nueva-password").value = "";
     alert("Contraseña actualizada.");
+  });
+
+  document.getElementById("input-sonido-activado").addEventListener("change", async (e) => {
+    PlayerData.sonidoActivado = e.target.checked;
+    await savePlayerData();
+    if (PlayerData.sonidoActivado) sfxClick();
   });
 
   document.getElementById("btn-cerrar-sesion-perfil").addEventListener("click", async () => {

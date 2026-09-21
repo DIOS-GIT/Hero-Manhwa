@@ -51,6 +51,7 @@ function renderAchievementsView() {
       }
       const premio = resultado.logro.recompensa;
       burstConfetti(btn);
+      if (typeof sfxMoneda === "function") sfxMoneda();
       showToast(`¡${resultado.logro.titulo}! +${premio.moneda} moneda${premio.cofre ? ` + cofre ${premio.cofre}` : ""}`, "exito");
       setTimeout(() => renderAchievementsView(), 450);
     });

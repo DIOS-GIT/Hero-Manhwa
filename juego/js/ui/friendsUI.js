@@ -171,6 +171,7 @@ function attachFriendsListEvents() {
         return;
       }
       burstConfetti(btn);
+      if (typeof sfxMoneda === "function") sfxMoneda();
       showToast(`¡Recibiste ${regalo.tipo === "creditos" ? `🪙 ${regalo.cantidad}` : `🧩 ${regalo.cantidad} fragmentos`} de ${regalo.de.nombre}!`, "exito");
       setTimeout(() => cargarYRenderizarAmigos(), 450);
     });

@@ -215,5 +215,6 @@ function celebrarSiEsRareza(resultado) {
   const rareza = resultado.carta.rareza;
   if (rareza !== "legendaria" && rareza !== "mitica") return;
   burstConfetti(document.querySelector(".gacha__resultado"), rareza === "mitica" ? 50 : 34);
+  if (typeof sfxRarezaAlta === "function") sfxRarezaAlta();
   showToast(`¡${resultado.carta.nombre} — ${rareza.toUpperCase()}!`, "exito");
 }

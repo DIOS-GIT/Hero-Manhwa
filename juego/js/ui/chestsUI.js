@@ -71,6 +71,7 @@ function renderChestsView() {
         renderChestsView();
         if (ultimoResultadoCofre.ok && !ultimoResultadoCofre.eraDuplicado) {
           burstConfetti(document.querySelector(".gacha__resultado"), 34);
+          if (typeof sfxCartaNueva === "function") sfxCartaNueva();
         }
       }, CHEST_OPEN_DELAY_MS);
     });
