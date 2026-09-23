@@ -2048,3 +2048,14 @@
 .mailcard__texto strong { font-size: 13.5px; display: block; margin-bottom: 3px; }
 .mailcard__texto p { font-size: 12px; color: var(--texto-tenue); margin: 0 0 6px; }
 .mailcard__recompensa { font-size: 12px; color: var(--acento-suave); font-family: var(--fuente-numeros); }
+
+/* ===== Pantalla de Gremio ===== */
+.guildheader {
+  text-align: center;
+  padding: 14px;
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.12), transparent);
+  margin-bottom: 14px;
+}
+.guildheader h3 { font-family: var(--fuente-titulos); font-size: 17px; margin: 0 0 4px; }

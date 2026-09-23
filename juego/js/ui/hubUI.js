@@ -78,6 +78,10 @@ function renderHubView() {
         <span class="hubtile__label">Correo</span>
         ${getUnclaimedMail().length > 0 ? `<span class="hubtile__badge">${getUnclaimedMail().length}</span>` : ""}
       </button>
+      <button type="button" class="hubtile" data-hub-nav="gremio">
+        <span class="hubtile__icono">🛡️</span>
+        <span class="hubtile__label">Gremio</span>
+      </button>
     </div>
 
     <button type="button" class="btn btn--aventura" id="btn-iniciar-aventura">
@@ -247,6 +251,10 @@ function renderProfileView() {
             <input type="checkbox" id="input-sonido-activado" ${PlayerData.sonidoActivado ? "checked" : ""} />
             Efectos de sonido
           </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="input-musica-activada" ${typeof isMusicaEnabled === "function" && isMusicaEnabled() ? "checked" : ""} />
+            Música ambiental
+          </label>
         </fieldset>
       </div>
 
@@ -362,6 +370,10 @@ function renderProfileView() {
     PlayerData.sonidoActivado = e.target.checked;
     await savePlayerData();
     if (PlayerData.sonidoActivado) sfxClick();
+  });
+
+  document.getElementById("input-musica-activada").addEventListener("change", (e) => {
+    if (typeof setMusicaActivada === "function") setMusicaActivada(e.target.checked);
   });
 
   document.getElementById("btn-cerrar-sesion-perfil").addEventListener("click", async () => {

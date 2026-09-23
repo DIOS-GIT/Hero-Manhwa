@@ -9,7 +9,7 @@
  * -----------------------------------------------------------------------
  */
 
-const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking", "evento", "pvp", "amigos", "correo"];
+const VISTAS_JUEGO = ["hub", "coleccion", "protagonistas", "tienda", "historial", "equipos", "aventura", "combate", "perfil", "cofres", "logros", "ranking", "evento", "pvp", "amigos", "correo", "gremio"];
 let ultimoResultadoRacha = null; // ver dailyStreak.js — se muestra una vez en la pantalla de título
 
 /**
@@ -42,6 +42,7 @@ function showView(nombre) {
     document.getElementById(`view-${v}`).classList.toggle("view--activa", v === nombre);
   });
   applyScreenBackground(nombre);
+  if (typeof setEscenaAmbiente === "function") setEscenaAmbiente(nombre);
 
   if (nombre === "hub") renderHubView();
   if (nombre === "coleccion") renderCollectionView();
@@ -59,6 +60,7 @@ function showView(nombre) {
   if (nombre === "pvp") renderPvpView();
   if (nombre === "amigos") renderFriendsView();
   if (nombre === "correo") renderMailboxView();
+  if (nombre === "gremio") renderGuildView();
 
   playViewTransition(document.getElementById(`view-${nombre}`));
 }
