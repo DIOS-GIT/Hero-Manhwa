@@ -103,4 +103,9 @@ const ECONOMY_CONFIG = {
     // Amistosa: no cambia LP ni da créditos, solo cuenta en el historial.
     retoExpiraEnMinutos: 5,
   },
+
+  gremio: {
+    costoCrear: 1000,
+    maxMiembros: 20,
+  },
 };

@@ -140,7 +140,7 @@ function playCombatFx(fx) {
       animateHpBar(efecto.instanceId, efecto.valor);
       if (efecto.ventaja && typeof sfxCritico === "function") sfxCritico();
       else if (typeof sfxHit === "function") sfxHit();
-      if (efecto.muerte) playDeathCollapse(efecto.instanceId);
+      if (efecto.muerte) { playDeathCollapse(efecto.instanceId); if (typeof sfxMuerte === "function") sfxMuerte(); }
       if (efecto.ventaja) huboGolpeGrande = true;
     } else if (efecto.tipo === "curacion") {
       spawnFloatingNumber(efecto.instanceId, `+${efecto.valor}`, "curacion");
@@ -149,8 +149,10 @@ function playCombatFx(fx) {
       if (typeof sfxCuracion === "function") sfxCuracion();
     } else if (efecto.tipo === "buff") {
       spawnFloatingNumber(efecto.instanceId, "▲", "buff");
+      if (typeof sfxBuff === "function") sfxBuff();
     } else if (efecto.tipo === "debuff") {
       spawnFloatingNumber(efecto.instanceId, "▼", "debuff");
+      if (typeof sfxDebuff === "function") sfxDebuff();
     } else if (efecto.tipo === "taunt") {
       spawnFloatingNumber(efecto.instanceId, "¡Aquí!", "taunt");
     } else if (efecto.tipo === "defender") {

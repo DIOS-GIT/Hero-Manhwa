@@ -1,0 +1,207 @@
+/* =======================================================================
+   VIDA.CSS — capa de arte y atmósfera (se carga DESPUÉS de todo lo demás)
+   Solo añade: si se quita este archivo el juego funciona igual, más plano.
+   Dirección: fantasía oscura a la luz de una antorcha — metal dorado,
+   piedra con grano, brasas flotando, rarezas que brillan de verdad.
+   ======================================================================= */
+
+:root {
+  --oro-luz: #ffe3a1;
+  --brasa: #ff8a3d;
+  --grano: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .75  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --marco-oro: linear-gradient(135deg, #f6d98b, #b5761f 45%, #f0c66a 70%, #7d4d10);
+}
+
+/* ---------- ATMÓSFERA GLOBAL: viñeta + grano de piedra + brasas ---------- */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(6, 4, 10, 0.55) 100%);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background-image: var(--grano); opacity: 0.05; mix-blend-mode: overlay;
+}
+#ambiente-canvas {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 1; mix-blend-mode: screen;
+}
+::selection { background: rgba(217, 164, 65, 0.4); color: #fff; }
+:focus-visible { outline: 2px solid var(--acento-suave); outline-offset: 2px; border-radius: 4px; }
+* { scrollbar-width: thin; scrollbar-color: #4d4460 transparent; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#5a4f70, #3a3247); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+
+/* ---------- TRANSICIÓN ENTRE PANTALLAS: entra con desenfoque ---------- */
+.uiview-entrando { animation: vida-entrar 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes vida-entrar {
+  0% { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(6px); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ---------- PANTALLA DE TÍTULO ---------- */
+.titlescreen::after {           /* rayos de luz que giran despacio */
+  content: ""; position: absolute; left: 50%; top: -20%; width: 160vmax; height: 160vmax;
+  transform: translateX(-50%); pointer-events: none; opacity: 0.5;
+  background: repeating-conic-gradient(from 0deg at 50% 30%, rgba(255, 210, 120, 0.07) 0 6deg, transparent 6deg 24deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, #000 0, transparent 55%);
+  mask-image: radial-gradient(circle at 50% 30%, #000 0, transparent 55%);
+  animation: vida-rayos 90s linear infinite;
+}
+@keyframes vida-rayos { to { transform: translateX(-50%) rotate(360deg); } }
+
+.titlescreen__emblema {
+  position: relative; font-size: 46px; z-index: 1;
+  animation: vida-flotar 4.5s ease-in-out infinite, vida-latir 3s ease-in-out infinite;
+}
+.titlescreen__emblema::before {  /* anillo rúnico */
+  content: ""; position: absolute; inset: -22px; border-radius: 50%; z-index: -1;
+  background: conic-gradient(from 0deg, transparent, rgba(217, 164, 65, 0.55), transparent 30%, rgba(217, 164, 65, 0.35), transparent 70%);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%, #000 64%, transparent 66%);
+  mask: radial-gradient(circle, transparent 58%, #000 60%, #000 64%, transparent 66%);
+  animation: vida-rayos 14s linear infinite reverse; transform: none;
+}
+@keyframes vida-flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes vida-latir {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(217, 164, 65, 0.35)); }
+  50% { filter: drop-shadow(0 0 28px rgba(255, 190, 90, 0.75)); }
+}
+
+.titlescreen__logo {
+  background: linear-gradient(100deg, #b5761f 0%, #ffe3a1 25%, #d9a441 45%, #fff2c9 55%, #b5761f 80%, #ffe3a1 100%);
+  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text;
+  animation: vida-brillo-logo 7s linear infinite, vida-aparecer 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  filter: drop-shadow(0 3px 0 rgba(90, 50, 8, 0.7)) drop-shadow(0 0 22px rgba(217, 164, 65, 0.35));
+}
+@keyframes vida-brillo-logo { to { background-position: -250% 0; } }
+@keyframes vida-aparecer { 0% { opacity: 0; letter-spacing: 0.25em; filter: blur(8px); } 100% { opacity: 1; } }
+.titlescreen__lema { animation: vida-aparecer 1.6s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.titlescreen__panel, .loginbox { animation: vida-panel 0.8s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes vida-panel { 0% { opacity: 0; transform: translateY(24px) scale(0.97); } 100% { opacity: 1; transform: none; } }
+
+/* ---------- PANELES: piedra oscura con marco dorado y esquinas ---------- */
+.titlescreen__panel, .loginbox, .hubheader, .eventbox, .carddetail {
+  position: relative;
+  background-image: var(--grano), linear-gradient(180deg, rgba(48, 40, 62, 0.92), rgba(24, 20, 33, 0.96));
+  background-blend-mode: soft-light, normal;
+  border: 1px solid #5a4a3a;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 220, 150, 0.12), inset 0 0 40px rgba(0, 0, 0, 0.35);
+}
+.titlescreen__panel::before, .loginbox::before, .hubheader::before, .carddetail::before {
+  content: ""; position: absolute; inset: 6px; pointer-events: none; z-index: 0;
+  --c: rgba(217, 164, 65, 0.85);
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 16px 1.5px, linear-gradient(var(--c), var(--c)) top left / 1.5px 16px,
+    linear-gradient(var(--c), var(--c)) top right / 16px 1.5px, linear-gradient(var(--c), var(--c)) top right / 1.5px 16px,
+    linear-gradient(var(--c), var(--c)) bottom left / 16px 1.5px, linear-gradient(var(--c), var(--c)) bottom left / 1.5px 16px,
+    linear-gradient(var(--c), var(--c)) bottom right / 16px 1.5px, linear-gradient(var(--c), var(--c)) bottom right / 1.5px 16px;
+  background-repeat: no-repeat;
+}
+.loginbox > *, .titlescreen__panel > *, .hubheader > * { position: relative; z-index: 1; }
+.loginbox__titulo, .carddetail__nombre { font-family: var(--fuente-titulos); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
+
+/* ---------- BOTONES: metal, relieve y luz ---------- */
+.btn { transition: transform 0.15s, box-shadow 0.2s, filter 0.2s; }
+.btn:not(:disabled):hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn--titulo, .btn--aventura {
+  border: 1px solid #7d4d10; border-radius: 10px; font-family: var(--fuente-titulos); font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 236, 190, 0.55);
+  background: linear-gradient(180deg, #ffe7a8 0%, #e2ad4a 48%, #b5761f 52%, #d19a3c 100%);
+  box-shadow: 0 5px 0 #6b410c, 0 10px 22px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 20px rgba(217, 164, 65, 0.25);
+}
+.btn--titulo:hover, .btn--aventura:hover { box-shadow: 0 5px 0 #6b410c, 0 12px 26px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 34px rgba(255, 190, 90, 0.55); }
+.btn--titulo:active, .btn--aventura:active { transform: translateY(4px); box-shadow: 0 1px 0 #6b410c, 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.btn--secundario { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 10px rgba(0, 0, 0, 0.35); }
+.btn--peligro { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 14px rgba(209, 72, 63, 0.25); }
+
+/* ---------- BARRA SUPERIOR ---------- */
+.game-shell__topbar {
+  background: linear-gradient(180deg, rgba(30, 24, 40, 0.96), rgba(18, 14, 26, 0.88));
+  border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, transparent, #b5761f, #ffe3a1, #b5761f, transparent) 1;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45); position: relative; z-index: 3;
+}
+.game-shell__logo { font-family: var(--fuente-logo); text-shadow: 0 0 14px rgba(217, 164, 65, 0.5); }
+
+/* ---------- HUB: losetas que se sienten físicas ---------- */
+.hubgrid > .hubtile { animation: vida-panel 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.hubgrid > .hubtile:nth-child(1) { animation-delay: 0.02s; } .hubgrid > .hubtile:nth-child(2) { animation-delay: 0.07s; }
+.hubgrid > .hubtile:nth-child(3) { animation-delay: 0.12s; } .hubgrid > .hubtile:nth-child(4) { animation-delay: 0.17s; }
+.hubgrid > .hubtile:nth-child(5) { animation-delay: 0.22s; } .hubgrid > .hubtile:nth-child(6) { animation-delay: 0.27s; }
+.hubgrid > .hubtile:nth-child(n+7) { animation-delay: 0.32s; }
+.hubtile {
+  position: relative; overflow: hidden; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s, border-color 0.25s;
+  background-image: var(--grano), linear-gradient(160deg, rgba(56, 46, 72, 0.95), rgba(28, 23, 38, 0.98));
+  background-blend-mode: soft-light, normal;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 220, 150, 0.12);
+}
+.hubtile::after {   /* reflejo que cruza al pasar */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 236, 190, 0.22) 50%, transparent 60%); transform: translateX(-130%);
+}
+.hubtile:hover { transform: translateY(-4px) scale(1.025); border-color: var(--acento); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 0 26px rgba(217, 164, 65, 0.28), inset 0 1px 0 rgba(255, 220, 150, 0.3); }
+.hubtile:hover::after { transform: translateX(130%); transition: transform 0.7s ease; }
+.hubtile__icono { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(217, 164, 65, 0.3)); transition: transform 0.25s; }
+.hubtile:hover .hubtile__icono { transform: scale(1.18) rotate(-5deg); }
+.hubtile__label { font-family: var(--fuente-titulos); letter-spacing: 0.04em; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+.hubheader__moneda { text-shadow: 0 0 12px rgba(255, 210, 100, 0.55); }
+
+/* ---------- CARTAS: la rareza se ve y se siente ---------- */
+.collectioncard, .pickcard, .chestcard { position: relative; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; }
+.collectioncard:hover, .pickcard:hover { transform: translateY(-6px) rotate(-0.6deg) scale(1.03); z-index: 3; }
+.collectioncard--rara, .pickcard--rara { box-shadow: 0 0 14px rgba(79, 143, 224, 0.28); }
+.collectioncard--epica, .pickcard--epica, .chestcard--epica { box-shadow: 0 0 18px rgba(166, 104, 232, 0.4); }
+.collectioncard--legendaria, .pickcard--legendaria, .chestcard--legendaria { animation: vida-aura-oro 2.6s ease-in-out infinite; }
+.collectioncard--mitica, .pickcard--mitica, .chestcard--mitica { animation: vida-aura-mitica 2.2s ease-in-out infinite; }
+@keyframes vida-aura-oro {
+  0%, 100% { box-shadow: 0 0 14px rgba(224, 172, 47, 0.4), 0 0 0 1px rgba(255, 215, 106, 0.5); }
+  50% { box-shadow: 0 0 34px rgba(255, 200, 70, 0.75), 0 0 0 1px rgba(255, 235, 160, 0.9); }
+}
+@keyframes vida-aura-mitica {
+  0%, 100% { box-shadow: 0 0 16px rgba(224, 71, 63, 0.55), 0 -6px 26px rgba(232, 138, 47, 0.3), 0 0 0 1px rgba(255, 130, 80, 0.7); }
+  50% { box-shadow: 0 0 38px rgba(255, 90, 60, 0.9), 0 -12px 40px rgba(255, 170, 60, 0.55), 0 0 0 1px rgba(255, 190, 120, 1); }
+}
+.collectioncard__nombre, .pickcard__nombre, .protagonistcard__nombre { font-family: var(--fuente-titulos); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+.collectioncard__chiprareza { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); }
+.protagonistcard { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; }
+.protagonistcard:hover { transform: translateY(-5px); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 0 22px rgba(217, 164, 65, 0.25); }
+.protagonistcard__img, .collectioncard__img { transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.collectioncard:hover .collectioncard__img, .protagonistcard:hover .protagonistcard__img { transform: scale(1.07); }
+
+/* ---------- COMBATE: turnos con presencia, barras con vida, golpes con peso ---------- */
+.combatscreen { background: radial-gradient(ellipse at 50% 100%, rgba(224, 71, 63, 0.09), transparent 60%), radial-gradient(ellipse at 50% 0%, rgba(91, 143, 196, 0.07), transparent 55%); }
+.formcard { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; }
+.formcard--turno { animation: vida-turno 1.4s ease-in-out infinite; z-index: 2; }
+@keyframes vida-turno {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.8), 0 0 16px rgba(217, 164, 65, 0.4); }
+  50% { box-shadow: 0 0 0 2px rgba(255, 227, 161, 1), 0 0 32px rgba(255, 200, 90, 0.75); }
+}
+.formcard--golpeada { animation: vida-golpe 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes vida-golpe {
+  0%, 100% { transform: translateX(0); filter: none; } 15% { transform: translateX(-9px) rotate(-2deg); filter: brightness(2.2) saturate(0.4); }
+  35% { transform: translateX(8px) rotate(1.5deg); } 55% { transform: translateX(-5px); } 80% { transform: translateX(3px); }
+}
+.formcard--dead { filter: grayscale(1) brightness(0.5); }
+.formcard__hpbar-fill { background: linear-gradient(180deg, #7fe0a0, #2f9e5e 55%, #1f7a44); box-shadow: 0 0 8px rgba(80, 220, 130, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+.energybar__fill { background: linear-gradient(180deg, #ffe7a8, #e2ad4a 55%, #b5761f); box-shadow: 0 0 12px rgba(255, 200, 90, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+.fx-numero { font-family: var(--fuente-titulos); font-weight: 900; -webkit-text-stroke: 1px rgba(0, 0, 0, 0.85); paint-order: stroke fill; text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), 0 0 14px currentColor; }
+.fx-numero--critico { font-size: 1.45em; text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 24px #ffb13b, 0 0 8px #ff6a2b; }
+.combatscreen--sacudida { animation: vida-temblor 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes vida-temblor { 10%, 90% { transform: translate(-2px, 1px); } 20%, 80% { transform: translate(4px, -2px); } 30%, 50%, 70% { transform: translate(-6px, 2px); } 40%, 60% { transform: translate(6px, -1px); } }
+.resultado { text-shadow: 0 3px 14px rgba(0, 0, 0, 0.8); }
+
+/* ---------- GACHA Y COFRES: más brillo en los momentos grandes ---------- */
+.gachareveal__burst--legendaria, .gachareveal__burst--mitica { filter: saturate(1.35) brightness(1.15); }
+.chestbox { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(217, 164, 65, 0.25)); }
+
+/* ---------- MÓVIL: menos efectos caros ---------- */
+@media (max-width: 600px) {
+  body::after { display: none; }
+  .titlescreen::after { animation-duration: 140s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titlescreen::after, .titlescreen__emblema, .titlescreen__emblema::before, .titlescreen__logo, .titlescreen__lema,
+  .titlescreen__panel, .loginbox, .hubgrid > .hubtile, .formcard--turno, .formcard--golpeada,
+  .collectioncard--legendaria, .collectioncard--mitica, .pickcard--legendaria, .pickcard--mitica,
+  .chestcard--legendaria, .chestcard--mitica, .combatscreen--sacudida, .uiview-entrando { animation: none !important; }
+  #ambiente-canvas { display: none; }
+}
